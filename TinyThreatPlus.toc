@@ -1,0 +1,8 @@
+## Interface: 20506
+## Title: TinyThreatPlus
+## Notes: Lightweight threat lead values for Blizzard nameplates and the target frame.
+## Author: StormtrooperTK421
+## SavedVariables: TinyThreatPlusDB
+
+TinyThreatPlus.lua
+Options.lua
