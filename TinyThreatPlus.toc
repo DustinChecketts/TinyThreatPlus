@@ -1,7 +1,10 @@
 ## Interface: 20506
 ## Title: TinyThreatPlus
-## Notes: Lightweight threat addon Blizzard's new nameplates and target frame.
+## Version: 1.0.1
 ## Author: StormtrooperTK421
+## Notes: Lightweight threat addon Blizzard's new nameplates and target frame.
+## DefaultState: enabled
+## X-Curse-Project-ID: 1603170
 ## SavedVariables: TinyThreatPlusDB
 
 TinyThreatPlus.lua
