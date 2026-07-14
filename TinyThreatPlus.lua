@@ -4,28 +4,26 @@ local TTP = CreateFrame("Frame", "TinyThreatPlusFrame")
 TinyThreatPlusDB = TinyThreatPlusDB or {}
 
 local DB_DEFAULTS = {
-    enabled = true,
     showNameplates = true,
     showTargetFrame = true,
-    includePets = true,
-    recolorNameplates = true,
-    showTargetCounter = true,
+    alwaysShowThreatBoxes = true,
+
     roleBasedColors = true,
+    showTargetCounter = true,
+    enemyPlayerClassColors = true,
+    friendlyPlayerClassColors = false,
 
     displayMode = "VALUE",
-    smoothThreat = true,
-    smoothingSpeed = 12,
 
-    fontSize = 12,
-
+    nameplateFontSize = 14,
     nameplateBoxWidth = 52,
-    nameplateBoxMinHeight = 8,
-    nameplateXOffset = 6,
+    nameplateBoxHeight = 22,
+    nameplateXOffset = 1,
     nameplateYOffset = 0,
-    classicLevelBadgeOffset = 22,
 
+    targetFontSize = 12,
     targetBoxWidth = 52,
-    targetBoxHeight = 18,
+    targetBoxHeight = 20,
     targetXOffset = 0,
     targetYOffset = 2,
 }
@@ -33,7 +31,6 @@ local DB_DEFAULTS = {
 TinyThreatPlusDefaults = DB_DEFAULTS
 
 local activeNameplates = {}
-local smoothedValues = {}
 local elapsedSinceUpdate = 0
 local isApplyingColor = false
 
@@ -45,6 +42,44 @@ local COLORS = {
     bg = { 0.02, 0.02, 0.02, 0.86 },
     border = { 0.72, 0.72, 0.72, 1.00 },
 }
+
+local function GetCVarValue(name)
+    if C_CVar and C_CVar.GetCVar then
+        return C_CVar.GetCVar(name)
+    end
+
+    if GetCVar then
+        return GetCVar(name)
+    end
+
+    return nil
+end
+
+local function SetCVarValue(name, enabled)
+    local value = enabled and "1" or "0"
+
+    if GetCVarValue(name) == value then
+        return
+    end
+
+    if C_CVar and C_CVar.SetCVar then
+        C_CVar.SetCVar(name, value)
+    elseif SetCVar then
+        SetCVar(name, value)
+    end
+end
+
+function TinyThreatPlus_ApplyClassColorSettings()
+    SetCVarValue(
+        "nameplateShowClassColor",
+        TinyThreatPlusDB.enemyPlayerClassColors
+    )
+
+    SetCVarValue(
+        "nameplateShowFriendlyClassColor",
+        TinyThreatPlusDB.friendlyPlayerClassColors
+    )
+end
 
 function TinyThreatPlus_ApplyDefaults()
     TinyThreatPlusDB = TinyThreatPlusDB or {}
@@ -63,10 +98,10 @@ function TinyThreatPlus_ResetDefaults()
         TinyThreatPlusDB[k] = v
     end
 
-    smoothedValues = {}
+    TinyThreatPlus_ApplyClassColorSettings()
 
     if TinyThreatPlus_UpdateAll then
-        TinyThreatPlus_UpdateAll(0.08)
+        TinyThreatPlus_UpdateAll()
     end
 end
 
@@ -106,12 +141,8 @@ local function FormatSignedPercent(value)
     return "0%"
 end
 
-local function GetGroupUnits(includePets)
+local function GetGroupUnits()
     local units = { "player" }
-
-    if includePets and UnitExists("pet") then
-        table.insert(units, "pet")
-    end
 
     if IsInRaid() then
         for i = 1, 40 do
@@ -119,22 +150,12 @@ local function GetGroupUnits(includePets)
             if UnitExists(unit) then
                 table.insert(units, unit)
             end
-
-            local pet = unit .. "pet"
-            if includePets and UnitExists(pet) then
-                table.insert(units, pet)
-            end
         end
     elseif IsInGroup() then
         for i = 1, 4 do
             local unit = "party" .. i
             if UnitExists(unit) then
                 table.insert(units, unit)
-            end
-
-            local pet = unit .. "pet"
-            if includePets and UnitExists(pet) then
-                table.insert(units, pet)
             end
         end
     end
@@ -152,22 +173,28 @@ local function GetThreatData(unit)
     end
 
     local _, _, _, _, playerThreat = UnitDetailedThreatSituation("player", unit)
-    if not playerThreat then
-        return nil
-    end
-
     local highestOtherThreat = 0
+    local hasThreatData = playerThreat ~= nil
 
-    for _, groupUnit in ipairs(GetGroupUnits(TinyThreatPlusDB.includePets)) do
+    for _, groupUnit in ipairs(GetGroupUnits()) do
         if groupUnit ~= "player" and UnitExists(groupUnit) then
             local _, _, _, _, threatValue = UnitDetailedThreatSituation(groupUnit, unit)
-            threatValue = threatValue or 0
 
-            if threatValue > highestOtherThreat then
-                highestOtherThreat = threatValue
+            if threatValue ~= nil then
+                hasThreatData = true
+
+                if threatValue > highestOtherThreat then
+                    highestOtherThreat = threatValue
+                end
             end
         end
     end
+
+    if not hasThreatData and not TinyThreatPlusDB.alwaysShowThreatBoxes then
+        return nil
+    end
+
+    playerThreat = playerThreat or 0
 
     local lead = (playerThreat - highestOtherThreat) / 100
     local percent
@@ -180,7 +207,7 @@ local function GetThreatData(unit)
         percent = 0
     end
 
-    return lead, percent
+    return lead, percent, hasThreatData
 end
 
 local function GetTargetCounter(unit)
@@ -199,7 +226,7 @@ local function GetTargetCounter(unit)
 
     local count = 0
 
-    for _, groupUnit in ipairs(GetGroupUnits(false)) do
+    for _, groupUnit in ipairs(GetGroupUnits()) do
         local targetUnit = groupUnit .. "target"
         if UnitExists(targetUnit) and UnitGUID(targetUnit) == guid then
             count = count + 1
@@ -263,39 +290,6 @@ local function FormatDisplayValue(value)
     return FormatSignedNumber(value)
 end
 
-local function GetSmoothKey(prefix, unit)
-    local guid = UnitGUID(unit)
-    if guid then
-        return prefix .. ":" .. guid
-    end
-
-    return prefix .. ":" .. unit
-end
-
-local function SmoothValue(key, rawValue, dt)
-    if not TinyThreatPlusDB.smoothThreat then
-        smoothedValues[key] = rawValue
-        return rawValue
-    end
-
-    local previous = smoothedValues[key]
-    if previous == nil then
-        smoothedValues[key] = rawValue
-        return rawValue
-    end
-
-    local speed = TinyThreatPlusDB.smoothingSpeed or 12
-    local alpha = math.min(1, (dt or 0.08) * speed)
-    local smoothed = previous + ((rawValue - previous) * alpha)
-
-    if math.abs(smoothed - rawValue) < 0.5 then
-        smoothed = rawValue
-    end
-
-    smoothedValues[key] = smoothed
-    return smoothed
-end
-
 local function IsClassicNameplateStyle()
     return C_CVar and C_CVar.GetCVar and C_CVar.GetCVar("nameplateStyle") == "0"
 end
@@ -309,7 +303,7 @@ local function GetClassicScaledOffset(healthBar)
     local uiScale = UIParent and UIParent.GetEffectiveScale and UIParent:GetEffectiveScale() or 1
     local relativeScale = scale / uiScale
 
-    return math.floor((TinyThreatPlusDB.classicLevelBadgeOffset or 22) * relativeScale + 0.5)
+    return math.floor(22 * relativeScale + 0.5)
 end
 
 local function ApplyThreatBoxStyle(frame, height)
@@ -382,11 +376,12 @@ local function UpdateThreatBox(box, width, height, text, r, g, b, counter, isNam
 
     box:SetSize(width, height)
 
-    local fontSize = TinyThreatPlusDB.fontSize or 12
-    if isNameplate and height <= 10 then
-        fontSize = math.max(8, fontSize - 2)
-    elseif isNameplate and height <= 14 then
-        fontSize = math.max(8, fontSize - 1)
+    local fontSize
+
+    if isNameplate then
+        fontSize = tonumber(TinyThreatPlusDB.nameplateFontSize) or 14
+    else
+        fontSize = tonumber(TinyThreatPlusDB.targetFontSize) or 12
     end
 
     box.text:SetFont(STANDARD_TEXT_FONT, fontSize, "OUTLINE")
@@ -423,23 +418,48 @@ local function FindNameplateHealthBar(nameplate)
     return nameplate
 end
 
-local function GetNameplateHealthHeight(healthBar)
-    if not healthBar or not healthBar.GetHeight then
-        return TinyThreatPlusDB.nameplateBoxMinHeight or 8
+local function IsHostileNameplateUnit(unit)
+    return unit
+        and UnitExists(unit)
+        and not UnitIsPlayer(unit)
+        and UnitCanAttack("player", unit)
+        and not UnitIsFriend("player", unit)
+end
+
+local function ClearNameplateAssignment(nameplate, healthBar)
+    healthBar = healthBar
+        or (nameplate and nameplate.TinyThreatPlusHealthBar)
+        or FindNameplateHealthBar(nameplate)
+
+    if healthBar then
+        healthBar.TinyThreatPlusUnit = nil
     end
 
-    local height = math.floor((healthBar:GetHeight() or 0) + 0.5)
-    local minHeight = TinyThreatPlusDB.nameplateBoxMinHeight or 8
+    if nameplate then
+        nameplate.TinyThreatPlusHealthBar = nil
 
-    if height < minHeight then
-        height = minHeight
+        if nameplate.TinyThreatPlusBox then
+            nameplate.TinyThreatPlusBox:Hide()
+        end
     end
+end
 
-    return height
+local function GetNameplateBoxHeight()
+    return math.max(6, math.min(40, tonumber(TinyThreatPlusDB.nameplateBoxHeight) or 22))
 end
 
 local function ApplyNameplateColor(healthBar, unit, lead)
-    if not TinyThreatPlusDB.recolorNameplates or not healthBar or not healthBar.SetStatusBarColor then
+    if not TinyThreatPlusDB.roleBasedColors
+        or not healthBar
+        or not healthBar.SetStatusBarColor
+        or not IsHostileNameplateUnit(unit)
+    then
+        return
+    end
+
+    local nameplate = C_NamePlate.GetNamePlateForUnit(unit)
+    if not nameplate or FindNameplateHealthBar(nameplate) ~= healthBar then
+        healthBar.TinyThreatPlusUnit = nil
         return
     end
 
@@ -458,52 +478,64 @@ local function HookHealthBarColor(healthBar)
     healthBar.TinyThreatPlusHooked = true
 
     hooksecurefunc(healthBar, "SetStatusBarColor", function(bar)
-        if isApplyingColor or not TinyThreatPlusDB.recolorNameplates then
+        if isApplyingColor or not TinyThreatPlusDB.roleBasedColors then
             return
         end
 
         local hookedUnit = bar.TinyThreatPlusUnit
-        if not hookedUnit or not UnitExists(hookedUnit) then
+
+        if not IsHostileNameplateUnit(hookedUnit) then
+            bar.TinyThreatPlusUnit = nil
+            return
+        end
+
+        local nameplate = C_NamePlate.GetNamePlateForUnit(hookedUnit)
+        if not nameplate or FindNameplateHealthBar(nameplate) ~= bar then
+            bar.TinyThreatPlusUnit = nil
             return
         end
 
         local lead = GetThreatData(hookedUnit)
-        if lead then
+        if lead ~= nil then
             ApplyNameplateColor(bar, hookedUnit, lead)
         end
     end)
 end
 
-local function UpdateNameplate(unit, dt)
-    if not TinyThreatPlusDB.enabled or not TinyThreatPlusDB.showNameplates then
-        local nameplate = C_NamePlate.GetNamePlateForUnit(unit)
-        if nameplate and nameplate.TinyThreatPlusBox then
-            nameplate.TinyThreatPlusBox:Hide()
-        end
-        return
-    end
-
+local function UpdateNameplate(unit)
     local nameplate = C_NamePlate.GetNamePlateForUnit(unit)
+
     if not nameplate or nameplate:IsForbidden() then
         return
     end
 
     local healthBar = FindNameplateHealthBar(nameplate)
-    local box = EnsureThreatBox(nameplate, "TinyThreatPlusBox", nil)
-    local lead, percent = GetThreatData(unit)
 
-    if not healthBar or not lead then
+    if not TinyThreatPlusDB.showNameplates then
+        ClearNameplateAssignment(nameplate, healthBar)
+        return
+    end
+
+    if not healthBar or not IsHostileNameplateUnit(unit) then
+        ClearNameplateAssignment(nameplate, healthBar)
+        return
+    end
+
+    local box = EnsureThreatBox(nameplate, "TinyThreatPlusBox", nil)
+    local lead, percent, hasThreatData = GetThreatData(unit)
+
+    if lead == nil then
+        healthBar.TinyThreatPlusUnit = nil
         box:Hide()
         return
     end
 
+    nameplate.TinyThreatPlusHealthBar = healthBar
     healthBar.TinyThreatPlusUnit = unit
     HookHealthBarColor(healthBar)
 
-    local rawDisplay = GetDisplayRawValue(lead, percent)
-    local display = SmoothValue(GetSmoothKey("nameplate", unit), rawDisplay, dt)
-
-    local height = GetNameplateHealthHeight(healthBar)
+    local display = GetDisplayRawValue(lead, percent)
+    local height = GetNameplateBoxHeight()
     local r, g, b = GetThreatColor(unit, lead)
     local counter = GetTargetCounter(unit)
     local extraOffset = GetClassicScaledOffset(healthBar)
@@ -513,7 +545,7 @@ local function UpdateNameplate(unit, dt)
         "LEFT",
         healthBar,
         "RIGHT",
-        (TinyThreatPlusDB.nameplateXOffset or 6) + extraOffset,
+        (TinyThreatPlusDB.nameplateXOffset or 1) + extraOffset,
         TinyThreatPlusDB.nameplateYOffset or 0
     )
 
@@ -522,18 +554,23 @@ local function UpdateNameplate(unit, dt)
         TinyThreatPlusDB.nameplateBoxWidth or 52,
         height,
         FormatDisplayValue(display),
-        r, g, b,
+        r,
+        g,
+        b,
         counter,
         true
     )
 
-    ApplyNameplateColor(healthBar, unit, lead)
+    if hasThreatData then
+        ApplyNameplateColor(healthBar, unit, lead)
+    end
 end
 
 local function HideNameplate(unit)
     local nameplate = C_NamePlate.GetNamePlateForUnit(unit)
-    if nameplate and nameplate.TinyThreatPlusBox then
-        nameplate.TinyThreatPlusBox:Hide()
+
+    if nameplate then
+        ClearNameplateAssignment(nameplate)
     end
 end
 
@@ -565,16 +602,16 @@ local function EnsureTargetBox()
     return box
 end
 
-local function UpdateTargetFrame(dt)
+local function UpdateTargetFrame()
     local box = EnsureTargetBox()
 
-    if not TinyThreatPlusDB.enabled or not TinyThreatPlusDB.showTargetFrame or not UnitExists("target") then
+    if not TinyThreatPlusDB.showTargetFrame or not UnitExists("target") then
         box:Hide()
         return
     end
 
     local lead, percent = GetThreatData("target")
-    if not lead then
+    if lead == nil then
         box:Hide()
         return
     end
@@ -585,9 +622,7 @@ local function UpdateTargetFrame(dt)
         return
     end
 
-    local rawDisplay = GetDisplayRawValue(lead, percent)
-    local display = SmoothValue(GetSmoothKey("target", "target"), rawDisplay, dt)
-
+    local display = GetDisplayRawValue(lead, percent)
     local r, g, b = GetThreatColor("target", lead)
     local counter = GetTargetCounter("target")
 
@@ -603,57 +638,47 @@ local function UpdateTargetFrame(dt)
     UpdateThreatBox(
         box,
         TinyThreatPlusDB.targetBoxWidth or 52,
-        TinyThreatPlusDB.targetBoxHeight or 18,
+        TinyThreatPlusDB.targetBoxHeight or 20,
         FormatDisplayValue(display),
-        r, g, b,
+        r,
+        g,
+        b,
         counter,
         false
     )
 end
 
-function TinyThreatPlus_UpdateAll(dt)
+function TinyThreatPlus_UpdateAll()
     TinyThreatPlus_ApplyDefaults()
-
-    if not TinyThreatPlusDB.enabled then
-        for unit in pairs(activeNameplates) do
-            HideNameplate(unit)
-        end
-
-        if TTP.targetBox then
-            TTP.targetBox:Hide()
-        end
-
-        return
-    end
 
     for unit in pairs(activeNameplates) do
         if UnitExists(unit) then
-            UpdateNameplate(unit, dt or 0.08)
+            UpdateNameplate(unit)
         else
             activeNameplates[unit] = nil
         end
     end
 
-    UpdateTargetFrame(dt or 0.08)
+    UpdateTargetFrame()
 end
 
 TTP:SetScript("OnEvent", function(_, event, arg1)
     if event == "ADDON_LOADED" and arg1 == ADDON_NAME then
         TinyThreatPlus_ApplyDefaults()
-        TinyThreatPlus_UpdateAll(0.08)
+        TinyThreatPlus_ApplyClassColorSettings()
+        TinyThreatPlus_UpdateAll()
     elseif event == "NAME_PLATE_UNIT_ADDED" then
         activeNameplates[arg1] = true
-        UpdateNameplate(arg1, 0.08)
+        UpdateNameplate(arg1)
     elseif event == "NAME_PLATE_UNIT_REMOVED" then
         activeNameplates[arg1] = nil
         HideNameplate(arg1)
     elseif event == "PLAYER_TARGET_CHANGED" then
-        smoothedValues["target:" .. (UnitGUID("target") or "target")] = nil
-        UpdateTargetFrame(0.08)
+        UpdateTargetFrame()
     elseif event == "UNIT_THREAT_LIST_UPDATE" or event == "UNIT_THREAT_SITUATION_UPDATE" then
-        TinyThreatPlus_UpdateAll(0.08)
+        TinyThreatPlus_UpdateAll()
     elseif event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ROLES_ASSIGNED" then
-        TinyThreatPlus_UpdateAll(0.08)
+        TinyThreatPlus_UpdateAll()
     end
 end)
 
@@ -661,9 +686,8 @@ TTP:SetScript("OnUpdate", function(_, elapsed)
     elapsedSinceUpdate = elapsedSinceUpdate + elapsed
 
     if elapsedSinceUpdate >= 0.08 then
-        local dt = elapsedSinceUpdate
         elapsedSinceUpdate = 0
-        TinyThreatPlus_UpdateAll(dt)
+        TinyThreatPlus_UpdateAll()
     end
 end)
 
@@ -681,42 +705,35 @@ SLASH_TINYTHREATPLUS2 = "/tinythreatplus"
 SlashCmdList.TINYTHREATPLUS = function(msg)
     msg = string.lower(msg or "")
 
-    if msg == "on" then
-        TinyThreatPlusDB.enabled = true
-        print("TinyThreatPlus enabled.")
-    elseif msg == "off" then
-        TinyThreatPlusDB.enabled = false
-        print("TinyThreatPlus disabled.")
-    elseif msg == "pets" then
-        TinyThreatPlusDB.includePets = not TinyThreatPlusDB.includePets
-        print("TinyThreatPlus include pets:", TinyThreatPlusDB.includePets and "on" or "off")
-    elseif msg == "colors" then
-        TinyThreatPlusDB.recolorNameplates = not TinyThreatPlusDB.recolorNameplates
-        print("TinyThreatPlus nameplate recolor:", TinyThreatPlusDB.recolorNameplates and "on" or "off")
-    elseif msg == "rolecolors" then
+    if msg == "colors" then
         TinyThreatPlusDB.roleBasedColors = not TinyThreatPlusDB.roleBasedColors
-        print("TinyThreatPlus role-based colors:", TinyThreatPlusDB.roleBasedColors and "on" or "off")
+        print("TinyThreatPlus role-based nameplate colors:", TinyThreatPlusDB.roleBasedColors and "on" or "off")
+    elseif msg == "enemyclass" then
+        TinyThreatPlusDB.enemyPlayerClassColors = not TinyThreatPlusDB.enemyPlayerClassColors
+        TinyThreatPlus_ApplyClassColorSettings()
+        print("TinyThreatPlus enemy player class colors:", TinyThreatPlusDB.enemyPlayerClassColors and "on" or "off")
+    elseif msg == "friendlyclass" then
+        TinyThreatPlusDB.friendlyPlayerClassColors = not TinyThreatPlusDB.friendlyPlayerClassColors
+        TinyThreatPlus_ApplyClassColorSettings()
+        print("TinyThreatPlus friendly player class colors:", TinyThreatPlusDB.friendlyPlayerClassColors and "on" or "off")
     elseif msg == "counter" then
         TinyThreatPlusDB.showTargetCounter = not TinyThreatPlusDB.showTargetCounter
         print("TinyThreatPlus target counter:", TinyThreatPlusDB.showTargetCounter and "on" or "off")
-    elseif msg == "smooth" then
-        TinyThreatPlusDB.smoothThreat = not TinyThreatPlusDB.smoothThreat
-        smoothedValues = {}
-        print("TinyThreatPlus threat smoothing:", TinyThreatPlusDB.smoothThreat and "on" or "off")
+    elseif msg == "preview" then
+        TinyThreatPlusDB.alwaysShowThreatBoxes = not TinyThreatPlusDB.alwaysShowThreatBoxes
+        print("TinyThreatPlus always show threat boxes:", TinyThreatPlusDB.alwaysShowThreatBoxes and "on" or "off")
     elseif msg == "reset" then
         TinyThreatPlus_ResetDefaults()
         print("TinyThreatPlus settings reset.")
     else
         print("TinyThreatPlus commands:")
-        print("/ttp on")
-        print("/ttp off")
-        print("/ttp pets")
         print("/ttp colors")
-        print("/ttp rolecolors")
+        print("/ttp enemyclass")
+        print("/ttp friendlyclass")
         print("/ttp counter")
-        print("/ttp smooth")
+        print("/ttp preview")
         print("/ttp reset")
     end
 
-    TinyThreatPlus_UpdateAll(0.08)
+    TinyThreatPlus_UpdateAll()
 end
