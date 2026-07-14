@@ -14,7 +14,7 @@ end
 
 local function RefreshAddon()
     if TinyThreatPlus_UpdateAll then
-        TinyThreatPlus_UpdateAll(0.08)
+        TinyThreatPlus_UpdateAll()
     end
 end
 
@@ -60,6 +60,13 @@ local function MakeCheckbox(parent, label, dbKey, x, y, tooltip)
     cb:SetScript("OnClick", function(self)
         ApplyDefaults()
         TinyThreatPlusDB[dbKey] = self:GetChecked() and true or false
+
+        if (dbKey == "enemyPlayerClassColors" or dbKey == "friendlyPlayerClassColors")
+            and TinyThreatPlus_ApplyClassColorSettings
+        then
+            TinyThreatPlus_ApplyClassColorSettings()
+        end
+
         RefreshAddon()
     end)
 
@@ -153,15 +160,14 @@ end
 local title = MakeTitle(panel, "TinyThreatPlus")
 MakeSubtitle(panel, "Lightweight threat lead values for Blizzard nameplates and the target frame.", title)
 
-MakeCheckbox(panel, "Enable TinyThreatPlus", "enabled", 20, -70, "Enables all TinyThreatPlus features.")
-MakeCheckbox(panel, "Show Threat on Nameplates", "showNameplates", 20, -100, "Displays your threat lead beside enemy nameplates.")
-MakeCheckbox(panel, "Show Threat on Target Frame", "showTargetFrame", 20, -130, "Displays your threat lead above the target frame.")
-MakeCheckbox(panel, "Recolor Nameplates", "recolorNameplates", 20, -160, "Colors enemy nameplates based on your role and threat status.\n\nDPS/Healer:\nGreen: Tank or pet has threat.\nYellow: You are close to taking threat.\nRed: You currently have threat.\n\nTank:\nGreen: You currently have threat.\nYellow: You are close to losing threat.\nRed: You do not have threat.")
+MakeCheckbox(panel, "Show Threat on Nameplates", "showNameplates", 20, -70, "Displays your threat lead beside enemy nameplates.")
+MakeCheckbox(panel, "Show Threat on Target Frame", "showTargetFrame", 20, -100, "Displays your threat lead above the target frame.")
+MakeCheckbox(panel, "Role-Based Nameplate Colors", "roleBasedColors", 20, -130, "Recolors Blizzard nameplates using green as good, yellow as a warning, and red as bad. The meaning automatically reverses for tanks.\n\nDPS/Healer:\nGreen: Another player or your pet has threat.\nYellow: You are close to taking threat.\nRed: You currently have threat.\n\nTank:\nGreen: You currently have threat.\nYellow: You are close to losing threat.\nRed: You do not have threat.")
 
-MakeCheckbox(panel, "Use Role-Based Colors", "roleBasedColors", 360, -70, "Automatically reverses threat colors when your assigned role is Tank, keeping green as good and red as bad.")
-MakeCheckbox(panel, "Include Pets", "includePets", 360, -100, "Includes player and party pets when calculating threat.")
-MakeCheckbox(panel, "Show Target Counter", "showTargetCounter", 360, -130, "Displays the number of group members currently targeting the enemy.")
-MakeCheckbox(panel, "Smooth Threat Updates", "smoothThreat", 360, -160, "Smooths threat number changes so values feel less jumpy during combat.")
+MakeCheckbox(panel, "Show Target Counter", "showTargetCounter", 360, -70, "Displays the number of group members currently targeting the enemy.")
+MakeCheckbox(panel, "Always Show Threat Boxes", "alwaysShowThreatBoxes", 360, -100, "Keeps both threat boxes visible on valid enemies outside combat. When no threat table exists, the display shows an accurate 0 or 0% until threat is generated.")
+MakeCheckbox(panel, "Enemy Player Class Colors", "enemyPlayerClassColors", 360, -130, "Uses Blizzard class colors for hostile player nameplates. This affects enemy players only, not hostile NPCs.")
+MakeCheckbox(panel, "Friendly Player Class Colors", "friendlyPlayerClassColors", 360, -160, "Uses Blizzard class colors for friendly player nameplates.")
 
 local displayHeader = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
 displayHeader:SetPoint("TOPLEFT", 20, -205)
@@ -174,22 +180,17 @@ local nameplateHeader = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
 nameplateHeader:SetPoint("TOPLEFT", 20, -285)
 nameplateHeader:SetText("Nameplate Threat Box")
 
-MakeSlider(panel, "Font Size", "fontSize", 8, 16, 1, 24, -320)
-MakeSlider(panel, "Box Width", "nameplateBoxWidth", 32, 100, 1, 24, -365)
-MakeSlider(panel, "Minimum Height", "nameplateBoxMinHeight", 6, 24, 1, 24, -410)
-MakeSlider(panel, "X Offset", "nameplateXOffset", -20, 80, 1, 24, -455)
-MakeSlider(panel, "Y Offset", "nameplateYOffset", -30, 30, 1, 24, -500)
-MakeSlider(panel, "Classic Level Badge Offset", "classicLevelBadgeOffset", 0, 120, 1, 24, -545)
+MakeSlider(panel, "Font Size", "nameplateFontSize", 8, 16, 1, 24, -320)
+MakeSlider(panel, "Box Width", "nameplateBoxWidth", 32, 120, 1, 24, -365)
+MakeSlider(panel, "Box Height", "nameplateBoxHeight", 6, 40, 1, 24, -410)
+MakeSlider(panel, "X Offset", "nameplateXOffset", -80, 80, 1, 24, -455)
+MakeSlider(panel, "Y Offset", "nameplateYOffset", -40, 40, 1, 24, -500)
 
-local targetHeader = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-targetHeader:SetPoint("TOPLEFT", 360, -285)
-targetHeader:SetText("Target Frame Threat Box")
-
-MakeSlider(panel, "Target Box Width", "targetBoxWidth", 32, 120, 1, 364, -320)
-MakeSlider(panel, "Target Box Height", "targetBoxHeight", 10, 32, 1, 364, -365)
-MakeSlider(panel, "Target X Offset", "targetXOffset", -80, 80, 1, 364, -410)
-MakeSlider(panel, "Target Y Offset", "targetYOffset", -40, 40, 1, 364, -455)
-MakeSlider(panel, "Smoothing Speed", "smoothingSpeed", 4, 30, 1, 364, -500)
+MakeSlider(panel, "Font Size", "targetFontSize", 8, 16, 1, 364, -320)
+MakeSlider(panel, "Box Width", "targetBoxWidth", 32, 120, 1, 364, -365)
+MakeSlider(panel, "Box Height", "targetBoxHeight", 6, 40, 1, 364, -410)
+MakeSlider(panel, "X Offset", "targetXOffset", -80, 80, 1, 364, -455)
+MakeSlider(panel, "Y Offset", "targetYOffset", -40, 40, 1, 364, -500)
 
 local reset = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
 reset:SetSize(130, 24)
@@ -211,6 +212,10 @@ end)
 
 panel:SetScript("OnShow", function()
     ApplyDefaults()
+
+    if TinyThreatPlus_ApplyClassColorSettings then
+        TinyThreatPlus_ApplyClassColorSettings()
+    end
 
     for _, control in ipairs(controls) do
         if control.Refresh then
