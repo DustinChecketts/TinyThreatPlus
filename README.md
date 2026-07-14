@@ -8,8 +8,9 @@ TinyThreatPlus adds lightweight threat information to Blizzard’s native WoW Cl
 ](https://github.com/DustinChecketts/TargetHealthPlus#features)**Features**
 
 *   A minimalist addon that retains the design of the default Blizzard UI and native nameplates
+*   Enable/Disable features of the addon (Nameplates, Target Frame, Target Counter)
 *   Options panel for making slight adjustments to height, width, font size and positions
-*   Ability to recolor Enemy and Allied players nameplates with class colors (doesn't affect NPCs)
+*   Toggle Enemy and Allied players nameplates with class colors (doesn't affect NPCs)
 *   High-performance and accurate
 
 #### **Acknowledgements**
