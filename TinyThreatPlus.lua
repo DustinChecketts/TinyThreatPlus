@@ -1,4 +1,4 @@
-ocal ADDON_NAME = ...
+local ADDON_NAME = ...
 local TTP = CreateFrame("Frame", "TinyThreatPlusFrame")
 
 TinyThreatPlusDB = TinyThreatPlusDB or {}
@@ -142,30 +142,21 @@ local function FormatSignedPercent(value)
 end
 
 local function GetGroupUnits()
-    local units = {}
-    local seenGUIDs = {}
-
-    local function AddUnit(unit)
-        if not unit or not UnitExists(unit) then
-            return
-        end
-
-        local guid = UnitGUID(unit)
-        if guid and not seenGUIDs[guid] then
-            seenGUIDs[guid] = true
-            table.insert(units, unit)
-        end
-    end
-
-    AddUnit("player")
+    local units = { "player" }
 
     if IsInRaid() then
         for i = 1, 40 do
-            AddUnit("raid" .. i)
+            local unit = "raid" .. i
+            if UnitExists(unit) then
+                table.insert(units, unit)
+            end
         end
     elseif IsInGroup() then
         for i = 1, 4 do
-            AddUnit("party" .. i)
+            local unit = "party" .. i
+            if UnitExists(unit) then
+                table.insert(units, unit)
+            end
         end
     end
 
@@ -181,15 +172,13 @@ local function GetThreatData(unit)
         return nil
     end
 
-    local playerGUID = UnitGUID("player")
     local _, _, _, _, playerThreat = UnitDetailedThreatSituation("player", unit)
     local highestOtherThreat = 0
     local hasThreatData = playerThreat ~= nil
 
     for _, groupUnit in ipairs(GetGroupUnits()) do
-        if UnitExists(groupUnit) and UnitGUID(groupUnit) ~= playerGUID then
-            local _, _, _, _, threatValue =
-                UnitDetailedThreatSituation(groupUnit, unit)
+        if UnitExists(groupUnit) and not UnitIsUnit(groupUnit, "player") then
+            local _, _, _, _, threatValue = UnitDetailedThreatSituation(groupUnit, unit)
 
             if threatValue ~= nil then
                 hasThreatData = true
@@ -230,24 +219,17 @@ local function GetTargetCounter(unit)
         return nil
     end
 
-    local targetGUID = UnitGUID(unit)
-    if not targetGUID then
+    local guid = UnitGUID(unit)
+    if not guid then
         return nil
     end
 
     local count = 0
-    local countedPlayers = {}
 
     for _, groupUnit in ipairs(GetGroupUnits()) do
-        local playerGUID = UnitGUID(groupUnit)
-
-        if playerGUID and not countedPlayers[playerGUID] then
-            countedPlayers[playerGUID] = true
-
-            local targetUnit = groupUnit .. "target"
-            if UnitExists(targetUnit) and UnitGUID(targetUnit) == targetGUID then
-                count = count + 1
-            end
+        local targetUnit = groupUnit .. "target"
+        if UnitExists(targetUnit) and UnitGUID(targetUnit) == guid then
+            count = count + 1
         end
     end
 
