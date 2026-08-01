@@ -113,6 +113,57 @@ local function MakeRadio(parent, label, dbKey, value, x, y, tooltip)
     return rb
 end
 
+local function MakeChoiceSlider(parent, label, dbKey, choices, x, y)
+    local slider =
+        CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
+
+    slider:SetPoint("TOPLEFT", x, y)
+    slider:SetMinMaxValues(1, #choices)
+    slider:SetValueStep(1)
+    slider:SetObeyStepOnDrag(true)
+    slider:SetWidth(220)
+
+    slider.Text:SetText(label)
+    slider.Low:SetText(choices[1])
+    slider.High:SetText(choices[#choices])
+
+    slider.valueText =
+        parent:CreateFontString(
+            nil,
+            "ARTWORK",
+            "GameFontHighlightSmall"
+        )
+    slider.valueText:SetPoint("LEFT", slider, "RIGHT", 12, 0)
+
+    slider:SetScript("OnValueChanged", function(self, value)
+        ApplyDefaults()
+
+        local index = math.floor(value + 0.5)
+        TinyThreatPlusDB[dbKey] = index
+        self.valueText:SetText(choices[index])
+
+        RefreshAddon()
+    end)
+
+    slider.Refresh = function()
+        ApplyDefaults()
+
+        local value = tonumber(TinyThreatPlusDB[dbKey])
+
+        if not value and TinyThreatPlusDefaults then
+            value = TinyThreatPlusDefaults[dbKey]
+        end
+
+        value = math.max(1, math.min(#choices, value or 1))
+
+        slider:SetValue(value)
+        slider.valueText:SetText(choices[value])
+    end
+
+    table.insert(controls, slider)
+    return slider
+end
+
 local function MakeSlider(parent, label, dbKey, minVal, maxVal, step, x, y)
     local slider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
     slider:SetPoint("TOPLEFT", x, y)
@@ -163,38 +214,50 @@ MakeSubtitle(panel, "Lightweight threat lead values for Blizzard nameplates and 
 MakeCheckbox(panel, "Show Threat on Nameplates", "showNameplates", 20, -70, "Displays your threat lead beside enemy nameplates.")
 MakeCheckbox(panel, "Show Threat on Target Frame", "showTargetFrame", 20, -100, "Displays your threat lead above the target frame.")
 MakeCheckbox(panel, "Role-Based Nameplate Colors", "roleBasedColors", 20, -130, "Recolors Blizzard nameplates using green as good, yellow as a warning, and red as bad. The meaning automatically reverses for tanks.\n\nDPS/Healer:\nGreen: Another player or your pet has threat.\nYellow: You are close to taking threat.\nRed: You currently have threat.\n\nTank:\nGreen: You currently have threat.\nYellow: You are close to losing threat.\nRed: You do not have threat.")
+MakeCheckbox(panel, "Show Enemy Level", "showMobLevel", 20, -160, "Displays hostile NPC levels immediately to the left of their health bars. Levels use Blizzard's difficulty colors: gray, green, yellow, orange, or red. Boss-level enemies display a skull.")
+MakeCheckbox(panel, "Show Friendly Level", "showFriendlyLevel", 20, -190, "Displays friendly NPC levels immediately to the left of their health bars using the same difficulty colors.")
+MakeCheckbox(panel, "Show Classification Icons", "showRareBorders", 20, -220, "Shows Blizzard's native gold and silver elite icons and adds a darkened silver dragon for plain rare enemies.")
 
 MakeCheckbox(panel, "Show Target Counter", "showTargetCounter", 360, -70, "Displays the number of group members currently targeting the enemy.")
 MakeCheckbox(panel, "Always Show Threat Boxes", "alwaysShowThreatBoxes", 360, -100, "Keeps both threat boxes visible on valid enemies outside combat. When no threat table exists, the display shows an accurate 0 or 0% until threat is generated.")
 MakeCheckbox(panel, "Enemy Player Class Colors", "enemyPlayerClassColors", 360, -130, "Uses Blizzard class colors for hostile player nameplates. This affects enemy players only, not hostile NPCs.")
 MakeCheckbox(panel, "Friendly Player Class Colors", "friendlyPlayerClassColors", 360, -160, "Uses Blizzard class colors for friendly player nameplates.")
 
+MakeChoiceSlider(
+    panel,
+    "Mob Level Position",
+    "levelPosition",
+    { "Top", "Center", "Bottom" },
+    364,
+    -220
+)
+
 local displayHeader = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-displayHeader:SetPoint("TOPLEFT", 20, -205)
+displayHeader:SetPoint("TOPLEFT", 20, -265)
 displayHeader:SetText("Threat Display")
 
-MakeRadio(panel, "Threat Value", "displayMode", "VALUE", 24, -235, "Displays your threat lead as a value.\n\nExamples: +243, -1.2k, +13k")
-MakeRadio(panel, "Threat Percentage", "displayMode", "PERCENT", 180, -235, "Displays your threat lead as a percentage above or below the next highest threat holder.\n\nExamples: +15%, -8%")
+MakeRadio(panel, "Threat Value", "displayMode", "VALUE", 24, -295, "Displays your threat lead as a value.\n\nExamples: +243, -1.2k, +13k")
+MakeRadio(panel, "Threat Percentage", "displayMode", "PERCENT", 180, -295, "Displays your threat lead as a percentage above or below the next highest threat holder.\n\nExamples: +15%, -8%")
 
 local nameplateHeader = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-nameplateHeader:SetPoint("TOPLEFT", 20, -285)
+nameplateHeader:SetPoint("TOPLEFT", 20, -345)
 nameplateHeader:SetText("Nameplate Threat Box")
 
-MakeSlider(panel, "Font Size", "nameplateFontSize", 8, 16, 1, 24, -320)
-MakeSlider(panel, "Box Width", "nameplateBoxWidth", 32, 120, 1, 24, -365)
-MakeSlider(panel, "Box Height", "nameplateBoxHeight", 6, 40, 1, 24, -410)
-MakeSlider(panel, "X Offset", "nameplateXOffset", -80, 80, 1, 24, -455)
-MakeSlider(panel, "Y Offset", "nameplateYOffset", -40, 40, 1, 24, -500)
+MakeSlider(panel, "Font Size", "nameplateFontSize", 8, 16, 1, 24, -380)
+MakeSlider(panel, "Box Width", "nameplateBoxWidth", 32, 120, 1, 24, -425)
+MakeSlider(panel, "Box Height", "nameplateBoxHeight", 6, 40, 1, 24, -470)
+MakeSlider(panel, "X Offset", "nameplateXOffset", -80, 80, 1, 24, -515)
+MakeSlider(panel, "Y Offset", "nameplateYOffset", -40, 40, 1, 24, -560)
 
-MakeSlider(panel, "Font Size", "targetFontSize", 8, 16, 1, 364, -320)
-MakeSlider(panel, "Box Width", "targetBoxWidth", 32, 120, 1, 364, -365)
-MakeSlider(panel, "Box Height", "targetBoxHeight", 6, 40, 1, 364, -410)
-MakeSlider(panel, "X Offset", "targetXOffset", -80, 80, 1, 364, -455)
-MakeSlider(panel, "Y Offset", "targetYOffset", -40, 40, 1, 364, -500)
+MakeSlider(panel, "Font Size", "targetFontSize", 8, 16, 1, 364, -380)
+MakeSlider(panel, "Box Width", "targetBoxWidth", 32, 120, 1, 364, -425)
+MakeSlider(panel, "Box Height", "targetBoxHeight", 6, 40, 1, 364, -470)
+MakeSlider(panel, "X Offset", "targetXOffset", -80, 80, 1, 364, -515)
+MakeSlider(panel, "Y Offset", "targetYOffset", -40, 40, 1, 364, -560)
 
 local reset = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
 reset:SetSize(130, 24)
-reset:SetPoint("TOPLEFT", 364, -555)
+reset:SetPoint("TOPLEFT", 364, -615)
 reset:SetText("Reset Defaults")
 reset:SetScript("OnClick", function()
     if TinyThreatPlus_ResetDefaults then
