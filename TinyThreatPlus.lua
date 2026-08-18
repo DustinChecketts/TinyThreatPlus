@@ -17,7 +17,7 @@ TTP.defaults = {
     showPriorityMarker = true,
     priorityWhileSolo = false,
     priorityThreatThreshold = 80,
-    priorityMarkerColor = { 0.01, 0.04, 0.10 },
+    priorityMarkerColor = { 0, 0.0627451, 0.3960784 },
     priorityMarkerOpacity = 100,
     priorityMarkerSizeRating = 3,
 
