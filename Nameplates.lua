@@ -991,7 +991,7 @@ local function UpdateSideAuraLayout(nameplate, box)
     -- the threat box. Preserve Blizzard's horizontal CC layout by moving
     -- those native side-aura frames to immediately AFTER our threat box:
     --
-    -- Health Bar > Threat Box > Shared CC / Loss of Control
+    -- Health Bar > Threat Box > Target Counter > Shared CC / Loss of Control
     --
     -- We do not reparent the aura frames, touch their LayoutFrame children,
     -- or force a layout pass.
@@ -1002,7 +1002,7 @@ local function UpdateSideAuraLayout(nameplate, box)
             "LEFT",
             box,
             "RIGHT",
-            5,
+            22,
             0
         )
     end
@@ -1014,7 +1014,7 @@ local function UpdateSideAuraLayout(nameplate, box)
             "LEFT",
             box,
             "RIGHT",
-            5,
+            22,
             0
         )
     end
