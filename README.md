@@ -6,14 +6,14 @@ Tiny Threat Plus is designed to work seamlessly with all 7 built-in Blizzard nam
 
 #### **Features**
 
-* Threat Display — See your threat difference as a value or percentage directly beside enemy nameplates and on the target frame.
-* Role-Based Threat Colors — Health bars dynamically change green, yellow, or red based on whether you're tanking or dealing damage.
-* Threat Leader — See who currently leads threat, including class-colored names, class/pet icons, and group role.
-* Target Priority — Highlights the enemy that deserves your attention when fighting multiple targets. Tanks are warned about mobs at risk of being lost, while DPS are guided toward safe targets based on group focus, enemy health, and threat.
-* Target Counter — See how many party or raid members are targeting each enemy.
-* Mob Information — Adds mob level, difficulty coloring, rare/elite indicators, and raid markers.
-* Pet Support — Tracks pet threat and includes optional solo Target Priority support for pet classes.
-* Native Blizzard Styling — Automatically adapts and scales with Classic, Modern, Thin Bars, Blocky Bars, Clean Health, Blocky Cast, and Legacy Red nameplates.
+* **Threat Display** - See your threat difference as a value or percentage directly beside enemy nameplates and on the target frame.
+* **Role-Based Threat Colors** - Health bars dynamically change green, yellow, or red based on whether you're tanking or dealing damage.
+* **Threat Leader** - See who currently leads threat, including class-colored names, class/pet icons, and group role.
+* **Target Priority** - Highlights the enemy that deserves your attention when fighting multiple targets. Tanks are warned about mobs at risk of being lost, while DPS are guided toward safe targets based on group focus, enemy health, and threat.
+* **Target Counter** - See how many party or raid members are targeting each enemy.
+* **Mob Information** - Adds mob level, difficulty coloring, rare/elite indicators, and raid markers.
+* **Pet Support** - Tracks pet threat and includes optional solo Target Priority support for pet classes.
+* **Native Blizzard Styling** - Automatically adapts and scales with Classic, Modern, Thin Bars, Blocky Bars, Clean Health, Blocky Cast, and Legacy Red nameplates.
 
 #### **Customization**
 
