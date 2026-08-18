@@ -2,7 +2,7 @@
 ## Title: TinyThreatPlus
 ## Version: 1.2.0
 ## Author: StormtrooperTK421
-## Notes: Lightweight and feature-rich threat addon for native Blizzard nameplates.
+## Notes: Lightweight and feature-rich threat addon for Blizzard nameplates.
 ## DefaultState: enabled
 ## X-Curse-Project-ID: 1603170
 ## SavedVariables: TinyThreatPlusDB
