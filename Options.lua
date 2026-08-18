@@ -1,20 +1,32 @@
-local PANEL_NAME = "TinyThreatPlus"
+local TTP = _G.TinyThreatPlus or select(2, ...)
 
+if not TTP then
+    error("TinyThreatPlus: shared addon namespace is unavailable.")
+end
+
+local PANEL_NAME = "TinyThreatPlus"
 local panel = CreateFrame("Frame", "TinyThreatPlusOptionsPanel")
 panel.name = PANEL_NAME
 
 local controls = {}
-local radioButtons = {}
 
-local function ApplyDefaults()
-    if TinyThreatPlus_ApplyDefaults then
-        TinyThreatPlus_ApplyDefaults()
+-- ---------------------------------------------------------------------------
+-- Options helpers
+-- ---------------------------------------------------------------------------
+
+local function EnsureCore()
+    if type(TTP.ApplyDefaults) ~= "function" then
+        error("TinyThreatPlus: core file did not initialize correctly.")
     end
+
+    TTP.ApplyDefaults()
 end
 
 local function RefreshAddon()
-    if TinyThreatPlus_UpdateAll then
-        TinyThreatPlus_UpdateAll()
+    EnsureCore()
+
+    if type(TTP.UpdateAll) == "function" then
+        TTP.UpdateAll()
     end
 end
 
@@ -35,262 +47,443 @@ local function AddTooltip(frame, title, text)
     end)
 end
 
-local function MakeTitle(parent, text)
-    local title = parent:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
-    title:SetPoint("TOPLEFT", 16, -16)
-    title:SetText(text)
-    return title
+local scrollFrame = CreateFrame(
+    "ScrollFrame",
+    "TinyThreatPlusOptionsScrollFrame",
+    panel,
+    "UIPanelScrollFrameTemplate"
+)
+
+scrollFrame:SetPoint("TOPLEFT", 8, -8)
+scrollFrame:SetPoint("BOTTOMRIGHT", -28, 8)
+
+local content = CreateFrame("Frame", nil, scrollFrame)
+content:SetSize(620, 1155)
+scrollFrame:SetScrollChild(content)
+
+local title = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+title:SetPoint("TOPLEFT", 22, -18)
+title:SetText("TinyThreatPlus")
+
+local subtitle = content:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+subtitle:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -7)
+subtitle:SetText("Threat intelligence and information enhancements for Blizzard nameplates.")
+
+local reset = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
+reset:SetSize(100, 22)
+reset:SetPoint("TOPRIGHT", content, "TOPRIGHT", -34, -18)
+reset:SetText("Defaults")
+
+local function Section(text, y)
+    local header = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+    header:SetPoint("TOPLEFT", 32, y)
+    header:SetText(text)
+
+    local line = content:CreateTexture(nil, "ARTWORK")
+    line:SetColorTexture(0.45, 0.45, 0.45, 0.45)
+    line:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -6)
+    line:SetSize(510, 1)
 end
 
-local function MakeSubtitle(parent, text, anchor)
-    local subtitle = parent:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-    subtitle:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -8)
-    subtitle:SetText(text)
-    subtitle:SetJustifyH("LEFT")
-    return subtitle
-end
+local function MakeToggle(label, key, y, tooltip)
+    local labelText = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    labelText:SetPoint("TOPLEFT", 78, y)
+    labelText:SetText(label)
 
-local function MakeCheckbox(parent, label, dbKey, x, y, tooltip)
-    local cb = CreateFrame("CheckButton", nil, parent, "InterfaceOptionsCheckButtonTemplate")
-    cb:SetPoint("TOPLEFT", x, y)
-    cb.Text:SetText(label)
+    local check = CreateFrame(
+        "CheckButton",
+        nil,
+        content,
+        "InterfaceOptionsCheckButtonTemplate"
+    )
+    check:SetPoint("TOPLEFT", 380, y + 6)
+    check.Text:SetText("")
 
-    AddTooltip(cb, label, tooltip)
+    AddTooltip(check, label, tooltip)
 
-    cb:SetScript("OnClick", function(self)
-        ApplyDefaults()
-        TinyThreatPlusDB[dbKey] = self:GetChecked() and true or false
+    check:SetScript("OnClick", function(self)
+        EnsureCore()
+        TinyThreatPlusDB[key] = self:GetChecked() == true
 
-        if (dbKey == "enemyPlayerClassColors" or dbKey == "friendlyPlayerClassColors")
-            and TinyThreatPlus_ApplyClassColorSettings
+        if key == "enemyPlayerClassColors"
+            or key == "friendlyPlayerClassColors"
         then
-            TinyThreatPlus_ApplyClassColorSettings()
-        end
-
-        RefreshAddon()
-    end)
-
-    cb.Refresh = function()
-        ApplyDefaults()
-        cb:SetChecked(TinyThreatPlusDB[dbKey] and true or false)
-    end
-
-    table.insert(controls, cb)
-    return cb
-end
-
-local function MakeRadio(parent, label, dbKey, value, x, y, tooltip)
-    local rb = CreateFrame("CheckButton", nil, parent, "UIRadioButtonTemplate")
-    rb:SetPoint("TOPLEFT", x, y)
-    rb.text:SetText(label)
-
-    AddTooltip(rb, label, tooltip)
-
-    rb:SetScript("OnClick", function()
-        ApplyDefaults()
-        TinyThreatPlusDB[dbKey] = value
-
-        for _, button in ipairs(radioButtons) do
-            if button.dbKey == dbKey then
-                button:SetChecked(TinyThreatPlusDB[dbKey] == button.value)
+            if type(TTP.ApplyClassColorSettings) == "function" then
+                TTP.ApplyClassColorSettings()
             end
         end
 
         RefreshAddon()
     end)
 
-    rb.dbKey = dbKey
-    rb.value = value
-
-    rb.Refresh = function()
-        ApplyDefaults()
-        rb:SetChecked(TinyThreatPlusDB[dbKey] == value)
+    check.Refresh = function()
+        EnsureCore()
+        check:SetChecked(TinyThreatPlusDB[key] == true)
     end
 
-    table.insert(radioButtons, rb)
-    table.insert(controls, rb)
-
-    return rb
+    controls[#controls + 1] = check
+    return check
 end
 
-local function MakeChoiceSlider(parent, label, dbKey, choices, x, y)
-    local slider =
-        CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
+local function MakeSlider(label, key, minimum, maximum, step, y, suffix, tooltip)
+    local labelText = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    labelText:SetPoint("TOPLEFT", 78, y)
+    labelText:SetText(label)
 
-    slider:SetPoint("TOPLEFT", x, y)
-    slider:SetMinMaxValues(1, #choices)
-    slider:SetValueStep(1)
-    slider:SetObeyStepOnDrag(true)
+    local slider = CreateFrame("Slider", nil, content, "OptionsSliderTemplate")
+    slider:SetPoint("TOPLEFT", 290, y + 2)
     slider:SetWidth(220)
-
-    slider.Text:SetText(label)
-    slider.Low:SetText(choices[1])
-    slider.High:SetText(choices[#choices])
-
-    slider.valueText =
-        parent:CreateFontString(
-            nil,
-            "ARTWORK",
-            "GameFontHighlightSmall"
-        )
-    slider.valueText:SetPoint("LEFT", slider, "RIGHT", 12, 0)
-
-    slider:SetScript("OnValueChanged", function(self, value)
-        ApplyDefaults()
-
-        local index = math.floor(value + 0.5)
-        TinyThreatPlusDB[dbKey] = index
-        self.valueText:SetText(choices[index])
-
-        RefreshAddon()
-    end)
-
-    slider.Refresh = function()
-        ApplyDefaults()
-
-        local value = tonumber(TinyThreatPlusDB[dbKey])
-
-        if not value and TinyThreatPlusDefaults then
-            value = TinyThreatPlusDefaults[dbKey]
-        end
-
-        value = math.max(1, math.min(#choices, value or 1))
-
-        slider:SetValue(value)
-        slider.valueText:SetText(choices[value])
-    end
-
-    table.insert(controls, slider)
-    return slider
-end
-
-local function MakeSlider(parent, label, dbKey, minVal, maxVal, step, x, y)
-    local slider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
-    slider:SetPoint("TOPLEFT", x, y)
-    slider:SetMinMaxValues(minVal, maxVal)
+    slider:SetMinMaxValues(minimum, maximum)
     slider:SetValueStep(step)
     slider:SetObeyStepOnDrag(true)
-    slider:SetWidth(220)
+    slider.Low:SetText("")
+    slider.High:SetText("")
+    slider.Text:SetText("")
 
-    slider.Text:SetText(label)
-    slider.Low:SetText(tostring(minVal))
-    slider.High:SetText(tostring(maxVal))
+    slider.valueText = content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    slider.valueText:SetPoint("LEFT", slider, "RIGHT", 10, 0)
 
-    slider.valueText = parent:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-    slider.valueText:SetPoint("LEFT", slider, "RIGHT", 12, 0)
+    AddTooltip(slider, label, tooltip)
 
     slider:SetScript("OnValueChanged", function(self, value)
-        ApplyDefaults()
-
-        local rounded = math.floor(value + 0.5)
-        TinyThreatPlusDB[dbKey] = rounded
-
-        self.valueText:SetText(tostring(rounded))
+        local rounded = math.floor((value / step) + 0.5) * step
+        TinyThreatPlusDB[key] = rounded
+        self.valueText:SetText(tostring(rounded) .. (suffix or ""))
         RefreshAddon()
     end)
 
     slider.Refresh = function()
-        ApplyDefaults()
-
-        local value = TinyThreatPlusDB[dbKey]
-        if value == nil and TinyThreatPlusDefaults then
-            value = TinyThreatPlusDefaults[dbKey]
-        end
-        if value == nil then
-            value = minVal
-        end
-
+        EnsureCore()
+        local value = tonumber(TinyThreatPlusDB[key]) or TTP.defaults[key] or minimum
         slider:SetValue(value)
-        slider.valueText:SetText(tostring(value))
+        slider.valueText:SetText(tostring(value) .. (suffix or ""))
     end
 
-    table.insert(controls, slider)
+    controls[#controls + 1] = slider
     return slider
 end
 
-local title = MakeTitle(panel, "TinyThreatPlus")
-MakeSubtitle(panel, "Lightweight threat lead values for Blizzard nameplates and the target frame.", title)
+local function MakeColorPicker(label, key, y, tooltip)
+    local labelText =
+        content:CreateFontString(
+            nil,
+            "ARTWORK",
+            "GameFontNormal"
+        )
 
-MakeCheckbox(panel, "Show Threat on Nameplates", "showNameplates", 20, -70, "Displays your threat lead beside enemy nameplates.")
-MakeCheckbox(panel, "Show Threat on Target Frame", "showTargetFrame", 20, -100, "Displays your threat lead above the target frame.")
-MakeCheckbox(panel, "Role-Based Nameplate Colors", "roleBasedColors", 20, -130, "Recolors Blizzard nameplates using green as good, yellow as a warning, and red as bad. The meaning automatically reverses for tanks.\n\nDPS/Healer:\nGreen: Another player or your pet has threat.\nYellow: You are close to taking threat.\nRed: You currently have threat.\n\nTank:\nGreen: You currently have threat.\nYellow: You are close to losing threat.\nRed: You do not have threat.")
-MakeCheckbox(panel, "Show Enemy Level", "showMobLevel", 20, -160, "Displays hostile NPC levels immediately to the left of their health bars. Levels use Blizzard's difficulty colors: gray, green, yellow, orange, or red. Boss-level enemies display a skull.")
-MakeCheckbox(panel, "Show Friendly Level", "showFriendlyLevel", 20, -190, "Displays friendly NPC levels immediately to the left of their health bars using the same difficulty colors.")
-MakeCheckbox(panel, "Show Classification Icons", "showRareBorders", 20, -220, "Shows Blizzard's native gold and silver elite icons and adds a darkened silver dragon for plain rare enemies.")
+    labelText:SetPoint("TOPLEFT", 78, y)
+    labelText:SetText(label)
 
-MakeCheckbox(panel, "Show Target Counter", "showTargetCounter", 360, -70, "Displays the number of group members currently targeting the enemy.")
-MakeCheckbox(panel, "Always Show Threat Boxes", "alwaysShowThreatBoxes", 360, -100, "Keeps both threat boxes visible on valid enemies outside combat. When no threat table exists, the display shows an accurate 0 or 0% until threat is generated.")
-MakeCheckbox(panel, "Enemy Player Class Colors", "enemyPlayerClassColors", 360, -130, "Uses Blizzard class colors for hostile player nameplates. This affects enemy players only, not hostile NPCs.")
-MakeCheckbox(panel, "Friendly Player Class Colors", "friendlyPlayerClassColors", 360, -160, "Uses Blizzard class colors for friendly player nameplates.")
+    local swatch =
+        CreateFrame(
+            "Button",
+            nil,
+            content,
+            "BackdropTemplate"
+        )
 
-MakeChoiceSlider(
-    panel,
-    "Mob Level Position",
-    "levelPosition",
-    { "Top", "Center", "Bottom" },
-    364,
-    -220
+    swatch:SetSize(44, 20)
+    swatch:SetPoint("TOPLEFT", 380, y + 2)
+
+    swatch:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8X8",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeSize = 8,
+        insets = {
+            left = 2,
+            right = 2,
+            top = 2,
+            bottom = 2,
+        },
+    })
+
+    AddTooltip(swatch, label, tooltip)
+
+    local function GetColor()
+        EnsureCore()
+
+        local color =
+            TinyThreatPlusDB[key]
+            or TTP.defaults[key]
+            or { 1, 1, 1 }
+
+        return color[1] or 1, color[2] or 1, color[3] or 1
+    end
+
+    local function ApplyColor(r, g, b)
+        TinyThreatPlusDB[key] = { r, g, b }
+        swatch:SetBackdropColor(r, g, b, 1)
+        RefreshAddon()
+    end
+
+    swatch:SetScript("OnClick", function()
+        local oldR, oldG, oldB = GetColor()
+
+        local function Changed()
+            local r, g, b = ColorPickerFrame:GetColorRGB()
+            ApplyColor(r, g, b)
+        end
+
+        local function Cancelled(previous)
+            if type(previous) == "table" then
+                ApplyColor(
+                    previous.r or previous[1] or oldR,
+                    previous.g or previous[2] or oldG,
+                    previous.b or previous[3] or oldB
+                )
+            else
+                ApplyColor(oldR, oldG, oldB)
+            end
+        end
+
+        if ColorPickerFrame.SetupColorPickerAndShow then
+            ColorPickerFrame:SetupColorPickerAndShow({
+                r = oldR,
+                g = oldG,
+                b = oldB,
+                swatchFunc = Changed,
+                cancelFunc = Cancelled,
+            })
+        else
+            ColorPickerFrame.previousValues =
+                { oldR, oldG, oldB }
+
+            ColorPickerFrame.func = Changed
+            ColorPickerFrame.cancelFunc = Cancelled
+            ColorPickerFrame:SetColorRGB(
+                oldR,
+                oldG,
+                oldB
+            )
+            ColorPickerFrame:Show()
+        end
+    end)
+
+    swatch.Refresh = function()
+        local r, g, b = GetColor()
+        swatch:SetBackdropColor(r, g, b, 1)
+    end
+
+    controls[#controls + 1] = swatch
+    return swatch
+end
+
+local function MakeChoice(label, key, choices, y, tooltip)
+    local labelText = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    labelText:SetPoint("TOPLEFT", 78, y)
+    labelText:SetText(label)
+
+    local left = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
+    left:SetSize(24, 22)
+    left:SetPoint("TOPLEFT", 285, y + 4)
+    left:SetText("<")
+
+    local choice = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
+    choice:SetSize(195, 22)
+    choice:SetPoint("LEFT", left, "RIGHT", 5, 0)
+
+    local right = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
+    right:SetSize(24, 22)
+    right:SetPoint("LEFT", choice, "RIGHT", 5, 0)
+    right:SetText(">")
+
+    AddTooltip(left, label, tooltip)
+    AddTooltip(choice, label, tooltip)
+    AddTooltip(right, label, tooltip)
+
+    local function FindIndex()
+        EnsureCore()
+        for index, item in ipairs(choices) do
+            if TinyThreatPlusDB[key] == item.value then
+                return index
+            end
+        end
+        return 1
+    end
+
+    local function SetIndex(index)
+        if index < 1 then index = #choices end
+        if index > #choices then index = 1 end
+        TinyThreatPlusDB[key] = choices[index].value
+        choice:SetText(choices[index].label)
+        RefreshAddon()
+    end
+
+    left:SetScript("OnClick", function() SetIndex(FindIndex() - 1) end)
+    right:SetScript("OnClick", function() SetIndex(FindIndex() + 1) end)
+    choice:SetScript("OnClick", function() SetIndex(FindIndex() + 1) end)
+
+    choice.Refresh = function()
+        local index = FindIndex()
+        choice:SetText(choices[index].label)
+    end
+
+    controls[#controls + 1] = choice
+    return choice
+end
+
+Section("Health Bar", -85)
+MakeToggle(
+    "Enable Threat Coloring",
+    "roleBasedColors",
+    -125,
+    "Colors hostile NPC health bars by threat state. Other assigned tanks holding aggro are treated as safe."
 )
 
-local displayHeader = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-displayHeader:SetPoint("TOPLEFT", 20, -265)
-displayHeader:SetText("Threat Display")
+Section("Threat Indicator", -180)
+MakeToggle(
+    "Show on Nameplates",
+    "showNameplates",
+    -220,
+    "Shows TinyThreatPlus threat information beside hostile nameplates."
+)
+MakeToggle(
+    "Show on Target Frame",
+    "showTargetFrame",
+    -252,
+    "Shows the same threat indicator above the target frame."
+)
+MakeToggle(
+    "Always Show Indicator",
+    "alwaysShowThreatBoxes",
+    -284,
+    "Shows an idle indicator even before active threat information exists."
+)
+MakeChoice(
+    "Threat Indicator Mode",
+    "displayMode",
+    {
+        { label = "Value Difference", value = "VALUE" },
+        { label = "Percentage", value = "PERCENT" },
+    },
+    -326,
+    "Choose between exact threat difference and percentage display."
+)
+MakeSlider(
+    "Nameplate Indicator Scale",
+    "nameplateThreatScale",
+    50,
+    150,
+    5,
+    -368,
+    "%",
+    "Scales the complete nameplate threat indicator, including text and target counter."
+)
+MakeSlider(
+    "Target Frame Indicator Scale",
+    "targetThreatScale",
+    50,
+    150,
+    5,
+    -410,
+    "%",
+    "Scales the complete target-frame threat indicator."
+)
 
-MakeRadio(panel, "Threat Value", "displayMode", "VALUE", 24, -295, "Displays your threat lead as a value.\n\nExamples: +243, -1.2k, +13k")
-MakeRadio(panel, "Threat Percentage", "displayMode", "PERCENT", 180, -295, "Displays your threat lead as a percentage above or below the next highest threat holder.\n\nExamples: +15%, -8%")
+Section("Threat Leader", -470)
+MakeToggle(
+    "Show Threat Leader",
+    "showThreatLeader",
+    -510,
+    "Shows the unit currently leading threat below the threat indicator."
+)
+MakeToggle(
+    "Show Class / Pet Icon",
+    "showThreatLeaderClassIcon",
+    -542,
+    "Shows a player class icon or pet portrait for the current threat leader."
+)
+MakeToggle(
+    "Show Role Icon",
+    "showThreatLeaderRole",
+    -574,
+    "Shows the Tank, Healer, or Damage role for player threat leaders when available."
+)
 
-local nameplateHeader = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-nameplateHeader:SetPoint("TOPLEFT", 20, -345)
-nameplateHeader:SetText("Nameplate Threat Box")
+Section("Target Priority", -630)
+MakeToggle(
+    "Enable Target Priority",
+    "showPriorityMarker",
+    -670,
+    "Highlights one useful priority target when multiple hostile nameplates are visible. Automatic priority is normally limited to parties and raids."
+)
+MakeToggle(
+    "Enable While Solo (Pet Classes)",
+    "priorityWhileSolo",
+    -702,
+    "Allows Target Priority while solo when you have an active pet. Uses real threat when available and combat-log fallback only when real threat data is unavailable."
+)
+MakeColorPicker(
+    "Priority Color",
+    "priorityMarkerColor",
+    -744,
+    "Choose the background color used to identify the Target Priority. Dark navy blue is the default."
+)
+MakeSlider(
+    "Opacity",
+    "priorityMarkerOpacity",
+    10,
+    100,
+    5,
+    -786,
+    "%",
+    "Controls the opacity of the Target Priority background."
+)
+MakeSlider(
+    "Size",
+    "priorityMarkerSizeRating",
+    1,
+    6,
+    1,
+    -828,
+    "",
+    "Controls Target Priority background size from 1 to 6. Each step adds 1 pixel of padding: 1 = 5 px through 6 = 10 px."
+)
+MakeSlider(
+    "Threat Threshold",
+    "priorityThreatThreshold",
+    0,
+    100,
+    5,
+    -870,
+    "%",
+    "Threat safety gate for Target Priority. Tanks mark the enemy most at risk of being lost. Damage only considers targets at or below this percentage of the threat leader, then prefers group focus, lower health, and finally lower personal threat. Healers receive no automatic priority target."
+)
 
-MakeSlider(panel, "Font Size", "nameplateFontSize", 8, 16, 1, 24, -380)
-MakeSlider(panel, "Box Width", "nameplateBoxWidth", 32, 120, 1, 24, -425)
-MakeSlider(panel, "Box Height", "nameplateBoxHeight", 6, 40, 1, 24, -470)
-MakeSlider(panel, "X Offset", "nameplateXOffset", -80, 80, 1, 24, -515)
-MakeSlider(panel, "Y Offset", "nameplateYOffset", -40, 40, 1, 24, -560)
+Section("Nameplate Information", -928)
+MakeToggle("Show Enemy Level", "showMobLevel", -968, "Restores enemy levels on modern Blizzard nameplate styles. Classic displays levels natively.")
+MakeToggle("Show Friendly Level", "showFriendlyLevel", -1000, "Restores friendly NPC levels on modern Blizzard nameplate styles.")
+MakeToggle("Show Target Counter", "showTargetCounter", -1032, "Shows how many group members are targeting each enemy.")
+MakeToggle("Enemy Player Class Colors", "enemyPlayerClassColors", -1064, "Uses Blizzard class colors for hostile players.")
+MakeToggle("Friendly Player Class Colors", "friendlyPlayerClassColors", -1096, "Uses Blizzard class colors for friendly players.")
 
-MakeSlider(panel, "Font Size", "targetFontSize", 8, 16, 1, 364, -380)
-MakeSlider(panel, "Box Width", "targetBoxWidth", 32, 120, 1, 364, -425)
-MakeSlider(panel, "Box Height", "targetBoxHeight", 6, 40, 1, 364, -470)
-MakeSlider(panel, "X Offset", "targetXOffset", -80, 80, 1, 364, -515)
-MakeSlider(panel, "Y Offset", "targetYOffset", -40, 40, 1, 364, -560)
-
-local reset = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-reset:SetSize(130, 24)
-reset:SetPoint("TOPLEFT", 364, -615)
-reset:SetText("Reset Defaults")
 reset:SetScript("OnClick", function()
-    if TinyThreatPlus_ResetDefaults then
-        TinyThreatPlus_ResetDefaults()
+    if type(TTP.ResetDefaults) == "function" then
+        TTP.ResetDefaults()
     end
 
     for _, control in ipairs(controls) do
-        if control.Refresh then
-            control.Refresh()
-        end
+        if control.Refresh then control.Refresh() end
     end
-
-    print("TinyThreatPlus settings reset.")
 end)
 
 panel:SetScript("OnShow", function()
-    ApplyDefaults()
+    EnsureCore()
 
-    if TinyThreatPlus_ApplyClassColorSettings then
-        TinyThreatPlus_ApplyClassColorSettings()
+    if type(TTP.ApplyClassColorSettings) == "function" then
+        TTP.ApplyClassColorSettings()
     end
 
     for _, control in ipairs(controls) do
-        if control.Refresh then
-            control.Refresh()
-        end
+        if control.Refresh then control.Refresh() end
     end
 end)
 
-local category
-
-if Settings and Settings.RegisterCanvasLayoutCategory and Settings.RegisterAddOnCategory then
-    category = Settings.RegisterCanvasLayoutCategory(panel, PANEL_NAME)
+if Settings
+    and Settings.RegisterCanvasLayoutCategory
+    and Settings.RegisterAddOnCategory
+then
+    local category = Settings.RegisterCanvasLayoutCategory(panel, PANEL_NAME)
     category.ID = PANEL_NAME
     Settings.RegisterAddOnCategory(category)
 elseif InterfaceOptions_AddCategory then
@@ -298,6 +491,7 @@ elseif InterfaceOptions_AddCategory then
 end
 
 SLASH_TINYTHREATPLUSOPTIONS1 = "/ttpoptions"
+
 SlashCmdList.TINYTHREATPLUSOPTIONS = function()
     if Settings and Settings.OpenToCategory then
         Settings.OpenToCategory(PANEL_NAME)
@@ -305,6 +499,6 @@ SlashCmdList.TINYTHREATPLUSOPTIONS = function()
         InterfaceOptionsFrame_OpenToCategory(panel)
         InterfaceOptionsFrame_OpenToCategory(panel)
     else
-        print("TinyThreatPlus: options panel is registered, but this client has no known settings open API.")
+        print("TinyThreatPlus: unable to open the options panel on this client.")
     end
 end
