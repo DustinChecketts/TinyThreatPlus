@@ -1,17 +1,23 @@
 # Tiny Threat Plus
 
-A World of Warcraft: Classic (Anniversary, Seasons, Hardcore, Era) addon that enhances Blizzard's new nameplates (introduced in patch 2.5.6) and target frame to display threat delta by value, percentage, and color. Matches all 7 pre-set Blizzard styles.
+A World of Warcraft: Classic (Anniversary, Seasons, Hardcore, Era) addon that enhances Blizzard's native Classic nameplates with clear, actionable threat information while preserving the default UI style.
 
-TinyThreatPlus adds lightweight threat information to Blizzard’s native WoW Classic nameplates and target frame, including threat lead values, optional percentage display, role-based color cues, pet-aware threat checks, target counters, and smoothing for cleaner updates during combat.
+Tiny Threat Plus is designed to work seamlessly with all 7 built-in Blizzard nameplate styles and sizes, adding threat information you want without replacing your nameplates.
 
-[  
-](https://github.com/DustinChecketts/TargetHealthPlus#features)**Features**
+#### **Features**
 
-*   A minimalist addon that retains the design of the default Blizzard UI and native nameplates
-*   Enable/Disable features of the addon (Nameplates, Target Frame, Target Counter)
-*   Options panel for making slight adjustments to height, width, font size and positions
-*   Toggle Enemy and Allied players nameplates with class colors (doesn't affect NPCs)
-*   High-performance and accurate
+* Threat Display — See your threat difference as a value or percentage directly beside enemy nameplates and on the target frame.
+* Role-Based Threat Colors — Health bars dynamically change green, yellow, or red based on whether you're tanking or dealing damage.
+* Threat Leader — See who currently leads threat, including class-colored names, class/pet icons, and group role.
+* Target Priority — Highlights the enemy that deserves your attention when fighting multiple targets. Tanks are warned about mobs at risk of being lost, while DPS are guided toward safe targets based on group focus, enemy health, and threat.
+* Target Counter — See how many party or raid members are targeting each enemy.
+* Mob Information — Adds mob level, difficulty coloring, rare/elite indicators, and raid markers.
+* Pet Support — Tracks pet threat and includes optional solo Target Priority support for pet classes.
+* Native Blizzard Styling — Automatically adapts and scales with Classic, Modern, Thin Bars, Blocky Bars, Clean Health, Blocky Cast, and Legacy Red nameplates.
+
+#### **Customization**
+
+* Configure threat displays, colors, thresholds, fonts, sizing, Threat Leader, Target Priority, Target Counter, mob information, class-colored nameplates, and more from Options → AddOns → Tiny Threat Plus.
 
 #### **Acknowledgements**
 
