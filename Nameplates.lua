@@ -979,30 +979,55 @@ local function UpdateSideAuraLayout(nameplate, box)
     local unitFrame = nameplate and nameplate.UnitFrame
     local aurasFrame = unitFrame and unitFrame.AurasFrame
 
-    if not aurasFrame or not box or not box:IsShown() then
-        RestoreSideAuraLayout(nameplate)
+    if not aurasFrame then
         return
     end
 
     local crowdControlFrame = aurasFrame.CrowdControlListFrame
     local lossOfControlFrame = aurasFrame.LossOfControlFrame
 
-    -- TinyThreatPlus uses Blizzard's native right-side information slot for
-    -- the threat box. Preserve Blizzard's horizontal CC layout by moving
-    -- those native side-aura frames to immediately AFTER our threat box:
+    local anchor
+
+    -- Anchor Blizzard's Shared CC / Loss-of-Control icons after the
+    -- right-most TinyThreatPlus element that is actually visible.
     --
-    -- Health Bar > Threat Box > Target Counter > Shared CC / Loss of Control
+    -- Threat Box + Counter:
+    --   Health Bar > Threat Box > Target Counter > Shared CC
     --
-    -- We do not reparent the aura frames, touch their LayoutFrame children,
-    -- or force a layout pass.
+    -- Threat Box only:
+    --   Health Bar > Threat Box > Shared CC
+    --
+    -- Neither:
+    --   Restore Blizzard's native positioning.
+    if box and box:IsShown() then
+        local counter =
+            box.counter
+
+        if counter
+            and counter:IsShown()
+            and TinyThreatPlusDB.showTargetCounter
+        then
+            anchor = counter
+        else
+            anchor = box
+        end
+    end
+
+    if not anchor then
+        RestoreSideAuraLayout(nameplate)
+        return
+    end
+
+    -- Keep Blizzard's original small visual gap after whichever element is
+    -- right-most. No fixed counter-width approximation is needed.
     if crowdControlFrame then
         crowdControlFrame:ClearAllPoints()
         PixelSetPoint(
             crowdControlFrame,
             "LEFT",
-            box,
+            anchor,
             "RIGHT",
-            22,
+            5,
             0
         )
     end
@@ -1012,9 +1037,9 @@ local function UpdateSideAuraLayout(nameplate, box)
         PixelSetPoint(
             lossOfControlFrame,
             "LEFT",
-            box,
+            anchor,
             "RIGHT",
-            22,
+            5,
             0
         )
     end
