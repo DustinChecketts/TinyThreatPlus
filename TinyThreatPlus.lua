@@ -183,7 +183,15 @@ function TTP.ResetDefaults()
     TinyThreatPlusDB = {}
 
     for key, value in pairs(TTP.defaults) do
-        TinyThreatPlusDB[key] = value
+        if type(value) == "table" then
+            TinyThreatPlusDB[key] = {}
+
+            for index, item in pairs(value) do
+                TinyThreatPlusDB[key][index] = item
+            end
+        else
+            TinyThreatPlusDB[key] = value
+        end
     end
 
     TTP.ApplyClassColorSettings()
