@@ -13,6 +13,7 @@ TTP.defaults = {
     alwaysShowThreatBoxes = true,
     roleBasedColors = true,
     showTargetCounter = true,
+    showTargetFrameCounter = true,
 
     showPriorityMarker = true,
     priorityWhileSolo = false,
@@ -808,6 +809,121 @@ local function GetTargetNameAnchor()
         or TargetFrame
 end
 
+local function GetTargetFrameCounter()
+    if TTP.targetFrameCounter then
+        return TTP.targetFrameCounter
+    end
+
+    local parent =
+        TargetFrameTextureFrame
+        or TargetFrame
+        or UIParent
+
+    local counter =
+        CreateFrame(
+            "Frame",
+            "TinyThreatPlusTargetFrameCounter",
+            parent
+        )
+
+    counter:SetSize(18, 18)
+    counter:SetFrameStrata(parent:GetFrameStrata())
+    counter:SetFrameLevel((parent:GetFrameLevel() or 1) + 31)
+
+    counter.ring =
+        counter:CreateTexture(nil, "ARTWORK")
+    counter.ring:SetAllPoints()
+    counter.ring:SetAtlas("PetJournal-LevelBubble")
+
+    counter.text =
+        counter:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameNormalNumberFont"
+        )
+
+    counter.text:SetAllPoints()
+    counter.text:SetJustifyH("CENTER")
+    counter.text:SetJustifyV("MIDDLE")
+    counter.text:SetTextColor(1, 1, 1)
+
+    counter:Hide()
+
+    TTP.targetFrameCounter = counter
+    return counter
+end
+
+local function UpdateStandaloneTargetCounter(
+    anchor,
+    threatBoxVisible
+)
+    local counter = GetTargetFrameCounter()
+
+    if not TinyThreatPlusDB.showTargetFrameCounter
+        or not UnitExists("target")
+    then
+        counter:Hide()
+        return
+    end
+
+    local count = TTP.GetGroupTargetCount("target")
+
+    if not count or count <= 0 then
+        counter:Hide()
+        return
+    end
+
+    local scale =
+        (TinyThreatPlusDB.targetThreatScale or 100) / 100
+
+    counter:SetScale(scale)
+
+    local xOffset =
+        count < 10 and -0.5 or 0
+
+    local fontSize =
+        count < 10 and 10 or 9
+
+    counter.text:ClearAllPoints()
+    counter.text:SetPoint(
+        "CENTER",
+        counter,
+        "CENTER",
+        xOffset,
+        0
+    )
+
+    counter.text:SetFont(
+        STANDARD_TEXT_FONT,
+        fontSize,
+        "OUTLINE"
+    )
+
+    counter.text:SetText(count)
+
+    counter:ClearAllPoints()
+
+    if threatBoxVisible and TTP.targetBox then
+        counter:SetPoint(
+            "LEFT",
+            TTP.targetBox,
+            "RIGHT",
+            -4,
+            0
+        )
+    else
+        counter:SetPoint(
+            "BOTTOM",
+            anchor,
+            "TOP",
+            31,
+            3
+        )
+    end
+
+    counter:Show()
+end
+
 function TTP.GetTargetBox()
     if TTP.targetBox then
         return TTP.targetBox
@@ -827,53 +943,67 @@ end
 
 function TTP.UpdateTargetFrame()
     local box = TTP.GetTargetBox()
-
-    if not TinyThreatPlusDB.showTargetFrame
-        or not UnitExists("target")
-    then
-        box:Hide()
-        return
-    end
-
-    local data = TTP.GetThreatData("target")
-
-    if not data then
-        box:Hide()
-        return
-    end
-
     local anchor = GetTargetNameAnchor()
 
-    if not anchor then
+    if not UnitExists("target") or not anchor then
         box:Hide()
+        GetTargetFrameCounter():Hide()
         return
     end
 
-    local red, green, blue = TTP.GetThreatColor("target", data)
-    local text, isFallback = TTP.GetThreatDisplayText(data)
-    if isFallback then red, green, blue = 1, 1, 1 end
+    local showThreatBox =
+        TinyThreatPlusDB.showTargetFrame == true
 
-    box:SetScale((TinyThreatPlusDB.targetThreatScale or 100) / 100)
+    if showThreatBox then
+        local data = TTP.GetThreatData("target")
 
-    box:ClearAllPoints()
-    box:SetPoint(
-        "BOTTOM",
+        if data then
+            local red, green, blue =
+                TTP.GetThreatColor("target", data)
+
+            local text, isFallback =
+                TTP.GetThreatDisplayText(data)
+
+            if isFallback then
+                red, green, blue = 1, 1, 1
+            end
+
+            box:SetScale(
+                (TinyThreatPlusDB.targetThreatScale or 100)
+                / 100
+            )
+
+            box:ClearAllPoints()
+            box:SetPoint(
+                "BOTTOM",
+                anchor,
+                "TOP",
+                0,
+                2
+            )
+
+            TTP.UpdateThreatBox(
+                box,
+                52,
+                20,
+                12,
+                text,
+                red,
+                green,
+                blue,
+                nil
+            )
+        else
+            box:Hide()
+            showThreatBox = false
+        end
+    else
+        box:Hide()
+    end
+
+    UpdateStandaloneTargetCounter(
         anchor,
-        "TOP",
-        0,
-        2
-    )
-
-    TTP.UpdateThreatBox(
-        box,
-        52,
-        20,
-        12,
-        text,
-        red,
-        green,
-        blue,
-        TTP.GetTargetCounter("target")
+        showThreatBox and box:IsShown()
     )
 end
 
