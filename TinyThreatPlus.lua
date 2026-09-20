@@ -141,13 +141,7 @@ TinyThreatPlus_ApplyDefaults = TTP.ApplyDefaults
 TinyThreatPlusDefaults = TTP.defaults
 
 function TTP.GetCVar(name)
-    if C_CVar and C_CVar.GetCVar then
-        return C_CVar.GetCVar(name)
-    end
-
-    if GetCVar then
-        return GetCVar(name)
-    end
+    return TTP.Compat.GetCVar(name)
 end
 
 local function SetBooleanCVar(name, enabled)
@@ -156,6 +150,9 @@ local function SetBooleanCVar(name, enabled)
     if TTP.GetCVar(name) == value then
         return
     end
+
+    TTP.Compat.SetCVar(name, value)
+end
 
     if C_CVar and C_CVar.SetCVar then
         C_CVar.SetCVar(name, value)
@@ -387,7 +384,8 @@ local function GetDamageFallback(destGUID)
 end
 
 local function RecordDamageEvent()
-    local info = { CombatLogGetCurrentEventInfo() }
+    if not TTP.Compat.CanUseDamageFallback() then return end
+    local info = { TTP.Compat.GetCombatLogEventInfo() }
     local subevent, sourceGUID, sourceName, destGUID = info[2], info[4], info[5], info[8]
     if subevent == "UNIT_DIED" or subevent == "UNIT_DESTROYED" then
         if destGUID then TTP.damageFallback[destGUID] = nil end
@@ -421,7 +419,7 @@ function TTP.GetThreatData(unit)
         highestOtherOwner=nil, playerStatus=nil, playerIsTanking=false, aggroUnit=nil,
         leaderUnit=nil, leaderThreat=0, leaderName=nil, hasThreatData=false,
         isDamageFallback=false, fallbackDamage=0, fallbackPlayerDamage=0 }
-    local playerIsTanking, playerStatus, _, _, playerThreat = UnitDetailedThreatSituation("player", unit)
+    local playerIsTanking, playerStatus, _, _, playerThreat = TTP.Compat.GetDetailedThreatSituation("player", unit)
     if playerThreat ~= nil then
         data.hasThreatData=true; data.playerThreat=playerThreat; data.leaderUnit="player";
         data.leaderThreat=playerThreat; data.leaderName=UnitName("player")
@@ -430,7 +428,7 @@ function TTP.GetThreatData(unit)
     if data.playerIsTanking then data.aggroUnit="player" end
     for _, threatUnit in ipairs(TTP.GetThreatUnits()) do
         if not UnitIsUnit(threatUnit,"player") then
-            local isTanking,_,_,_,threat=UnitDetailedThreatSituation(threatUnit,unit)
+            local isTanking,_,_,_,threat=TTP.Compat.GetDetailedThreatSituation(threatUnit,unit)
             if threat ~= nil then
                 data.hasThreatData=true
                 if threat > data.highestOtherThreat then
@@ -594,7 +592,7 @@ function TTP.GetThreatColor(unit, data)
     end
 
     local status = data and data.playerStatus
-        or UnitThreatSituation("player", unit)
+        or TTP.Compat.GetThreatSituation("player", unit)
 
     if TTP.PlayerIsTank() then
         if data and data.playerIsTanking then
@@ -1470,7 +1468,9 @@ eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
 eventFrame:RegisterEvent("PLAYER_ROLES_ASSIGNED")
 eventFrame:RegisterEvent("UNIT_CLASSIFICATION_CHANGED")
 eventFrame:RegisterEvent("RAID_TARGET_UPDATE")
-eventFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+if TTP.Compat.CanUseDamageFallback() then
+    eventFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+end
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 
 SLASH_TINYTHREATPLUS1 = "/ttp"
