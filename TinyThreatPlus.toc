@@ -1,4 +1,4 @@
-## Interface: 20506, 11509
+## Interface: 20506, 11509, 16001
 ## Title: TinyThreatPlus
 ## Version: 1.2.0
 ## Author: StormtrooperTK421
@@ -7,6 +7,7 @@
 ## X-Curse-Project-ID: 1603170
 ## SavedVariables: TinyThreatPlusDB
 
+Compat.lua
 TinyThreatPlus.lua
 Nameplates.lua
 Options.lua
