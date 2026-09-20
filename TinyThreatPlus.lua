@@ -154,12 +154,6 @@ local function SetBooleanCVar(name, enabled)
     TTP.Compat.SetCVar(name, value)
 end
 
-    if C_CVar and C_CVar.SetCVar then
-        C_CVar.SetCVar(name, value)
-    elseif SetCVar then
-        SetCVar(name, value)
-    end
-end
 
 function TTP.ApplyClassColorSettings()
     TTP.ApplyDefaults()
