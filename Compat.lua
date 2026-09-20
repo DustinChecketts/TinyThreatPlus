@@ -46,14 +46,18 @@ function Compat.GetDetailedThreatSituation(sourceUnit, targetUnit)
     if type(UnitDetailedThreatSituation) ~= "function" then
         return nil
     end
-    return UnitDetailedThreatSituation(sourceUnit, targetUnit)
+    return Compat.ScrubSecretValues(
+        UnitDetailedThreatSituation(sourceUnit, targetUnit)
+    )
 end
 
 function Compat.GetThreatSituation(sourceUnit, targetUnit)
     if type(UnitThreatSituation) ~= "function" then
         return nil
     end
-    return UnitThreatSituation(sourceUnit, targetUnit)
+    return Compat.ScrubSecretValues(
+        UnitThreatSituation(sourceUnit, targetUnit)
+    )
 end
 
 function Compat.HasCombatLogEventInfo()
@@ -74,3 +78,15 @@ end
 function Compat.HasNamePlateAPI()
     return C_NamePlate and type(C_NamePlate.GetNamePlateForUnit) == "function"
 end
+
+-- Forever uses modern secret values for combat-sensitive information. Addons
+-- must not compare, branch on, or perform arithmetic with those values.
+-- scrubsecretvalues() preserves ordinary values and replaces secret values
+-- with nil, giving the feature layer a normal "data unavailable" signal.
+function Compat.ScrubSecretValues(...)
+    if Compat.IsForever() and type(scrubsecretvalues) == "function" then
+        return scrubsecretvalues(...)
+    end
+    return ...
+end
+
