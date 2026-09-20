@@ -1742,6 +1742,17 @@ function TTP.UpdateNameplate(unit)
         TTP.GetTargetCounter(unit)
     )
 
+    if TTP.Compat.IsForever() and box.counterRing then
+        -- The threat box sits left of the health bar on Forever, so keep the
+        -- optional target counter outside that edge rather than overlapping
+        -- the native bar.
+        box.counterRing:ClearAllPoints()
+        box.counterRing:SetPoint("CENTER", box, "LEFT", -5, 0)
+    elseif box.counterRing then
+        box.counterRing:ClearAllPoints()
+        box.counterRing:SetPoint("CENTER", box, "RIGHT", 5, 0)
+    end
+
     ApplyTargetCounterScale(box)
 
     local hasActiveThreat = false
