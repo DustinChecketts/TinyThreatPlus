@@ -806,6 +806,14 @@ local function PositionInfoWithoutLevel(nameplate, healthBar)
 end
 
 local function UpdateLevelAndClassification(nameplate, healthBar, unit)
+    -- Forever already supplies a native inline level box and complete layouts.
+    -- Leave Blizzard's level/name/classification presentation untouched.
+    if TTP.Compat.IsForever() then
+        HideLevelBadge(nameplate)
+        ResetClassificationFrame(nameplate)
+        return
+    end
+
     UpdateClassificationFrame(nameplate, healthBar, unit)
 
     if IsClassicNameplateStyle() then
@@ -924,14 +932,12 @@ end
 local function AnchorThreatBox(nameplate, healthBar, box)
     box:ClearAllPoints()
 
-    PixelSetPoint(
-        box,
-        "LEFT",
-        healthBar,
-        "RIGHT",
-        1,
-        0
-    )
+    if TTP.Compat.IsForever() then
+        PixelSetPoint(box, "RIGHT", healthBar, "LEFT", -1, 0)
+        return
+    end
+
+    PixelSetPoint(box, "LEFT", healthBar, "RIGHT", 1, 0)
 end
 
 
@@ -976,6 +982,11 @@ local function RestoreSideAuraLayout(nameplate)
 end
 
 local function UpdateSideAuraLayout(nameplate, box)
+    if TTP.Compat.IsForever() then
+        RestoreSideAuraLayout(nameplate)
+        return
+    end
+
     local unitFrame = nameplate and nameplate.UnitFrame
     local aurasFrame = unitFrame and unitFrame.AurasFrame
 
@@ -1703,6 +1714,17 @@ function TTP.UpdateNameplate(unit)
 
     local profile = GetThreatBoxStyleProfile()
     local boxHeight = GetThreatBoxHeight(profile)
+    local boxWidth = profile.width * horizontalScale * userScale
+    local boxFontSize = profile.fontSize * verticalScale * userScale
+
+    if TTP.Compat.IsForever() then
+        local nativeHeight = healthBar:GetHeight()
+        if nativeHeight and nativeHeight > 0 then
+            boxHeight = nativeHeight
+            boxFontSize = math.max(9, math.min(12, nativeHeight * 0.58)) * userScale
+        end
+        boxWidth = 42 * userScale
+    end
 
     box:SetScale(1)
 
@@ -1710,9 +1732,9 @@ function TTP.UpdateNameplate(unit)
 
     TTP.UpdateThreatBox(
         box,
-        profile.width * horizontalScale * userScale,
+        boxWidth,
         boxHeight * userScale,
-        profile.fontSize * verticalScale * userScale,
+        boxFontSize,
         text,
         red,
         green,
@@ -1722,12 +1744,16 @@ function TTP.UpdateNameplate(unit)
 
     ApplyTargetCounterScale(box)
 
-    local hasActiveThreat =
-        data.hasThreatData
-        and (
-            (data.playerThreat or 0) > 0
-            or (data.highestOtherThreat or 0) > 0
-        )
+    local hasActiveThreat = false
+
+    if not TTP.Compat.IsForever() then
+        hasActiveThreat =
+            data.hasThreatData
+            and (
+                (data.playerThreat or 0) > 0
+                or (data.highestOtherThreat or 0) > 0
+            )
+    end
 
     local emphasizeThreatBox =
         UnitIsUnit(unit, "target")
