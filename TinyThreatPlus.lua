@@ -681,13 +681,11 @@ function TTP.GetThreatDisplayText(data)
     if not data then return "", nil end
     if data.isDamageFallback then return Abbreviate(data.fallbackDamage), true end
 
-    -- Forever scrubs combat-sensitive numeric threat values. Do not invent a
-    -- signed delta from the zero-filled compatibility model; present a stable
-    -- neutral value while still allowing safe threat-state APIs to color it.
-    if TTP.Compat.IsForever() then
-        if TinyThreatPlusDB.displayMode == "PERCENT" then
-            return "0%", false
-        end
+    -- Forever may make raw threat secret in some execution contexts. When the
+    -- event-time snapshot contains accessible numeric values, render the real
+    -- delta exactly like other clients. Neutral zero is only the fallback.
+    if TTP.Compat.IsForever() and not data.hasNumericThreat then
+        if TinyThreatPlusDB.displayMode == "PERCENT" then return "0%", false end
         return "0", false
     end
 
