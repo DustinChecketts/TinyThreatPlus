@@ -934,23 +934,13 @@ local function AnchorThreatBox(nameplate, healthBar, box)
 
     -- Native Forever mode leaves Blizzard's complete plate untouched and
     -- appends TinyThreatPlus after Blizzard's native right-side level box.
-    if TTP.Compat.IsForever()
-        and TinyThreatPlusDB.customNameplateLayout == false
-    then
+    if TTP.Compat.IsForever() then
         local levelFrame = GetNativeLevelFrame(nameplate)
         if levelFrame and levelFrame:IsShown() then
             PixelSetPoint(box, "LEFT", levelFrame, "RIGHT", 1, 0)
         else
             PixelSetPoint(box, "LEFT", healthBar, "RIGHT", 1, 0)
         end
-        return
-    end
-
-    -- Custom Forever layout is introduced in the next presentation pass.
-    -- Until then, retain the proven appended layout while keeping the two
-    -- modes architecturally separate.
-    if TTP.Compat.IsForever() then
-        PixelSetPoint(box, "RIGHT", healthBar, "LEFT", -1, 0)
         return
     end
 
@@ -1735,14 +1725,23 @@ function TTP.UpdateNameplate(unit)
     local boxFontSize = profile.fontSize * verticalScale * userScale
 
     if TTP.Compat.IsForever() then
-        local nativeHeight = healthBar:GetHeight()
+        local levelFrame = GetNativeLevelFrame(nameplate)
+        local nativeHeight =
+            levelFrame and levelFrame:IsShown() and levelFrame:GetHeight()
+            or healthBar:GetHeight()
+
         if nativeHeight and nativeHeight > 0 then
             boxHeight = nativeHeight
-            boxFontSize = math.max(9, math.min(12, nativeHeight * 0.58)) * userScale
+            boxFontSize =
+                math.max(8, math.min(11, nativeHeight * 0.52)) * userScale
         end
-        -- Keep the indicator compact but give signed threat values enough room.
-        -- Height follows the active Blizzard style (Default/Large/Block/Cast Focus).
-        boxWidth = 38 * userScale
+
+        -- Mirror the native level badge proportions. Default/Cast Focus use
+        -- the short geometry; Large/Block naturally report the taller one.
+        local nativeWidth =
+            levelFrame and levelFrame:IsShown() and levelFrame:GetWidth()
+            or nil
+        boxWidth = math.max(32, nativeWidth or 34) * userScale
     end
 
     box:SetScale(1)
@@ -1761,13 +1760,7 @@ function TTP.UpdateNameplate(unit)
         TTP.GetTargetCounter(unit)
     )
 
-    if TTP.Compat.IsForever()
-        and TinyThreatPlusDB.customNameplateLayout ~= false
-        and box.counterRing
-    then
-        box.counterRing:ClearAllPoints()
-        box.counterRing:SetPoint("CENTER", box, "LEFT", -5, 0)
-    elseif box.counterRing then
+    if box.counterRing then
         box.counterRing:ClearAllPoints()
         box.counterRing:SetPoint("CENTER", box, "RIGHT", 5, 0)
     end
