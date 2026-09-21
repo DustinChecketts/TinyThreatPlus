@@ -1428,13 +1428,24 @@ function TTP.UpdateAll()
                         end
 
                         if eligible then
-                            local maxHealth =
-                                UnitHealthMax(unit) or 0
+                            -- Forever can mark health values secret for visible nameplates
+                            -- during combat, including nearby unengaged enemies.
+                            -- Health is only a priority tie-break, so inaccessible
+                            -- health safely remains neutral.
+                            local healthPercent = 1
+                            local maxHealth = UnitHealthMax(unit)
+                            local health = UnitHealth(unit)
+                            local healthAccessible =
+                                maxHealth ~= nil
+                                and health ~= nil
+                                and not TTP.Compat.IsSecretValue(maxHealth)
+                                and not TTP.Compat.IsSecretValue(health)
+                                and TTP.Compat.CanAccessValue(maxHealth)
+                                and TTP.Compat.CanAccessValue(health)
 
-                            local healthPercent =
-                                maxHealth > 0
-                                and UnitHealth(unit) / maxHealth
-                                or 1
+                            if healthAccessible and maxHealth > 0 then
+                                healthPercent = health / maxHealth
+                            end
 
                             local targetCount =
                                 inGroup
