@@ -553,6 +553,17 @@ end
 function TTP.GetThreatDisplayText(data)
     if not data then return "", nil end
     if data.isDamageFallback then return Abbreviate(data.fallbackDamage), true end
+
+    -- Forever scrubs combat-sensitive numeric threat values. Do not invent a
+    -- signed delta from the zero-filled compatibility model; present a stable
+    -- neutral value while still allowing safe threat-state APIs to color it.
+    if TTP.Compat.IsForever() then
+        if TinyThreatPlusDB.displayMode == "PERCENT" then
+            return "0%", false
+        end
+        return "0", false
+    end
+
     return TTP.FormatThreatValue(TTP.GetDisplayValue(data.lead,data.percent)), false
 end
 
@@ -976,7 +987,7 @@ function TTP.UpdateTargetFrame()
 
             TTP.UpdateThreatBox(
                 box,
-                52,
+                TTP.Compat.IsForever() and 34 or 52,
                 20,
                 12,
                 text,
