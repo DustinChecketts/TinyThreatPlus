@@ -15,6 +15,8 @@ D.eventCounts = {}
 D.lastSignature = nil
 D.maxSamples = 80
 D.startedAt = nil
+D.live = false
+D.lastLive = nil
 
 local function IsSecret(value)
     return type(issecretvalue) == "function" and issecretvalue(value) or false
@@ -132,12 +134,47 @@ function D.Capture(reason, force)
     while #D.samples > D.maxSamples do table.remove(D.samples, 1) end
 end
 
-function D.NoteEvent(event, unit)
-    if not D.enabled then return end
-    D.eventCounts[event] = (D.eventCounts[event] or 0) + 1
-    if unit == nil or unit == "target" or unit == "player" or unit == "pet" then
-        D.Capture(event .. (unit and (":" .. unit) or ""), false)
+local function SafePrimitive(value)
+    if value == nil or IsSecret(value) then return nil end
+    if type(canaccessvalue) == "function" and not canaccessvalue(value) then return nil end
+    return value
+end
+
+local function LiveThreatLine()
+    if not UnitExists("target") then return nil end
+    local _, ps, pscaled, ppct, pthreat = UnitDetailedThreatSituation("player", "target")
+    local _, pets, petscaled, petpct, petthreat
+    if UnitExists("pet") then
+        _, pets, petscaled, petpct, petthreat = UnitDetailedThreatSituation("pet", "target")
     end
+    ps, pscaled, ppct, pthreat = SafePrimitive(ps), SafePrimitive(pscaled), SafePrimitive(ppct), SafePrimitive(pthreat)
+    pets, petscaled, petpct, petthreat = SafePrimitive(pets), SafePrimitive(petscaled), SafePrimitive(petpct), SafePrimitive(petthreat)
+    return string.format("TTP RAW player: threat=%s pct=%s scaled=%s status=%s | pet: threat=%s pct=%s scaled=%s status=%s",
+        tostring(pthreat), tostring(ppct), tostring(pscaled), tostring(ps),
+        tostring(petthreat), tostring(petpct), tostring(petscaled), tostring(pets))
+end
+
+function D.NoteEvent(event, unit)
+    if not D.enabled and not D.live then return end
+    if D.enabled then
+        D.eventCounts[event] = (D.eventCounts[event] or 0) + 1
+        if unit == nil or unit == "target" or unit == "player" or unit == "pet" then
+            D.Capture(event .. (unit and (":" .. unit) or ""), false)
+        end
+    end
+    if D.live and (event == "UNIT_THREAT_LIST_UPDATE" or event == "UNIT_THREAT_SITUATION_UPDATE") then
+        local line = LiveThreatLine()
+        if line and line ~= D.lastLive then
+            D.lastLive = line
+            print(line)
+        end
+    end
+end
+
+function D.ToggleLive()
+    D.live = not D.live
+    D.lastLive = nil
+    print("TinyThreatPlus raw threat live:", D.live and "ON" or "OFF")
 end
 
 function D.Start()
