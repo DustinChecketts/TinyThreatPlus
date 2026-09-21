@@ -1173,7 +1173,7 @@ local function SetThreatLeaderRoleIcon(texture, role)
 end
 
 local function ApplyTargetCounterScale(box)
-    if not box or not box.counter then
+    if not box or not box.counterRing then
         return
     end
 
@@ -1185,7 +1185,7 @@ local function ApplyTargetCounterScale(box)
 
     local scale = classificationScale * userScale
 
-    box.counter:SetScale(scale)
+    box.counterRing:SetScale(scale)
 
     if box.counterText then
         box.counterText:SetScale(1)
@@ -1220,7 +1220,7 @@ local function ApplyThreatLeaderScale(frame)
     )
 
     local font = STANDARD_TEXT_FONT
-    local fontSize = 10 * textScale
+    local fontSize = (TTP.Compat.IsForever() and 9 or 10) * textScale
 
     frame.name:SetFont(
         font,
@@ -1740,8 +1740,9 @@ function TTP.UpdateNameplate(unit)
             boxHeight = nativeHeight
             boxFontSize = math.max(9, math.min(12, nativeHeight * 0.58)) * userScale
         end
-        -- Match the compact visual weight of Forever's native level badge.
-        boxWidth = 34 * userScale
+        -- Keep the indicator compact but give signed threat values enough room.
+        -- Height follows the active Blizzard style (Default/Large/Block/Cast Focus).
+        boxWidth = 38 * userScale
     end
 
     box:SetScale(1)
