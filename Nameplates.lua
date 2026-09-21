@@ -1013,25 +1013,34 @@ function TTP.DumpForeverNameplateLevel(unit)
         end
     end
 
-    if unitFrame.GetChildren then
-        local children = { unitFrame:GetChildren() }
-        for index, child in ipairs(children) do
-            local found = false
-            if child.GetRegions then
-                local regions = { child:GetRegions() }
-                for regionIndex, region in ipairs(regions) do
-                    local text = region.GetText and region:GetText() or nil
-                    if text == tostring(UnitLevel(unit)) then
-                        if not found then
-                            print(" MATCH child[" .. index .. "]: " .. DescribeRegion(child))
-                            found = true
-                        end
-                        print("   region[" .. regionIndex .. "]: " .. DescribeRegion(region))
-                    end
+    local targetLevel = tostring(UnitLevel(unit))
+
+    local function ScanFrame(frame, path, depth)
+        if not frame or depth > 5 then return end
+
+        if frame.GetRegions then
+            local regions = { frame:GetRegions() }
+            for regionIndex, region in ipairs(regions) do
+                local text = region.GetText and region:GetText() or nil
+                if text == targetLevel then
+                    print(" MATCH " .. path .. " region[" .. regionIndex .. "]: " .. DescribeRegion(region))
                 end
             end
         end
+
+        if frame.GetChildren then
+            local children = { frame:GetChildren() }
+            for index, child in ipairs(children) do
+                ScanFrame(child, path .. ".child[" .. index .. "]", depth + 1)
+            end
+        end
     end
+
+    -- The visible Forever level is not a direct UnitFrame region: LevelFrame
+    -- is already hidden while the number remains visible. Recursively scan
+    -- both the Blizzard UnitFrame and the whole nameplate tree.
+    ScanFrame(unitFrame, "UnitFrame", 0)
+    ScanFrame(nameplate, "NamePlate", 0)
 end
 
 SLASH_TINYTHREATPLUSLEVELDIAG1 = "/ttplevel"
