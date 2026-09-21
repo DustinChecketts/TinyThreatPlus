@@ -482,17 +482,18 @@ function TTP.GetThreatData(unit)
         hasNumericThreat=false, isDamageFallback=false, fallbackDamage=0,
         fallbackPlayerDamage=0, playerScaledPercent=nil, playerRawPercent=nil }
 
-    local playerIsTanking, playerStatus, playerScaled, playerRawPercent, playerThreat
+    -- Prefer a fresh accessible read. On Forever, any field that is secret in
+    -- the render context comes back nil from Compat, so fill only those gaps
+    -- from the sanitized event-time snapshot.
+    local playerIsTanking, playerStatus, playerScaled, playerRawPercent, playerThreat =
+        TTP.Compat.GetDetailedThreatSituation("player", unit)
     local playerSnapshot = GetForeverSnapshotSource(unit, "player")
     if playerSnapshot then
-        playerIsTanking = playerSnapshot.isTanking
-        playerStatus = playerSnapshot.status
-        playerScaled = playerSnapshot.scaledPercent
-        playerRawPercent = playerSnapshot.rawPercent
-        playerThreat = playerSnapshot.threatValue
-    else
-        playerIsTanking, playerStatus, playerScaled, playerRawPercent, playerThreat =
-            TTP.Compat.GetDetailedThreatSituation("player", unit)
+        if playerIsTanking == nil then playerIsTanking = playerSnapshot.isTanking end
+        if playerStatus == nil then playerStatus = playerSnapshot.status end
+        if playerScaled == nil then playerScaled = playerSnapshot.scaledPercent end
+        if playerRawPercent == nil then playerRawPercent = playerSnapshot.rawPercent end
+        if playerThreat == nil then playerThreat = playerSnapshot.threatValue end
     end
 
     data.playerStatus = playerStatus
@@ -513,16 +514,13 @@ function TTP.GetThreatData(unit)
 
     for _, threatUnit in ipairs(TTP.GetThreatUnits()) do
         if not UnitIsUnit(threatUnit, "player") then
-            local isTanking, status, threat
+            local isTanking, status, _, _, threat =
+                TTP.Compat.GetDetailedThreatSituation(threatUnit, unit)
             local sourceSnapshot = GetForeverSnapshotSource(unit, threatUnit)
             if sourceSnapshot then
-                isTanking = sourceSnapshot.isTanking
-                status = sourceSnapshot.status
-                threat = sourceSnapshot.threatValue
-            else
-                local scaledPercent, rawPercent
-                isTanking, status, scaledPercent, rawPercent, threat =
-                    TTP.Compat.GetDetailedThreatSituation(threatUnit, unit)
+                if isTanking == nil then isTanking = sourceSnapshot.isTanking end
+                if status == nil then status = sourceSnapshot.status end
+                if threat == nil then threat = sourceSnapshot.threatValue end
             end
 
             if status ~= nil or isTanking ~= nil then data.hasThreatData = true end
