@@ -553,7 +553,10 @@ function TTP.GetThreatData(unit)
     end
 
     if data.hasNumericThreat then
-        data.lead = (data.playerThreat - data.highestOtherThreat) / 100
+        -- Forever returns directly usable whole threat units. Anniversary's
+        -- threatValue uses the historical x100 scale expected by this addon.
+        local threatDivisor = TTP.Compat.IsForever() and 1 or 100
+        data.lead = (data.playerThreat - data.highestOtherThreat) / threatDivisor
         if data.highestOtherThreat > 0 then
             if data.playerThreat >= data.highestOtherThreat then
                 data.percent = (data.playerThreat / data.highestOtherThreat) * 100
