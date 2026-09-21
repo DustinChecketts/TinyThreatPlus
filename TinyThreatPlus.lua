@@ -411,28 +411,55 @@ local function CaptureForeverThreatSnapshot(targetUnit)
     if UnitIsPlayer(targetUnit) or not UnitCanAttack("player", targetUnit) then return end
     local targetGUID = UnitGUID(targetUnit)
     if not targetGUID then return end
-    local snapshot = { capturedAt = GetTime(), sources = {} }
+
+    -- Merge into the existing target snapshot. A later read through a
+    -- different unit token (for example nameplate1 after target) may have
+    -- fewer accessible values; it must never erase a good event-time read.
+    local snapshot = TTP.foreverThreatSnapshots[targetGUID]
+    if not snapshot then
+        snapshot = { capturedAt = GetTime(), sources = {} }
+        TTP.foreverThreatSnapshots[targetGUID] = snapshot
+    end
+
     for _, sourceUnit in ipairs(TTP.GetThreatUnits()) do
         if UnitExists(sourceUnit) then
             local sourceGUID = UnitGUID(sourceUnit)
             if sourceGUID then
-                local isTanking, status, scaledPercent, rawPercent, threatValue = TTP.Compat.GetDetailedThreatSituation(sourceUnit, targetUnit)
-                if isTanking ~= nil or status ~= nil or scaledPercent ~= nil or rawPercent ~= nil or threatValue ~= nil then
-                    snapshot.sources[sourceGUID] = { isTanking=isTanking, status=status, scaledPercent=scaledPercent, rawPercent=rawPercent, threatValue=threatValue }
+                local isTanking, status, scaledPercent, rawPercent, threatValue =
+                    TTP.Compat.GetDetailedThreatSituation(sourceUnit, targetUnit)
+                if isTanking ~= nil or status ~= nil or scaledPercent ~= nil
+                    or rawPercent ~= nil or threatValue ~= nil then
+                    local source = snapshot.sources[sourceGUID] or {}
+                    if isTanking ~= nil then source.isTanking = isTanking end
+                    if status ~= nil then source.status = status end
+                    if scaledPercent ~= nil then source.scaledPercent = scaledPercent end
+                    if rawPercent ~= nil then source.rawPercent = rawPercent end
+                    if threatValue ~= nil then source.threatValue = threatValue end
+                    snapshot.sources[sourceGUID] = source
+                    snapshot.capturedAt = GetTime()
                 end
             end
         end
     end
-    TTP.foreverThreatSnapshots[targetGUID] = snapshot
 end
 
 local function CaptureForeverThreatForVisibleTargets(eventUnit)
     if not TTP.Compat.IsForever() then return end
-    if eventUnit and UnitExists(eventUnit) and UnitCanAttack("player", eventUnit) then CaptureForeverThreatSnapshot(eventUnit) end
-    if UnitExists("target") and UnitCanAttack("player", "target") then CaptureForeverThreatSnapshot("target") end
-    for unit in pairs(TTP.activeNameplates) do
-        if UnitExists(unit) and UnitCanAttack("player", unit) then CaptureForeverThreatSnapshot(unit) end
+    local capturedGUIDs = {}
+
+    local function CaptureOnce(unit)
+        if not unit or not UnitExists(unit) or not UnitCanAttack("player", unit) then return end
+        local guid = UnitGUID(unit)
+        if not guid or capturedGUIDs[guid] then return end
+        capturedGUIDs[guid] = true
+        CaptureForeverThreatSnapshot(unit)
     end
+
+    -- The event unit is the highest-value token because the diagnostic proved
+    -- its threat values can be ordinary at this exact point in dispatch.
+    CaptureOnce(eventUnit)
+    CaptureOnce("target")
+    for unit in pairs(TTP.activeNameplates) do CaptureOnce(unit) end
 end
 
 local function GetForeverSnapshotSource(targetUnit, sourceUnit)
