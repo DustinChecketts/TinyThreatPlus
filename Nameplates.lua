@@ -805,19 +805,112 @@ local function PositionInfoWithoutLevel(nameplate, healthBar)
     PositionBlizzardInfoSlot(nameplate, healthBar)
 end
 
+-- Forever custom presentation keeps Blizzard's live UnitFrame and StatusBar
+-- logic, but takes ownership of visible geometry/art. This follows the safe
+-- pattern proven by ClassicUIForever: never replace the world nameplate or
+-- hook into Blizzard's protected health update; restyle it from our own pass.
+local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
+    if not TTP.Compat.IsForever()
+        or not nameplate
+        or not healthBar
+        or not unit
+        or not TTP.IsHostileNPC(unit)
+    then
+        return false
+    end
+
+    local unitFrame = nameplate.UnitFrame
+    local container = unitFrame and unitFrame.HealthBarsContainer
+    if not unitFrame or not container then return false end
+
+    -- Stable addon-owned geometry: targeting may change Blizzard emphasis,
+    -- but it no longer changes the dimensions of our presentation.
+    container:SetScale(1)
+    container:ClearAllPoints()
+    PixelSetSize(container, 137, 16)
+    PixelSetPoint(container, "BOTTOM", unitFrame, "BOTTOM", 0, 4)
+
+    healthBar:ClearAllPoints()
+    healthBar:SetAllPoints(container)
+
+    -- Suppress Blizzard's presentation art while retaining the StatusBar.
+    -- The visible Forever level cap is coupled to this presentation rather
+    -- than the nominal LevelFrame, which is why hiding LevelFrame alone did
+    -- not remove it in live world plates.
+    if healthBar.bgTexture then healthBar.bgTexture:SetAlpha(0) end
+    for _, key in ipairs({
+        "LevelFrame",
+        "PlayerLevelDifferentialFrame",
+        "PlayerLevelDiffFrame",
+        "ClassificationFrame",
+    }) do
+        local frame = unitFrame[key]
+        if frame then frame:SetAlpha(0) end
+    end
+
+    -- Draw a simple TTP-owned border over Blizzard's still-live health fill.
+    local border = healthBar.TinyThreatPlusForeverBorder
+    if not border then
+        border = CreateFrame("Frame", nil, healthBar, "BackdropTemplate")
+        border:SetAllPoints(healthBar)
+        border:SetFrameLevel((healthBar:GetFrameLevel() or 1) + 5)
+        border:SetBackdrop({
+            edgeFile = "Interface\\Buttons\\WHITE8X8",
+            edgeSize = 1,
+        })
+        healthBar.TinyThreatPlusForeverBorder = border
+    end
+    border:SetBackdropBorderColor(0.72, 0.72, 0.76, 1)
+    border:Show()
+
+    -- Reuse our addon-owned circular level badge. Unlike Forever's native
+    -- cap this is a normal FontString/texture hierarchy we fully control.
+    if ShouldShowLevel(unit) then
+        local level = UnitLevel(unit)
+        local secret = type(issecretvalue) == "function" and issecretvalue(level)
+        if level and not secret and level ~= 0 then
+            local badge = CreateLevelBadge(nameplate)
+            ApplyModernLevelBadgeScale(badge)
+            ApplyLevelBadgeStyle(badge)
+            badge:ClearAllPoints()
+            PixelSetPoint(badge, "LEFT", healthBar, "RIGHT", 2, 0)
+
+            if level < 0 then
+                badge.text:Hide()
+                badge.skull:Show()
+            else
+                local red, green, blue = GetDifficultyColor(level)
+                badge.skull:Hide()
+                badge.text:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+                badge.text:SetText(tostring(level))
+                badge.text:SetTextColor(red, green, blue)
+                badge.text:Show()
+            end
+            badge:Show()
+        else
+            HideLevelBadge(nameplate)
+        end
+    else
+        HideLevelBadge(nameplate)
+    end
+
+    local nameText = GetNativeNameFontString(nameplate, healthBar)
+    if nameText then
+        nameText:ClearAllPoints()
+        nameText:SetJustifyH("CENTER")
+        PixelSetPoint(nameText, "BOTTOM", healthBar, "TOP", 0, 2)
+    end
+
+    return true
+end
+
 local function UpdateLevelAndClassification(nameplate, healthBar, unit)
     -- Forever's native inline level badge does not fit TinyThreatPlus's
     -- presentation. Hide Blizzard's LevelFrame for hostile NPCs; a future
     -- pass will replace it with a TinyThreatPlus level treatment matching the
     -- target-frame artwork. Leave non-hostile plates alone.
     if TTP.Compat.IsForever() then
-        HideLevelBadge(nameplate)
-        ResetClassificationFrame(nameplate)
-
-        -- Do not hide LevelFrame here. Forever's live level numeral is not
-        -- rendered by this frame, while Blizzard's options preview *does* use
-        -- it as part of the preview health-bar composition. Hiding it breaks
-        -- the preview without removing the live-world numeral.
+        ApplyForeverCustomLayout(nameplate, healthBar, unit)
         return
     end
 
@@ -1079,7 +1172,12 @@ local function AnchorThreatBox(nameplate, healthBar, box)
     -- bar. Anchor from the health bar's right edge instead. The threat box
     -- then becomes the first addon-owned element after Blizzard's native row.
     if TTP.Compat.IsForever() then
-        PixelSetPoint(box, "LEFT", healthBar, "RIGHT", 2, 0)
+        local levelBadge = nameplate and nameplate.TinyThreatPlusLevel
+        if levelBadge and levelBadge:IsShown() then
+            PixelSetPoint(box, "LEFT", levelBadge, "RIGHT", 2, 0)
+        else
+            PixelSetPoint(box, "LEFT", healthBar, "RIGHT", 2, 0)
+        end
         return
     end
 
