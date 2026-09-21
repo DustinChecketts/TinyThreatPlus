@@ -1504,6 +1504,17 @@ local eventFrame = CreateFrame("Frame")
 local updateElapsed = 0
 
 eventFrame:SetScript("OnEvent", function(_, event, arg1)
+    -- Forever's numeric threat can be accessible during the threat event but
+    -- secret later in the render path. Capture it before any diagnostic or
+    -- broader addon update work runs.
+    if event == "UNIT_THREAT_LIST_UPDATE"
+        or event == "UNIT_THREAT_SITUATION_UPDATE"
+        or event == "PLAYER_TARGET_CHANGED"
+        or event == "NAME_PLATE_UNIT_ADDED"
+    then
+        CaptureForeverThreatForVisibleTargets(arg1)
+    end
+
     if TTP.ThreatDiagnostic then TTP.ThreatDiagnostic.NoteEvent(event, arg1) end
     if event == "ADDON_LOADED" then
         if arg1 ~= ADDON_NAME then
@@ -1523,6 +1534,7 @@ eventFrame:SetScript("OnEvent", function(_, event, arg1)
 
     if event == "PLAYER_REGEN_ENABLED" then
         wipe(TTP.damageFallback)
+        wipe(TTP.foreverThreatSnapshots)
     end
 
     if event == "NAME_PLATE_UNIT_ADDED" then
