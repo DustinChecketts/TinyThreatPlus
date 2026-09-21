@@ -1701,6 +1701,9 @@ SlashCmdList.TINYTHREATPLUS = function(message)
     elseif command == "threatreport" then
         if TTP.ThreatDiagnostic then TTP.ThreatDiagnostic.PrintReport() end
         return
+    elseif command == "threatlive" then
+        if TTP.ThreatDiagnostic then TTP.ThreatDiagnostic.ToggleLive() end
+        return
     elseif command == "reset" then
         TTP.ResetDefaults()
         print("TinyThreatPlus settings reset.")
@@ -1720,6 +1723,7 @@ SlashCmdList.TINYTHREATPLUS = function(message)
         print("/ttp threatdebug")
         print("/ttp threatstop")
         print("/ttp threatreport")
+        print("/ttp threatlive")
         print("/ttp reset")
     end
 
