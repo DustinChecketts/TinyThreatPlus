@@ -9,5 +9,6 @@
 
 Compat.lua
 TinyThreatPlus.lua
+ThreatDiagnostic.lua
 Nameplates.lua
 Options.lua
