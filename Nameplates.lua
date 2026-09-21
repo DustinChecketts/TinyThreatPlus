@@ -932,6 +932,23 @@ end
 local function AnchorThreatBox(nameplate, healthBar, box)
     box:ClearAllPoints()
 
+    -- Native Forever mode leaves Blizzard's complete plate untouched and
+    -- appends TinyThreatPlus after Blizzard's native right-side level box.
+    if TTP.Compat.IsForever()
+        and TinyThreatPlusDB.customNameplateLayout == false
+    then
+        local levelFrame = GetNativeLevelFrame(nameplate)
+        if levelFrame and levelFrame:IsShown() then
+            PixelSetPoint(box, "LEFT", levelFrame, "RIGHT", 1, 0)
+        else
+            PixelSetPoint(box, "LEFT", healthBar, "RIGHT", 1, 0)
+        end
+        return
+    end
+
+    -- Custom Forever layout is introduced in the next presentation pass.
+    -- Until then, retain the proven appended layout while keeping the two
+    -- modes architecturally separate.
     if TTP.Compat.IsForever() then
         PixelSetPoint(box, "RIGHT", healthBar, "LEFT", -1, 0)
         return
@@ -1743,10 +1760,10 @@ function TTP.UpdateNameplate(unit)
         TTP.GetTargetCounter(unit)
     )
 
-    if TTP.Compat.IsForever() and box.counterRing then
-        -- The threat box sits left of the health bar on Forever, so keep the
-        -- optional target counter outside that edge rather than overlapping
-        -- the native bar.
+    if TTP.Compat.IsForever()
+        and TinyThreatPlusDB.customNameplateLayout ~= false
+        and box.counterRing
+    then
         box.counterRing:ClearAllPoints()
         box.counterRing:SetPoint("CENTER", box, "LEFT", -5, 0)
     elseif box.counterRing then
