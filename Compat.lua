@@ -49,6 +49,24 @@ local function Accessible(value)
     return value
 end
 
+function Compat.IsSecretValue(value)
+    return type(issecretvalue) == "function"
+        and issecretvalue(value)
+        or false
+end
+
+function Compat.CanAccessValue(value)
+    if value == nil then return false end
+    if type(canaccessvalue) == "function" then
+        return canaccessvalue(value)
+    end
+    return not Compat.IsSecretValue(value)
+end
+
+function Compat.GetAccessibleValue(value)
+    return Accessible(value)
+end
+
 function Compat.GetDetailedThreatSituation(sourceUnit, targetUnit)
     if type(UnitDetailedThreatSituation) ~= "function" then return nil end
     local isTanking, status, scaledPercent, rawPercent, threatValue =
