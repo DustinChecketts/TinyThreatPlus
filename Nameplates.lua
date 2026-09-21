@@ -685,6 +685,23 @@ local function GetNativeNameFontString(nameplate, healthBar)
 end
 
 local function PositionClassicName(nameplate, healthBar)
+    -- Keep Blizzard's functional cast bar, but anchor its container to our
+    -- custom health-bar geometry. Forever otherwise retains coordinates from
+    -- the native nameplate style, which makes the cast bar float through the
+    -- name/health row after we resize HealthBarsContainer.
+    local castContainer = unitFrame.CastBarsContainer
+    if castContainer then
+        castContainer:ClearAllPoints()
+        PixelSetPoint(castContainer, "TOP", healthBar, "BOTTOM", 0, -2)
+        PixelSetSize(castContainer, 137, 14)
+
+        local castBar = castContainer.castBar or unitFrame.castBar
+        if castBar then
+            castBar:ClearAllPoints()
+            castBar:SetAllPoints(castContainer)
+        end
+    end
+
     local nameText = GetNativeNameFontString(nameplate, healthBar)
 
     if not nameText then
@@ -1688,20 +1705,29 @@ local function ApplyPriorityMarkerAppearance(
         sizeRating + 4
 
     marker:ClearAllPoints()
-    marker:SetPoint(
-        "TOPLEFT",
-        healthBar,
-        "TOPLEFT",
-        -padding,
-        padding
-    )
-    marker:SetPoint(
-        "BOTTOMRIGHT",
-        healthBar,
-        "BOTTOMRIGHT",
-        padding,
-        -padding
-    )
+
+    if TTP.Compat.IsForever() then
+        -- The Forever custom layout owns a stable health-bar container.
+        -- Keep priority emphasis tight to that bar instead of using the old
+        -- Anniversary padding, which collides with our name and cast rows.
+        marker:SetPoint("TOPLEFT", healthBar, "TOPLEFT", -2, 2)
+        marker:SetPoint("BOTTOMRIGHT", healthBar, "BOTTOMRIGHT", 2, -2)
+    else
+        marker:SetPoint(
+            "TOPLEFT",
+            healthBar,
+            "TOPLEFT",
+            -padding,
+            padding
+        )
+        marker:SetPoint(
+            "BOTTOMRIGHT",
+            healthBar,
+            "BOTTOMRIGHT",
+            padding,
+            -padding
+        )
+    end
 
     -- Reuse exactly the same border/backdrop treatment as the threat box.
     -- Only the interior background color is different.
