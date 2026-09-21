@@ -1756,16 +1756,14 @@ function TTP.UpdateNameplate(unit)
 
     ApplyTargetCounterScale(box)
 
-    local hasActiveThreat = false
-
-    if not TTP.Compat.IsForever() then
-        hasActiveThreat =
-            data.hasThreatData
-            and (
-                (data.playerThreat or 0) > 0
-                or (data.highestOtherThreat or 0) > 0
-            )
-    end
+    -- Forever now has a sanitized numeric threat path too, so active threat
+    -- should receive the same full-opacity treatment as other clients.
+    local hasActiveThreat =
+        data.hasThreatData
+        and (
+            (data.playerThreat or 0) > 0
+            or (data.highestOtherThreat or 0) > 0
+        )
 
     local emphasizeThreatBox =
         UnitIsUnit(unit, "target")
