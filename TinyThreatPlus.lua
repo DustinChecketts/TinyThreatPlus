@@ -804,12 +804,13 @@ end
 -- Shared threat-box presentation
 -- ---------------------------------------------------------------------------
 function TTP.ApplyBoxStyle(frame, height)
-    -- Use the heavier border treatment that previously looked best on the
-    -- large nameplate family, and apply it consistently to both large and
-    -- thin threat-box profiles.
-    local edgeSize = 10
-    local inset = 2
-    local styleKey = "fixed:10:2"
+    local forever = TTP.Compat.IsForever()
+    local edgeSize = forever and 1 or 10
+    local inset = forever and 1 or 2
+    local edgeFile = forever
+        and "Interface\\Buttons\\WHITE8X8"
+        or "Interface\\Tooltips\\UI-Tooltip-Border"
+    local styleKey = forever and "forever:1:1" or "fixed:10:2"
 
     if frame.TinyThreatPlusStyleKey == styleKey then
         return
@@ -819,7 +820,7 @@ function TTP.ApplyBoxStyle(frame, height)
 
     frame:SetBackdrop({
         bgFile = "Interface\\Buttons\\WHITE8X8",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeFile = edgeFile,
         edgeSize = edgeSize,
         insets = {
             left = inset,
@@ -830,7 +831,12 @@ function TTP.ApplyBoxStyle(frame, height)
     })
 
     frame:SetBackdropColor(unpack(TTP.colors.background))
-    frame:SetBackdropBorderColor(unpack(TTP.colors.border))
+
+    if forever then
+        frame:SetBackdropBorderColor(0.34, 0.34, 0.38, 0.95)
+    else
+        frame:SetBackdropBorderColor(unpack(TTP.colors.border))
+    end
 end
 
 function TTP.CreateThreatBox(parent, key, globalName)
