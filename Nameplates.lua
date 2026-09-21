@@ -932,15 +932,12 @@ end
 local function AnchorThreatBox(nameplate, healthBar, box)
     box:ClearAllPoints()
 
-    -- Native Forever mode leaves Blizzard's complete plate untouched and
-    -- appends TinyThreatPlus after Blizzard's native right-side level box.
+    -- Forever's LevelFrame is visually inline but its frame bounds are not a
+    -- reliable external anchor; in live plates they can overlap the health
+    -- bar. Anchor from the health bar's right edge instead. The threat box
+    -- then becomes the first addon-owned element after Blizzard's native row.
     if TTP.Compat.IsForever() then
-        local levelFrame = GetNativeLevelFrame(nameplate)
-        if levelFrame and levelFrame:IsShown() then
-            PixelSetPoint(box, "LEFT", levelFrame, "RIGHT", 1, 0)
-        else
-            PixelSetPoint(box, "LEFT", healthBar, "RIGHT", 1, 0)
-        end
+        PixelSetPoint(box, "LEFT", healthBar, "RIGHT", 2, 0)
         return
     end
 
@@ -1725,10 +1722,11 @@ function TTP.UpdateNameplate(unit)
     local boxFontSize = profile.fontSize * verticalScale * userScale
 
     if TTP.Compat.IsForever() then
-        local levelFrame = GetNativeLevelFrame(nameplate)
-        local nativeHeight =
-            levelFrame and levelFrame:IsShown() and levelFrame:GetHeight()
-            or healthBar:GetHeight()
+        -- The health StatusBar is the trustworthy geometry source on Forever.
+        -- Its live height distinguishes the short Default/Cast Focus family
+        -- from the taller Large/Block family. LevelFrame bounds are not used
+        -- because Blizzard's inline level artwork can extend outside them.
+        local nativeHeight = healthBar:GetHeight()
 
         if nativeHeight and nativeHeight > 0 then
             boxHeight = nativeHeight
@@ -1736,12 +1734,7 @@ function TTP.UpdateNameplate(unit)
                 math.max(8, math.min(11, nativeHeight * 0.52)) * userScale
         end
 
-        -- Mirror the native level badge proportions. Default/Cast Focus use
-        -- the short geometry; Large/Block naturally report the taller one.
-        local nativeWidth =
-            levelFrame and levelFrame:IsShown() and levelFrame:GetWidth()
-            or nil
-        boxWidth = math.max(32, nativeWidth or 34) * userScale
+        boxWidth = 34 * userScale
     end
 
     box:SetScale(1)
