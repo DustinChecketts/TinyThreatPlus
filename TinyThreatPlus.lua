@@ -404,6 +404,45 @@ end
 -- ---------------------------------------------------------------------------
 -- Threat collection and fallback data
 -- ---------------------------------------------------------------------------
+TTP.foreverThreatSnapshots = TTP.foreverThreatSnapshots or {}
+
+local function CaptureForeverThreatSnapshot(targetUnit)
+    if not TTP.Compat.IsForever() or not targetUnit or not UnitExists(targetUnit) then return end
+    if UnitIsPlayer(targetUnit) or not UnitCanAttack("player", targetUnit) then return end
+    local targetGUID = UnitGUID(targetUnit)
+    if not targetGUID then return end
+    local snapshot = { capturedAt = GetTime(), sources = {} }
+    for _, sourceUnit in ipairs(TTP.GetThreatUnits()) do
+        if UnitExists(sourceUnit) then
+            local sourceGUID = UnitGUID(sourceUnit)
+            if sourceGUID then
+                local isTanking, status, scaledPercent, rawPercent, threatValue = TTP.Compat.GetDetailedThreatSituation(sourceUnit, targetUnit)
+                if isTanking ~= nil or status ~= nil or scaledPercent ~= nil or rawPercent ~= nil or threatValue ~= nil then
+                    snapshot.sources[sourceGUID] = { isTanking=isTanking, status=status, scaledPercent=scaledPercent, rawPercent=rawPercent, threatValue=threatValue }
+                end
+            end
+        end
+    end
+    TTP.foreverThreatSnapshots[targetGUID] = snapshot
+end
+
+local function CaptureForeverThreatForVisibleTargets(eventUnit)
+    if not TTP.Compat.IsForever() then return end
+    if eventUnit and UnitExists(eventUnit) and UnitCanAttack("player", eventUnit) then CaptureForeverThreatSnapshot(eventUnit) end
+    if UnitExists("target") and UnitCanAttack("player", "target") then CaptureForeverThreatSnapshot("target") end
+    for unit in pairs(TTP.activeNameplates) do
+        if UnitExists(unit) and UnitCanAttack("player", unit) then CaptureForeverThreatSnapshot(unit) end
+    end
+end
+
+local function GetForeverSnapshotSource(targetUnit, sourceUnit)
+    if not TTP.Compat.IsForever() then return nil end
+    local targetGUID, sourceGUID = UnitGUID(targetUnit), UnitGUID(sourceUnit)
+    if not targetGUID or not sourceGUID then return nil end
+    local snapshot = TTP.foreverThreatSnapshots[targetGUID]
+    return snapshot and snapshot.sources[sourceGUID] or nil
+end
+
 function TTP.GetThreatData(unit)
     if not unit or not UnitExists(unit) or UnitIsDead(unit) or UnitIsPlayer(unit)
         or not UnitCanAttack("player", unit) then return nil end
