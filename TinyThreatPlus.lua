@@ -409,57 +409,96 @@ function TTP.GetThreatData(unit)
         or not UnitCanAttack("player", unit) then return nil end
     TTP.threatCache = TTP.threatCache or {}
     if TTP.threatCache[unit] then return TTP.threatCache[unit] end
+
     local data = { unit=unit, playerThreat=0, highestOtherThreat=0, highestOtherUnit=nil,
         highestOtherOwner=nil, playerStatus=nil, playerIsTanking=false, aggroUnit=nil,
         leaderUnit=nil, leaderThreat=0, leaderName=nil, hasThreatData=false,
-        isDamageFallback=false, fallbackDamage=0, fallbackPlayerDamage=0 }
-    local playerIsTanking, playerStatus, _, _, playerThreat = TTP.Compat.GetDetailedThreatSituation("player", unit)
+        hasNumericThreat=false, isDamageFallback=false, fallbackDamage=0,
+        fallbackPlayerDamage=0, playerScaledPercent=nil, playerRawPercent=nil }
+
+    local playerIsTanking, playerStatus, playerScaled, playerRawPercent, playerThreat =
+        TTP.Compat.GetDetailedThreatSituation("player", unit)
+
+    data.playerStatus = playerStatus
+    data.playerIsTanking = playerIsTanking == true
+    data.playerScaledPercent = playerScaled
+    data.playerRawPercent = playerRawPercent
+
+    if playerStatus ~= nil or playerIsTanking ~= nil then data.hasThreatData = true end
     if playerThreat ~= nil then
-        data.hasThreatData=true; data.playerThreat=playerThreat; data.leaderUnit="player";
-        data.leaderThreat=playerThreat; data.leaderName=UnitName("player")
+        data.hasThreatData = true
+        data.hasNumericThreat = true
+        data.playerThreat = playerThreat
+        data.leaderUnit = "player"
+        data.leaderThreat = playerThreat
+        data.leaderName = UnitName("player")
     end
-    data.playerStatus=playerStatus; data.playerIsTanking=playerIsTanking==true
-    if data.playerIsTanking then data.aggroUnit="player" end
+    if data.playerIsTanking then data.aggroUnit = "player" end
+
     for _, threatUnit in ipairs(TTP.GetThreatUnits()) do
-        if not UnitIsUnit(threatUnit,"player") then
-            local isTanking,_,_,_,threat=TTP.Compat.GetDetailedThreatSituation(threatUnit,unit)
+        if not UnitIsUnit(threatUnit, "player") then
+            local isTanking, status, _, _, threat =
+                TTP.Compat.GetDetailedThreatSituation(threatUnit, unit)
+
+            if status ~= nil or isTanking ~= nil then data.hasThreatData = true end
             if threat ~= nil then
-                data.hasThreatData=true
+                data.hasThreatData = true
+                data.hasNumericThreat = true
                 if threat > data.highestOtherThreat then
-                    data.highestOtherThreat=threat; data.highestOtherUnit=threatUnit;
-                    data.highestOtherOwner=GetPetOwnerUnit(threatUnit)
+                    data.highestOtherThreat = threat
+                    data.highestOtherUnit = threatUnit
+                    data.highestOtherOwner = GetPetOwnerUnit(threatUnit)
                 end
                 if threat > data.leaderThreat then
-                    data.leaderThreat=threat; data.leaderUnit=threatUnit; data.leaderName=UnitName(threatUnit)
+                    data.leaderThreat = threat
+                    data.leaderUnit = threatUnit
+                    data.leaderName = UnitName(threatUnit)
                 end
             end
-            if isTanking==true then data.aggroUnit=threatUnit end
+            if isTanking == true then data.aggroUnit = threatUnit end
         end
     end
-    if not data.aggroUnit then
-        if data.playerThreat > data.highestOtherThreat and data.playerThreat > 0 then data.aggroUnit="player"
-        elseif data.highestOtherUnit then data.aggroUnit=data.highestOtherUnit end
-    end
-    data.lead=(data.playerThreat-data.highestOtherThreat)/100
-    if data.highestOtherThreat>0 then
-        if data.playerThreat>=data.highestOtherThreat then data.percent=(data.playerThreat/data.highestOtherThreat)*100
-        else data.percent=((data.playerThreat-data.highestOtherThreat)/data.highestOtherThreat)*100 end
-    elseif data.playerThreat>0 then data.percent=100 else data.percent=0 end
-    if not data.hasThreatData then
-        local amount, sourceUnit, sourceName, playerAmount =
-            GetDamageFallback(UnitGUID(unit))
 
+    if not data.aggroUnit and data.hasNumericThreat then
+        if data.playerThreat > data.highestOtherThreat and data.playerThreat > 0 then
+            data.aggroUnit = "player"
+        elseif data.highestOtherUnit then
+            data.aggroUnit = data.highestOtherUnit
+        end
+    end
+
+    if data.hasNumericThreat then
+        data.lead = (data.playerThreat - data.highestOtherThreat) / 100
+        if data.highestOtherThreat > 0 then
+            if data.playerThreat >= data.highestOtherThreat then
+                data.percent = (data.playerThreat / data.highestOtherThreat) * 100
+            else
+                data.percent = ((data.playerThreat - data.highestOtherThreat) / data.highestOtherThreat) * 100
+            end
+        elseif data.playerThreat > 0 then
+            data.percent = 100
+        else
+            data.percent = 0
+        end
+    else
+        data.lead = 0
+        data.percent = 0
+    end
+
+    if not data.hasThreatData then
+        local amount, sourceUnit, sourceName, playerAmount = GetDamageFallback(UnitGUID(unit))
         if amount then
             data.isDamageFallback = true
             data.fallbackDamage = amount
             data.fallbackPlayerDamage = playerAmount or 0
             data.leaderUnit = sourceUnit
-            data.leaderName =
-                (sourceUnit and UnitName(sourceUnit))
-                or sourceName
-        elseif not TinyThreatPlusDB.alwaysShowThreatBoxes then return nil end
+            data.leaderName = (sourceUnit and UnitName(sourceUnit)) or sourceName
+        elseif not TinyThreatPlusDB.alwaysShowThreatBoxes then
+            return nil
+        end
     end
-    TTP.threatCache[unit]=data
+
+    TTP.threatCache[unit] = data
     return data
 end
 
