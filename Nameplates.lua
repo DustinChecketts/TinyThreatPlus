@@ -1723,7 +1723,8 @@ function TTP.UpdateNameplate(unit)
             boxHeight = nativeHeight
             boxFontSize = math.max(9, math.min(12, nativeHeight * 0.58)) * userScale
         end
-        boxWidth = 42 * userScale
+        -- Match the compact visual weight of Forever's native level badge.
+        boxWidth = 34 * userScale
     end
 
     box:SetScale(1)
