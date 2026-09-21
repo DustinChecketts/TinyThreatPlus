@@ -814,14 +814,10 @@ local function UpdateLevelAndClassification(nameplate, healthBar, unit)
         HideLevelBadge(nameplate)
         ResetClassificationFrame(nameplate)
 
-        local nativeLevelFrame = GetNativeLevelFrame(nameplate)
-        if nativeLevelFrame then
-            if TTP.IsHostileNPC(unit) then
-                nativeLevelFrame:Hide()
-            else
-                nativeLevelFrame:Show()
-            end
-        end
+        -- Do not hide LevelFrame here. Forever's live level numeral is not
+        -- rendered by this frame, while Blizzard's options preview *does* use
+        -- it as part of the preview health-bar composition. Hiding it breaks
+        -- the preview without removing the live-world numeral.
         return
     end
 
