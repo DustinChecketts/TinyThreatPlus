@@ -1067,6 +1067,100 @@ function TTP.GetTargetBox()
     return TTP.targetBox
 end
 
+local TARGET_CLASS_ICON_ATLASES = {
+    WARRIOR = "groupfinder-icon-class-warrior",
+    MAGE = "groupfinder-icon-class-mage",
+    ROGUE = "groupfinder-icon-class-rogue",
+    DRUID = "groupfinder-icon-class-druid",
+    HUNTER = "groupfinder-icon-class-hunter",
+    SHAMAN = "groupfinder-icon-class-shaman",
+    PRIEST = "groupfinder-icon-class-priest",
+    WARLOCK = "groupfinder-icon-class-warlock",
+    PALADIN = "groupfinder-icon-class-paladin",
+    DEATHKNIGHT = "groupfinder-icon-class-deathknight",
+}
+
+local function GetTargetThreatLeaderFrame()
+    if TTP.targetThreatLeader then return TTP.targetThreatLeader end
+
+    local parent = TargetFrameTextureFrame or TargetFrame or UIParent
+    local frame = CreateFrame("Frame", "TinyThreatPlusTargetThreatLeader", parent)
+    frame:SetSize(150, 16)
+    frame:SetFrameStrata(parent:GetFrameStrata())
+    frame:SetFrameLevel((parent:GetFrameLevel() or 1) + 32)
+
+    frame.icon = frame:CreateTexture(nil, "ARTWORK")
+    frame.icon:SetSize(14, 14)
+    frame.icon:SetPoint("LEFT", frame, "LEFT", 0, 0)
+
+    frame.name = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    frame.name:SetPoint("LEFT", frame.icon, "RIGHT", 3, 0)
+    frame.name:SetJustifyH("LEFT")
+    frame.name:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+    frame:Hide()
+
+    TTP.targetThreatLeader = frame
+    return frame
+end
+
+local function UpdateTargetThreatLeader(box, data)
+    local frame = GetTargetThreatLeaderFrame()
+
+    if not TinyThreatPlusDB.showThreatLeader
+        or not box
+        or not box:IsShown()
+        or not data
+        or not data.leaderName
+    then
+        frame:Hide()
+        return
+    end
+
+    local unit = data.leaderUnit
+    local exists = unit and UnitExists(unit)
+    local _, class = nil, nil
+    if exists and UnitIsPlayer(unit) then
+        _, class = UnitClass(unit)
+    end
+
+    frame.icon:Hide()
+    if TinyThreatPlusDB.showThreatLeaderClassIcon and exists then
+        if class and TARGET_CLASS_ICON_ATLASES[class] then
+            frame.icon:SetTexCoord(0, 1, 0, 1)
+            frame.icon:SetAtlas(TARGET_CLASS_ICON_ATLASES[class])
+            frame.icon:Show()
+        elseif unit == "pet"
+            or string.match(unit or "", "^partypet%d+$")
+            or string.match(unit or "", "^raidpet%d+$")
+        then
+            frame.icon:SetTexCoord(0, 1, 0, 1)
+            SetPortraitTexture(frame.icon, unit)
+            frame.icon:Show()
+        end
+    end
+
+    frame.name:ClearAllPoints()
+    if frame.icon:IsShown() then
+        frame.name:SetPoint("LEFT", frame.icon, "RIGHT", 3, 0)
+    else
+        frame.name:SetPoint("LEFT", frame, "LEFT", 0, 0)
+    end
+
+    frame.name:SetText(data.leaderName)
+    if class and RAID_CLASS_COLORS and RAID_CLASS_COLORS[class] then
+        local color = RAID_CLASS_COLORS[class]
+        frame.name:SetTextColor(color.r, color.g, color.b)
+    else
+        frame.name:SetTextColor(1, 1, 1)
+    end
+
+    local scale = (TinyThreatPlusDB.targetThreatScale or 100) / 100
+    frame:SetScale(scale)
+    frame:ClearAllPoints()
+    frame:SetPoint("TOPLEFT", box, "BOTTOMLEFT", 0, -1)
+    frame:Show()
+end
+
 function TTP.UpdateTargetFrame()
     local box = TTP.GetTargetBox()
     local anchor = GetTargetNameAnchor()
