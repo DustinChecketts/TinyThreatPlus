@@ -496,7 +496,7 @@ MakeToggle(
 
 Section("Nameplate Information", -1183)
 SectionDescription(
-    "Restores useful unit information and optional Blizzard class coloring on native nameplates.",
+    "Controls TinyThreatPlus information added to Blizzard's native nameplates.",
     -1214
 )
 MakeToggle(
