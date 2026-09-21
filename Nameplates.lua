@@ -838,6 +838,18 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     -- than the nominal LevelFrame, which is why hiding LevelFrame alone did
     -- not remove it in live world plates.
     if healthBar.bgTexture then healthBar.bgTexture:SetAlpha(0) end
+
+    -- Forever's native target-selection highlight retains Blizzard's original
+    -- geometry after we resize HealthBarsContainer, producing the oversized
+    -- bright white outline seen around selected custom plates. The custom
+    -- layout owns its border, so suppress that native presentation layer.
+    if unitFrame.selectionHighlight then
+        unitFrame.selectionHighlight:SetAlpha(0)
+    end
+    if unitFrame.SelectionHighlight then
+        unitFrame.SelectionHighlight:SetAlpha(0)
+    end
+
     for _, key in ipairs({
         "LevelFrame",
         "PlayerLevelDifferentialFrame",
