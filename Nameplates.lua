@@ -1041,6 +1041,30 @@ function TTP.DumpForeverNameplateLevel(unit)
     -- both the Blizzard UnitFrame and the whole nameplate tree.
     ScanFrame(unitFrame, "UnitFrame", 0)
     ScanFrame(nameplate, "NamePlate", 0)
+
+    -- If no text region matches, dump all direct UnitFrame fields that are
+    -- frames/regions. Forever's level may be rendered by a mixin-owned field
+    -- that is not part of the normal child/region traversal.
+    print(" TinyThreatPlus: UnitFrame object fields:")
+    for key, value in pairs(unitFrame) do
+        local valueType = type(value)
+        if valueType == "table" or valueType == "userdata" then
+            local okType, objectType = pcall(function()
+                return value.GetObjectType and value:GetObjectType()
+            end)
+            if okType and objectType then
+                print("  [" .. tostring(key) .. "] " .. DescribeRegion(value))
+            end
+        end
+    end
+
+    -- Also report the health bar's anchor and right edge. The visible level
+    -- appears immediately after it even though LevelFrame itself is hidden.
+    if healthBar then
+        local left = healthBar.GetLeft and healthBar:GetLeft() or nil
+        local right = healthBar.GetRight and healthBar:GetRight() or nil
+        print(" healthBar edges: left=" .. tostring(left) .. " right=" .. tostring(right))
+    end
 end
 
 SLASH_TINYTHREATPLUSLEVELDIAG1 = "/ttplevel"
