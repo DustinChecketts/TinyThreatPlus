@@ -42,22 +42,24 @@ function Compat.SetCVar(name, value)
     return false
 end
 
+local function Accessible(value)
+    if value == nil then return nil end
+    if type(canaccessvalue) == "function" and not canaccessvalue(value) then return nil end
+    if type(issecretvalue) == "function" and issecretvalue(value) then return nil end
+    return value
+end
+
 function Compat.GetDetailedThreatSituation(sourceUnit, targetUnit)
-    if type(UnitDetailedThreatSituation) ~= "function" then
-        return nil
-    end
-    return Compat.ScrubSecretValues(
+    if type(UnitDetailedThreatSituation) ~= "function" then return nil end
+    local isTanking, status, scaledPercent, rawPercent, threatValue =
         UnitDetailedThreatSituation(sourceUnit, targetUnit)
-    )
+    return Accessible(isTanking), Accessible(status), Accessible(scaledPercent),
+        Accessible(rawPercent), Accessible(threatValue)
 end
 
 function Compat.GetThreatSituation(sourceUnit, targetUnit)
-    if type(UnitThreatSituation) ~= "function" then
-        return nil
-    end
-    return Compat.ScrubSecretValues(
-        UnitThreatSituation(sourceUnit, targetUnit)
-    )
+    if type(UnitThreatSituation) ~= "function" then return nil end
+    return Accessible(UnitThreatSituation(sourceUnit, targetUnit))
 end
 
 function Compat.HasCombatLogEventInfo()
