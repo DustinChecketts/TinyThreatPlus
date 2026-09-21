@@ -938,6 +938,108 @@ local function UpdateLevelAndClassification(nameplate, healthBar, unit)
 end
 
 -- ---------------------------------------------------------------------------
+-- Forever native level diagnostic
+-- ---------------------------------------------------------------------------
+local function DescribeRegion(region)
+    if not region then return "nil" end
+
+    local name = region.GetName and region:GetName() or nil
+    local objectType = region.GetObjectType and region:GetObjectType() or "?"
+    local shown = region.IsShown and region:IsShown() or false
+    local width = region.GetWidth and region:GetWidth() or 0
+    local height = region.GetHeight and region:GetHeight() or 0
+
+    local extra = ""
+    if objectType == "FontString" and region.GetText then
+        extra = " text=" .. tostring(region:GetText())
+    elseif objectType == "Texture" then
+        local atlas = region.GetAtlas and region:GetAtlas() or nil
+        local texture = region.GetTexture and region:GetTexture() or nil
+        extra = " atlas=" .. tostring(atlas) .. " texture=" .. tostring(texture)
+    end
+
+    return string.format(
+        "%s name=%s shown=%s size=%.1fx%.1f%s",
+        tostring(objectType),
+        tostring(name),
+        tostring(shown),
+        tonumber(width) or 0,
+        tonumber(height) or 0,
+        extra
+    )
+end
+
+function TTP.DumpForeverNameplateLevel(unit)
+    if not TTP.Compat.IsForever() then
+        print("TinyThreatPlus: Forever level diagnostic is Forever-only.")
+        return
+    end
+
+    unit = unit or "target"
+    local nameplate = C_NamePlate and C_NamePlate.GetNamePlateForUnit
+        and C_NamePlate.GetNamePlateForUnit(unit)
+
+    if not nameplate then
+        print("TinyThreatPlus: no visible nameplate for " .. tostring(unit) .. ".")
+        return
+    end
+
+    local unitFrame = nameplate.UnitFrame
+    print("TinyThreatPlus Forever level diagnostic: " .. tostring(UnitName(unit) or unit))
+    print(" nameplate: " .. DescribeRegion(nameplate))
+    print(" UnitFrame: " .. DescribeRegion(unitFrame))
+
+    if not unitFrame then return end
+
+    local candidates = {
+        "LevelFrame", "levelFrame", "Level", "level", "LevelText", "levelText",
+        "ClassificationFrame", "HealthBarsContainer", "healthBar", "HealthBar",
+    }
+
+    for _, key in ipairs(candidates) do
+        local value = unitFrame[key]
+        if value then
+            print(" UnitFrame." .. key .. ": " .. DescribeRegion(value))
+        end
+    end
+
+    if unitFrame.GetRegions then
+        local regions = { unitFrame:GetRegions() }
+        for index, region in ipairs(regions) do
+            local text = region.GetText and region:GetText() or nil
+            if text == tostring(UnitLevel(unit)) then
+                print(" MATCH UnitFrame region[" .. index .. "]: " .. DescribeRegion(region))
+            end
+        end
+    end
+
+    if unitFrame.GetChildren then
+        local children = { unitFrame:GetChildren() }
+        for index, child in ipairs(children) do
+            local found = false
+            if child.GetRegions then
+                local regions = { child:GetRegions() }
+                for regionIndex, region in ipairs(regions) do
+                    local text = region.GetText and region:GetText() or nil
+                    if text == tostring(UnitLevel(unit)) then
+                        if not found then
+                            print(" MATCH child[" .. index .. "]: " .. DescribeRegion(child))
+                            found = true
+                        end
+                        print("   region[" .. regionIndex .. "]: " .. DescribeRegion(region))
+                    end
+                end
+            end
+        end
+    end
+end
+
+SLASH_TINYTHREATPLUSLEVELDIAG1 = "/ttplevel"
+SlashCmdList.TINYTHREATPLUSLEVELDIAG = function()
+    TTP.DumpForeverNameplateLevel("target")
+end
+
+-- ---------------------------------------------------------------------------
 -- Threat-box and Blizzard side-aura layout
 -- ---------------------------------------------------------------------------
 local function AnchorThreatBox(nameplate, healthBar, box)
