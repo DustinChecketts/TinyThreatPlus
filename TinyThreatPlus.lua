@@ -1407,6 +1407,7 @@ local eventFrame = CreateFrame("Frame")
 local updateElapsed = 0
 
 eventFrame:SetScript("OnEvent", function(_, event, arg1)
+    if TTP.ThreatDiagnostic then TTP.ThreatDiagnostic.NoteEvent(event, arg1) end
     if event == "ADDON_LOADED" then
         if arg1 ~= ADDON_NAME then
             return
@@ -1555,6 +1556,15 @@ SlashCmdList.TINYTHREATPLUS = function(message)
     elseif command == "prioritydebug" then
         TTP.PrintPriorityDebug()
         return
+    elseif command == "threatdebug" then
+        if TTP.ThreatDiagnostic then TTP.ThreatDiagnostic.Start() end
+        return
+    elseif command == "threatstop" then
+        if TTP.ThreatDiagnostic then TTP.ThreatDiagnostic.Stop() end
+        return
+    elseif command == "threatreport" then
+        if TTP.ThreatDiagnostic then TTP.ThreatDiagnostic.PrintReport() end
+        return
     elseif command == "reset" then
         TTP.ResetDefaults()
         print("TinyThreatPlus settings reset.")
@@ -1571,6 +1581,9 @@ SlashCmdList.TINYTHREATPLUS = function(message)
         print("/ttp priority")
         print("/ttp testpriority")
         print("/ttp prioritydebug")
+        print("/ttp threatdebug")
+        print("/ttp threatstop")
+        print("/ttp threatreport")
         print("/ttp reset")
     end
 
