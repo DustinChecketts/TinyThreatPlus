@@ -806,11 +806,22 @@ local function PositionInfoWithoutLevel(nameplate, healthBar)
 end
 
 local function UpdateLevelAndClassification(nameplate, healthBar, unit)
-    -- Forever already supplies a native inline level box and complete layouts.
-    -- Leave Blizzard's level/name/classification presentation untouched.
+    -- Forever's native inline level badge does not fit TinyThreatPlus's
+    -- presentation. Hide Blizzard's LevelFrame for hostile NPCs; a future
+    -- pass will replace it with a TinyThreatPlus level treatment matching the
+    -- target-frame artwork. Leave non-hostile plates alone.
     if TTP.Compat.IsForever() then
         HideLevelBadge(nameplate)
         ResetClassificationFrame(nameplate)
+
+        local nativeLevelFrame = GetNativeLevelFrame(nameplate)
+        if nativeLevelFrame then
+            if TTP.IsHostileNPC(unit) then
+                nativeLevelFrame:Hide()
+            else
+                nativeLevelFrame:Show()
+            end
+        end
         return
     end
 
