@@ -846,11 +846,21 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     local container = unitFrame and unitFrame.HealthBarsContainer
     if not unitFrame or not container then return false end
 
-    -- Stable addon-owned geometry: targeting may change Blizzard emphasis,
-    -- but it no longer changes the dimensions of our presentation.
+    -- Follow the player's Blizzard style family/size rather than imposing a
+    -- single TTP geometry. Default/Cast Focus use the thin family; Large/Block
+    -- use the large family. This keeps custom presentation visually native.
+    local horizontalScale, verticalScale = GetNameplateVisualScales()
+    local styleFamily = GetNameplateStyleFamily()
+    local baseWidth = 137
+    local baseHeight = styleFamily == STYLE_FAMILY_LARGE and 20 or 12
+
     container:SetScale(1)
     container:ClearAllPoints()
-    PixelSetSize(container, 137, 16)
+    PixelSetSize(
+        container,
+        baseWidth * horizontalScale,
+        baseHeight * verticalScale
+    )
     PixelSetPoint(container, "BOTTOM", unitFrame, "BOTTOM", 0, 4)
 
     healthBar:ClearAllPoints()
@@ -895,7 +905,13 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         })
         healthBar.TinyThreatPlusForeverBorder = border
     end
-    border:SetBackdropBorderColor(0.72, 0.72, 0.76, 1)
+    -- TTP owns the target treatment now. Do not let Blizzard's mismatched
+    -- selection art reappear; brighten this exact-fit border for the target.
+    if UnitIsUnit and UnitIsUnit(unit, "target") then
+        border:SetBackdropBorderColor(0.82, 0.82, 0.86, 1)
+    else
+        border:SetBackdropBorderColor(0.26, 0.26, 0.29, 1)
+    end
     border:Show()
 
     -- Reuse our addon-owned circular level badge. Unlike Forever's native
@@ -938,8 +954,8 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
 
     if castBar then
         castBar:ClearAllPoints()
-        PixelSetPoint(castBar, "TOP", healthBar, "BOTTOM", 0, -2)
-        PixelSetSize(castBar, 137, 12)
+        PixelSetPoint(castBar, "TOP", healthBar, "BOTTOM", 0, -1)
+        PixelSetSize(castBar, healthBar:GetWidth(), 10 * verticalScale)
     elseif castContainer then
         castContainer:ClearAllPoints()
         PixelSetPoint(castContainer, "TOP", healthBar, "BOTTOM", 0, -2)
@@ -949,7 +965,7 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     if nameText then
         nameText:ClearAllPoints()
         nameText:SetJustifyH("CENTER")
-        PixelSetPoint(nameText, "BOTTOM", healthBar, "TOP", 0, 2)
+        PixelSetPoint(nameText, "BOTTOM", healthBar, "TOP", 0, 1)
     end
 
     return true
