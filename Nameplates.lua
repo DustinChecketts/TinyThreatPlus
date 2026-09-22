@@ -893,7 +893,22 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         if frame then frame:SetAlpha(0) end
     end
 
-    -- Draw a simple TTP-owned border over Blizzard's still-live health fill.
+    -- Blizzard exposes additional selection art on the health StatusBar
+    -- itself. This is the thick white frame still visible in live testing;
+    -- suppress it along with the UnitFrame-level highlight.
+    for _, key in ipairs({
+        "selectedBorder",
+        "SelectedBorder",
+        "deselectedOverlay",
+        "DeselectedOverlay",
+    }) do
+        local region = healthBar[key]
+        if region then region:SetAlpha(0) end
+    end
+
+    -- Our border is deliberately subtle and exactly follows the live bar.
+    -- Target selection is represented by this border, never by oversized
+    -- Blizzard art left over from the native geometry.
     local border = healthBar.TinyThreatPlusForeverBorder
     if not border then
         border = CreateFrame("Frame", nil, healthBar, "BackdropTemplate")
@@ -905,12 +920,10 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         })
         healthBar.TinyThreatPlusForeverBorder = border
     end
-    -- TTP owns the target treatment now. Do not let Blizzard's mismatched
-    -- selection art reappear; brighten this exact-fit border for the target.
     if UnitIsUnit and UnitIsUnit(unit, "target") then
-        border:SetBackdropBorderColor(0.82, 0.82, 0.86, 1)
+        border:SetBackdropBorderColor(0.62, 0.62, 0.66, 1)
     else
-        border:SetBackdropBorderColor(0.26, 0.26, 0.29, 1)
+        border:SetBackdropBorderColor(0.20, 0.20, 0.22, 1)
     end
     border:Show()
 
@@ -965,7 +978,8 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     if nameText then
         nameText:ClearAllPoints()
         nameText:SetJustifyH("CENTER")
-        PixelSetPoint(nameText, "BOTTOM", healthBar, "TOP", 0, 1)
+        PixelSetPoint(nameText, "BOTTOM", healthBar, "TOP", 0, 2)
+        nameText:SetWidth(0)
     end
 
     return true
