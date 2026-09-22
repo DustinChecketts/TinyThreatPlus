@@ -691,14 +691,20 @@ local function PositionClassicName(nameplate, healthBar)
     -- name/health row after we resize HealthBarsContainer.
     local castContainer = unitFrame.CastBarsContainer
     if castContainer then
-        castContainer:ClearAllPoints()
-        PixelSetPoint(castContainer, "TOP", healthBar, "BOTTOM", 0, -2)
-        PixelSetSize(castContainer, 137, 14)
-
+        -- Forever's CastBarsContainer has its own native internal geometry.
+        -- Resizing the container and then stretching castBar to it caused the
+        -- live cast fill/text to overlap the health row. Keep Blizzard's cast
+        -- bar dimensions and move the *actual cast bar* below our health bar.
         local castBar = castContainer.castBar or unitFrame.castBar
+
         if castBar then
             castBar:ClearAllPoints()
-            castBar:SetAllPoints(castContainer)
+            PixelSetPoint(castBar, "TOP", healthBar, "BOTTOM", 0, -2)
+            PixelSetSize(castBar, 137, 12)
+        else
+            -- Fallback for builds where only the container is exposed.
+            castContainer:ClearAllPoints()
+            PixelSetPoint(castContainer, "TOP", healthBar, "BOTTOM", 0, -2)
         end
     end
 
