@@ -929,6 +929,22 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         HideLevelBadge(nameplate)
     end
 
+    -- Forever cast presentation is a sibling system, not part of the health
+    -- bar. Move the exposed Blizzard cast bar itself in this live layout pass.
+    local castContainer = unitFrame.CastBarsContainer
+    local castBar = castContainer and (castContainer.castBar or castContainer.CastBar)
+        or unitFrame.castBar
+        or unitFrame.CastBar
+
+    if castBar then
+        castBar:ClearAllPoints()
+        PixelSetPoint(castBar, "TOP", healthBar, "BOTTOM", 0, -2)
+        PixelSetSize(castBar, 137, 12)
+    elseif castContainer then
+        castContainer:ClearAllPoints()
+        PixelSetPoint(castContainer, "TOP", healthBar, "BOTTOM", 0, -2)
+    end
+
     local nameText = GetNativeNameFontString(nameplate, healthBar)
     if nameText then
         nameText:ClearAllPoints()
