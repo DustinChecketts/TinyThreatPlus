@@ -1,6 +1,6 @@
 ## Interface: 20506, 11509, 16001
 ## Title: TinyThreatPlus
-## Version: 1.2.0
+## Version: 1.3.0
 ## Author: StormtrooperTK421
 ## Notes: Lightweight and feature-rich threat addon for Blizzard nameplates.
 ## DefaultState: enabled
@@ -9,6 +9,5 @@
 
 Compat.lua
 TinyThreatPlus.lua
-ThreatDiagnostic.lua
 Nameplates.lua
 Options.lua
