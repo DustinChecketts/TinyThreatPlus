@@ -1,0 +1,7 @@
+package-as: TinyThreatPlus
+
+ignore:
+  - .github
+  - .gitignore
+  - docs
+  - ThreatDiagnostic.lua
