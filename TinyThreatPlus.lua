@@ -993,6 +993,8 @@ local function UpdateStandaloneTargetCounter(
 
     if not TinyThreatPlusDB.showTargetFrameCounter
         or not UnitExists("target")
+        or not UnitCanAttack("player", "target")
+        or UnitIsFriend("player", "target")
     then
         counter:Hide()
         return
