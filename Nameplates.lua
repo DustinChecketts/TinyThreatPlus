@@ -948,7 +948,7 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     targetHighlight:SetBackdropBorderColor(0, 0, 0, 0)
     TTP.ApplyForeverRoundedChrome(
         targetHighlight,
-        1, 1, 1, 0.14,
+        1, 1, 1, 0,
         1, 1, 1, 0.82
     )
 
