@@ -2111,10 +2111,18 @@ function TTP.UpdateNameplate(unit)
 
     AnchorThreatBox(nameplate, healthBar, box)
 
+    -- On Forever, the Threat Box is part of the same horizontal row as the
+    -- health bar and level badge. Keep its outer height exactly equal to the
+    -- live health bar; the user's threat scale changes width/text, not height.
+    local renderedBoxHeight = boxHeight * userScale
+    if TTP.Compat.IsForever() then
+        renderedBoxHeight = healthBar:GetHeight()
+    end
+
     TTP.UpdateThreatBox(
         box,
         boxWidth,
-        boxHeight * userScale,
+        renderedBoxHeight,
         boxFontSize,
         text,
         red,
