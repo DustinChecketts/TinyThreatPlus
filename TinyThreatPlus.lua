@@ -803,6 +803,66 @@ end
 -- ---------------------------------------------------------------------------
 -- Shared threat-box presentation
 -- ---------------------------------------------------------------------------
+-- Forever uses a compact modern nameplate shell. Build the chrome from
+-- simple rects with one-pixel clipped corners so addon-owned frames visually
+-- match Blizzard's subtly rounded health bars without depending on a
+-- client-specific NineSlice layout.
+function TTP.ApplyForeverRoundedChrome(
+    frame,
+    bgR, bgG, bgB, bgA,
+    edgeR, edgeG, edgeB, edgeA
+)
+    if not frame.TinyThreatPlusRoundedChrome then
+        local chrome = {}
+
+        chrome.bgH = frame:CreateTexture(nil, "BACKGROUND")
+        chrome.bgV = frame:CreateTexture(nil, "BACKGROUND")
+
+        chrome.top = frame:CreateTexture(nil, "BORDER")
+        chrome.bottom = frame:CreateTexture(nil, "BORDER")
+        chrome.left = frame:CreateTexture(nil, "BORDER")
+        chrome.right = frame:CreateTexture(nil, "BORDER")
+
+        -- Two overlapping rectangles leave only the four 1x1 corner pixels
+        -- empty, producing a restrained radius at Forever nameplate scale.
+        chrome.bgH:SetPoint("TOPLEFT", frame, "TOPLEFT", 1, 0)
+        chrome.bgH:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -1, 0)
+        chrome.bgV:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -1)
+        chrome.bgV:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 1)
+
+        chrome.top:SetPoint("TOPLEFT", frame, "TOPLEFT", 1, 0)
+        chrome.top:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -1, 0)
+        chrome.top:SetHeight(1)
+
+        chrome.bottom:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 1, 0)
+        chrome.bottom:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -1, 0)
+        chrome.bottom:SetHeight(1)
+
+        chrome.left:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -1)
+        chrome.left:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 1)
+        chrome.left:SetWidth(1)
+
+        chrome.right:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, -1)
+        chrome.right:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 1)
+        chrome.right:SetWidth(1)
+
+        frame.TinyThreatPlusRoundedChrome = chrome
+    end
+
+    local chrome = frame.TinyThreatPlusRoundedChrome
+    chrome.bgH:SetColorTexture(bgR, bgG, bgB, bgA)
+    chrome.bgV:SetColorTexture(bgR, bgG, bgB, bgA)
+
+    for _, edge in ipairs({
+        chrome.top,
+        chrome.bottom,
+        chrome.left,
+        chrome.right,
+    }) do
+        edge:SetColorTexture(edgeR, edgeG, edgeB, edgeA)
+    end
+end
+
 function TTP.ApplyBoxStyle(frame, height)
     local forever = TTP.Compat.IsForever()
     local edgeSize = forever and 1 or 10
@@ -830,11 +890,21 @@ function TTP.ApplyBoxStyle(frame, height)
         },
     })
 
-    frame:SetBackdropColor(unpack(TTP.colors.background))
-
     if forever then
-        frame:SetBackdropBorderColor(0.34, 0.34, 0.38, 0.95)
+        -- Backdrop edges are square. The Forever renderer uses our clipped
+        -- one-pixel-corner chrome instead.
+        frame:SetBackdropColor(0, 0, 0, 0)
+        frame:SetBackdropBorderColor(0, 0, 0, 0)
+        TTP.ApplyForeverRoundedChrome(
+            frame,
+            TTP.colors.background[1],
+            TTP.colors.background[2],
+            TTP.colors.background[3],
+            TTP.colors.background[4],
+            0.34, 0.34, 0.38, 0.95
+        )
     else
+        frame:SetBackdropColor(unpack(TTP.colors.background))
         frame:SetBackdropBorderColor(unpack(TTP.colors.border))
     end
 end
