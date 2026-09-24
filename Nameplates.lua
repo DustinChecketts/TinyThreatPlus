@@ -829,9 +829,12 @@ local function PositionInfoWithoutLevel(nameplate, healthBar)
 end
 
 local function ApplyForeverLevelBadgeScale(badge, healthHeight)
-    local size = math.max(8, healthHeight or 12)
-    local bevelSize = math.max(6, size - 2)
-    local innerSize = math.max(4, size - 4)
+    -- Keep the level readable while remaining subordinate to the health row.
+    -- The badge may exceed the bar by only 2px total (1px per side), rather
+    -- than shrinking the numeral into an unreadable dot at Default size.
+    local size = math.max(12, (healthHeight or 12) + 2)
+    local bevelSize = math.max(10, size - 2)
+    local innerSize = math.max(8, size - 4)
 
     PixelSetSize(badge, size, size)
     PixelSetSize(badge.modernBevel, bevelSize, bevelSize)
@@ -991,7 +994,7 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
                 badge.skull:Hide()
                 badge.text:SetFont(
                     STANDARD_TEXT_FONT,
-                    math.max(7, math.floor(healthBar:GetHeight() * 0.58)),
+                    math.max(9, math.floor(healthBar:GetHeight() * 0.72)),
                     "OUTLINE"
                 )
                 badge.text:SetText(tostring(level))
