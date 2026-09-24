@@ -997,6 +997,16 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
                     math.max(9, math.floor(healthBar:GetHeight() * 0.72)),
                     "OUTLINE"
                 )
+                badge.text:ClearAllPoints()
+                badge.text:SetPoint(
+                    "CENTER",
+                    badge,
+                    "CENTER",
+                    level < 10 and -0.25 or -0.5,
+                    0.5
+                )
+                badge.text:SetJustifyH("CENTER")
+                badge.text:SetJustifyV("MIDDLE")
                 badge.text:SetText(tostring(level))
                 badge.text:SetTextColor(red, green, blue)
                 badge.text:Show()
