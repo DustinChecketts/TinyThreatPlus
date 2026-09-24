@@ -938,8 +938,16 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     targetHighlight:ClearAllPoints()
     targetHighlight:SetPoint("TOPLEFT", healthBar, "TOPLEFT", -2, 2)
     targetHighlight:SetPoint("BOTTOMRIGHT", healthBar, "BOTTOMRIGHT", 2, -2)
-    targetHighlight:SetBackdropColor(1, 1, 1, 0.14)
-    targetHighlight:SetBackdropBorderColor(1, 1, 1, 0.82)
+    -- Use the same clipped-corner geometry as the health/threat row.
+    -- The highlight remains a softer white background treatment rather than
+    -- a second hard rectangular border.
+    targetHighlight:SetBackdropColor(0, 0, 0, 0)
+    targetHighlight:SetBackdropBorderColor(0, 0, 0, 0)
+    TTP.ApplyForeverRoundedChrome(
+        targetHighlight,
+        1, 1, 1, 0.14,
+        1, 1, 1, 0.82
+    )
 
     if UnitIsUnit and UnitIsUnit(unit, "target") then
         targetHighlight:Show()
@@ -1838,6 +1846,17 @@ local function ApplyPriorityMarkerAppearance(
     marker:SetBackdropBorderColor(
         unpack(TTP.colors.border)
     )
+
+    if TTP.Compat.IsForever() then
+        TTP.ApplyForeverRoundedChrome(
+            marker,
+            color[1], color[2], color[3], opacity,
+            TTP.colors.border[1],
+            TTP.colors.border[2],
+            TTP.colors.border[3],
+            TTP.colors.border[4] or 1
+        )
+    end
 end
 
 local function HidePriorityMarker(marker)
