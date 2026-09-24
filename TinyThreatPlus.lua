@@ -1046,6 +1046,16 @@ local function GetTargetFrameCounter()
     return counter
 end
 
+local function GetTargetPortraitAnchor()
+    if TargetFrame then
+        if TargetFrame.PortraitContainer then return TargetFrame.PortraitContainer end
+        if TargetFrame.portrait then return TargetFrame.portrait end
+        if TargetFrame.Portrait then return TargetFrame.Portrait end
+    end
+    if TargetFramePortrait then return TargetFramePortrait end
+    return TargetFrameTextureFrame or TargetFrame
+end
+
 local function UpdateStandaloneTargetCounter(
     anchor,
     threatBoxVisible
@@ -1085,7 +1095,7 @@ local function UpdateStandaloneTargetCounter(
         counter,
         "CENTER",
         xOffset,
-        0
+        0.5
     )
 
     counter.text:SetFont(
@@ -1098,13 +1108,16 @@ local function UpdateStandaloneTargetCounter(
 
     counter:ClearAllPoints()
 
-    if threatBoxVisible and TTP.targetBox then
+    -- Associate the counter with the target portrait. Upper-right mirrors
+    -- Blizzard's lower-right level badge and does not move with threat UI.
+    local portraitAnchor = GetTargetPortraitAnchor()
+    if portraitAnchor then
         counter:SetPoint(
-            "LEFT",
-            TTP.targetBox,
-            "RIGHT",
-            -4,
-            0
+            "CENTER",
+            portraitAnchor,
+            "TOPRIGHT",
+            -2,
+            -2
         )
     else
         counter:SetPoint(
