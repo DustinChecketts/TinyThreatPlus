@@ -884,6 +884,22 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     healthBar:ClearAllPoints()
     healthBar:SetAllPoints(container)
 
+    -- Forever-style health shell: restrained 2px corners, dark outer rim and
+    -- subtle warm-gray inner field like Blizzard's modern unit frames.
+    local healthShell = healthBar.TinyThreatPlusForeverShell
+    if not healthShell then
+        healthShell = CreateFrame("Frame", nil, container)
+        healthShell:SetAllPoints(healthBar)
+        healthShell:SetFrameLevel(math.max(0, (healthBar:GetFrameLevel() or 1) - 1))
+        healthBar.TinyThreatPlusForeverShell = healthShell
+    end
+    TTP.ApplyForeverRoundedChrome(
+        healthShell,
+        0.08, 0.08, 0.08, 1,
+        0.42, 0.38, 0.30, 1
+    )
+    healthShell:Show()
+
     -- Suppress Blizzard's presentation art while retaining the StatusBar.
     -- The visible Forever level cap is coupled to this presentation rather
     -- than the nominal LevelFrame, which is why hiding LevelFrame alone did
@@ -949,7 +965,7 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     TTP.ApplyForeverRoundedChrome(
         targetHighlight,
         1, 1, 1, 0,
-        1, 1, 1, 0.82
+        0.94, 0.94, 0.96, 0.92
     )
 
     if UnitIsUnit and UnitIsUnit(unit, "target") then
@@ -984,7 +1000,7 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
             ApplyForeverLevelBadgeScale(badge, healthBar:GetHeight())
             ApplyLevelBadgeStyle(badge)
             badge:ClearAllPoints()
-            PixelSetPoint(badge, "LEFT", healthBar, "RIGHT", 2, 0)
+            PixelSetPoint(badge, "LEFT", healthBar, "RIGHT", 1, 0)
 
             if level < 0 then
                 badge.text:Hide()
@@ -1030,6 +1046,20 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         castBar:ClearAllPoints()
         PixelSetPoint(castBar, "TOP", healthBar, "BOTTOM", 0, -1)
         PixelSetSize(castBar, healthBar:GetWidth(), 10 * verticalScale)
+
+        local castShell = castBar.TinyThreatPlusForeverShell
+        if not castShell then
+            castShell = CreateFrame("Frame", nil, castBar)
+            castShell:SetAllPoints(castBar)
+            castShell:SetFrameLevel((castBar:GetFrameLevel() or 1) + 3)
+            castBar.TinyThreatPlusForeverShell = castShell
+        end
+        TTP.ApplyForeverRoundedChrome(
+            castShell,
+            0, 0, 0, 0,
+            0.42, 0.38, 0.30, 1
+        )
+        castShell:Show()
     elseif castContainer then
         castContainer:ClearAllPoints()
         PixelSetPoint(castContainer, "TOP", healthBar, "BOTTOM", 0, -2)
@@ -1039,7 +1069,7 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     if nameText then
         nameText:ClearAllPoints()
         nameText:SetJustifyH("CENTER")
-        PixelSetPoint(nameText, "BOTTOM", healthBar, "TOP", 0, 2)
+        PixelSetPoint(nameText, "BOTTOM", healthBar, "TOP", 0, 1)
         nameText:SetWidth(0)
     end
 
@@ -1316,9 +1346,9 @@ local function AnchorThreatBox(nameplate, healthBar, box)
     if TTP.Compat.IsForever() then
         local levelBadge = nameplate and nameplate.TinyThreatPlusLevel
         if levelBadge and levelBadge:IsShown() then
-            PixelSetPoint(box, "LEFT", levelBadge, "RIGHT", 2, 0)
+            PixelSetPoint(box, "LEFT", levelBadge, "RIGHT", 1, 0)
         else
-            PixelSetPoint(box, "LEFT", healthBar, "RIGHT", 2, 0)
+            PixelSetPoint(box, "LEFT", healthBar, "RIGHT", 1, 0)
         end
         return
     end
