@@ -828,6 +828,21 @@ local function PositionInfoWithoutLevel(nameplate, healthBar)
     PositionBlizzardInfoSlot(nameplate, healthBar)
 end
 
+local function ApplyForeverLevelBadgeScale(badge, healthHeight)
+    local size = math.max(8, healthHeight or 12)
+    local bevelSize = math.max(6, size - 2)
+    local innerSize = math.max(4, size - 4)
+
+    PixelSetSize(badge, size, size)
+    PixelSetSize(badge.modernBevel, bevelSize, bevelSize)
+    PixelSetSize(badge.modernInner, innerSize, innerSize)
+    PixelSetSize(badge.text, size, size)
+    PixelSetSize(badge.skull, math.max(6, size - 4), math.max(6, size - 4))
+
+    badge.TinyThreatPlusLevelScale = 1
+    badge.TinyThreatPlusLevelBaseSize = size
+end
+
 -- Forever custom presentation keeps Blizzard's live UnitFrame and StatusBar
 -- logic, but takes ownership of visible geometry/art. This follows the safe
 -- pattern proven by ClassicUIForever: never replace the world nameplate or
@@ -906,9 +921,34 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         if region then region:SetAlpha(0) end
     end
 
-    -- Our border is deliberately subtle and exactly follows the live bar.
-    -- Target selection is represented by this border, never by oversized
-    -- Blizzard art left over from the native geometry.
+    -- TTP-owned selected-target highlight. It sits behind the health bar,
+    -- follows the exact custom geometry, and is intentionally softer than
+    -- Target Priority: bright white with low opacity rather than navy blue.
+    local targetHighlight = healthBar.TinyThreatPlusTargetHighlight
+    if not targetHighlight then
+        targetHighlight = CreateFrame("Frame", nil, container, "BackdropTemplate")
+        targetHighlight:SetFrameLevel(math.max(0, (healthBar:GetFrameLevel() or 1) - 1))
+        targetHighlight:SetBackdrop({
+            bgFile = "Interface\\Buttons\\WHITE8X8",
+            edgeFile = "Interface\\Buttons\\WHITE8X8",
+            edgeSize = 1,
+        })
+        healthBar.TinyThreatPlusTargetHighlight = targetHighlight
+    end
+    targetHighlight:ClearAllPoints()
+    targetHighlight:SetPoint("TOPLEFT", healthBar, "TOPLEFT", -2, 2)
+    targetHighlight:SetPoint("BOTTOMRIGHT", healthBar, "BOTTOMRIGHT", 2, -2)
+    targetHighlight:SetBackdropColor(1, 1, 1, 0.14)
+    targetHighlight:SetBackdropBorderColor(1, 1, 1, 0.82)
+
+    if UnitIsUnit and UnitIsUnit(unit, "target") then
+        targetHighlight:Show()
+    else
+        targetHighlight:Hide()
+    end
+
+    -- Exact-fit inner border. Selection is handled by the background frame
+    -- above so the health bar never gets the old double-border appearance.
     local border = healthBar.TinyThreatPlusForeverBorder
     if not border then
         border = CreateFrame("Frame", nil, healthBar, "BackdropTemplate")
@@ -920,11 +960,7 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         })
         healthBar.TinyThreatPlusForeverBorder = border
     end
-    if UnitIsUnit and UnitIsUnit(unit, "target") then
-        border:SetBackdropBorderColor(0.62, 0.62, 0.66, 1)
-    else
-        border:SetBackdropBorderColor(0.20, 0.20, 0.22, 1)
-    end
+    border:SetBackdropBorderColor(0.20, 0.20, 0.22, 1)
     border:Show()
 
     -- Reuse our addon-owned circular level badge. Unlike Forever's native
@@ -934,7 +970,7 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         local secret = type(issecretvalue) == "function" and issecretvalue(level)
         if level and not secret and level ~= 0 then
             local badge = CreateLevelBadge(nameplate)
-            ApplyModernLevelBadgeScale(badge)
+            ApplyForeverLevelBadgeScale(badge, healthBar:GetHeight())
             ApplyLevelBadgeStyle(badge)
             badge:ClearAllPoints()
             PixelSetPoint(badge, "LEFT", healthBar, "RIGHT", 2, 0)
@@ -945,7 +981,11 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
             else
                 local red, green, blue = GetDifficultyColor(level)
                 badge.skull:Hide()
-                badge.text:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+                badge.text:SetFont(
+                    STANDARD_TEXT_FONT,
+                    math.max(7, math.floor(healthBar:GetHeight() * 0.58)),
+                    "OUTLINE"
+                )
                 badge.text:SetText(tostring(level))
                 badge.text:SetTextColor(red, green, blue)
                 badge.text:Show()
