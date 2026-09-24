@@ -815,52 +815,43 @@ function TTP.ApplyForeverRoundedChrome(
     if not frame.TinyThreatPlusRoundedChrome then
         local chrome = {}
 
-        chrome.bgH = frame:CreateTexture(nil, "BACKGROUND")
-        chrome.bgV = frame:CreateTexture(nil, "BACKGROUND")
+        -- A reusable rounded mask gives the entire addon-owned shell real
+        -- curved corners. This is preferable to merely clipping one corner
+        -- pixel, which still reads square at Forever's UI scale.
+        chrome.fill = frame:CreateTexture(nil, "BACKGROUND")
+        chrome.fill:SetAllPoints(frame)
+        chrome.fill:SetTexture("Interface\\Buttons\\WHITE8X8")
 
-        chrome.top = frame:CreateTexture(nil, "BORDER")
-        chrome.bottom = frame:CreateTexture(nil, "BORDER")
-        chrome.left = frame:CreateTexture(nil, "BORDER")
-        chrome.right = frame:CreateTexture(nil, "BORDER")
+        chrome.fillMask = frame:CreateMaskTexture(nil, "BACKGROUND")
+        chrome.fillMask:SetAllPoints(frame)
+        chrome.fillMask:SetTexture(
+            "Interface\\CHARACTERFRAME\\TempPortraitAlphaMask"
+        )
+        chrome.fill:AddMaskTexture(chrome.fillMask)
 
-        -- Two overlapping rectangles leave only the four 1x1 corner pixels
-        -- empty, producing a restrained radius at Forever nameplate scale.
-        chrome.bgH:SetPoint("TOPLEFT", frame, "TOPLEFT", 1, 0)
-        chrome.bgH:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -1, 0)
-        chrome.bgV:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -1)
-        chrome.bgV:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 1)
+        -- The edge is a slightly larger rounded silhouette behind the fill.
+        -- Insetting the fill by one pixel leaves a clean curved 1px rim.
+        chrome.edge = frame:CreateTexture(nil, "BACKGROUND", nil, -1)
+        chrome.edge:SetAllPoints(frame)
+        chrome.edge:SetTexture("Interface\\Buttons\\WHITE8X8")
 
-        chrome.top:SetPoint("TOPLEFT", frame, "TOPLEFT", 1, 0)
-        chrome.top:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -1, 0)
-        chrome.top:SetHeight(1)
+        chrome.edgeMask = frame:CreateMaskTexture(nil, "BACKGROUND")
+        chrome.edgeMask:SetAllPoints(frame)
+        chrome.edgeMask:SetTexture(
+            "Interface\\CHARACTERFRAME\\TempPortraitAlphaMask"
+        )
+        chrome.edge:AddMaskTexture(chrome.edgeMask)
 
-        chrome.bottom:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 1, 0)
-        chrome.bottom:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -1, 0)
-        chrome.bottom:SetHeight(1)
-
-        chrome.left:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -1)
-        chrome.left:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 1)
-        chrome.left:SetWidth(1)
-
-        chrome.right:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, -1)
-        chrome.right:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 1)
-        chrome.right:SetWidth(1)
+        chrome.fill:ClearAllPoints()
+        chrome.fill:SetPoint("TOPLEFT", frame, "TOPLEFT", 1, -1)
+        chrome.fill:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -1, 1)
 
         frame.TinyThreatPlusRoundedChrome = chrome
     end
 
     local chrome = frame.TinyThreatPlusRoundedChrome
-    chrome.bgH:SetColorTexture(bgR, bgG, bgB, bgA)
-    chrome.bgV:SetColorTexture(bgR, bgG, bgB, bgA)
-
-    for _, edge in ipairs({
-        chrome.top,
-        chrome.bottom,
-        chrome.left,
-        chrome.right,
-    }) do
-        edge:SetColorTexture(edgeR, edgeG, edgeB, edgeA)
-    end
+    chrome.fill:SetColorTexture(bgR, bgG, bgB, bgA)
+    chrome.edge:SetColorTexture(edgeR, edgeG, edgeB, edgeA)
 end
 
 function TTP.ApplyBoxStyle(frame, height)
