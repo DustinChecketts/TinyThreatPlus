@@ -895,8 +895,8 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     end
     TTP.ApplyForeverRoundedChrome(
         healthShell,
-        0.08, 0.08, 0.08, 1,
-        0.42, 0.38, 0.30, 1
+        0.07, 0.07, 0.07, 1,
+        0.30, 0.28, 0.24, 0.95
     )
     healthShell:Show()
 
@@ -965,7 +965,7 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     TTP.ApplyForeverRoundedChrome(
         targetHighlight,
         1, 1, 1, 0,
-        0.94, 0.94, 0.96, 0.92
+        0.94, 0.94, 0.96, 0.88
     )
 
     if UnitIsUnit and UnitIsUnit(unit, "target") then
@@ -1057,7 +1057,7 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         TTP.ApplyForeverRoundedChrome(
             castShell,
             0, 0, 0, 0,
-            0.42, 0.38, 0.30, 1
+            0.30, 0.28, 0.24, 0.95
         )
         castShell:Show()
     elseif castContainer then
