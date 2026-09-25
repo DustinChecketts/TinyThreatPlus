@@ -995,7 +995,18 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     if ShouldShowLevel(unit) then
         local level = UnitLevel(unit)
         local secret = type(issecretvalue) == "function" and issecretvalue(level)
-        if level and not secret and level ~= 0 then
+        local accessible = level ~= nil
+            and not secret
+            and (
+                type(canaccessvalue) ~= "function"
+                or canaccessvalue(level)
+            )
+
+        -- Forever can return a protected/inaccessible level as the unit moves
+        -- out of information range. Passing that value to a FontString is
+        -- rendered by Blizzard as "...". Never render protected level data;
+        -- hide our badge until a normal numeric level is accessible again.
+        if accessible and type(level) == "number" and level ~= 0 then
             local badge = CreateLevelBadge(nameplate)
             ApplyForeverLevelBadgeScale(badge, healthBar:GetHeight())
             ApplyLevelBadgeStyle(badge)
