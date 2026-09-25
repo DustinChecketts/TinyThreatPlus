@@ -855,8 +855,18 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         or not nameplate
         or not healthBar
         or not unit
-        or not TTP.IsHostileNPC(unit)
     then
+        return false
+    end
+
+    -- Remember that this world plate belongs to a hostile NPC while that
+    -- relationship is accessible. Forever can protect UnitCanAttack/level
+    -- data at distance; abandoning the custom pass at that point lets pieces
+    -- of Blizzard's native presentation (including its "..." level cap)
+    -- reappear on an otherwise TTP-owned plate.
+    if TTP.IsHostileNPC(unit) then
+        nameplate.TinyThreatPlusForeverHostile = true
+    elseif not nameplate.TinyThreatPlusForeverHostile then
         return false
     end
 
@@ -2004,6 +2014,7 @@ function TTP.ClearNameplate(nameplate)
     RestoreHealthBarColor(nameplate)
 
     nameplate.TinyThreatPlusHealthBar = nil
+    nameplate.TinyThreatPlusForeverHostile = nil
 end
 
 local function ApplyNameplateColor(healthBar, unit, data)
