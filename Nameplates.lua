@@ -553,10 +553,12 @@ local function UpdateClassificationFrame(nameplate, healthBar, unit)
 
     local classification = UnitClassification(unit)
 
-    -- Blizzard raid markers intentionally take priority over classification
-    -- artwork. Never force TinyThreatPlus's plain-rare dragon into the same
-    -- information slot while a raid marker is assigned.
-    if HasBlizzardRaidMarker(nameplate) then
+    -- Anniversary uses a shared slot, so raid markers take priority there.
+    -- Forever has dedicated positions for raid marker and rarity, allowing
+    -- both to remain visible just like the established TTP information map.
+    if HasBlizzardRaidMarker(nameplate)
+        and not TTP.Compat.IsForever()
+    then
         ResetClassificationFrame(nameplate)
         return nil
     end
@@ -609,9 +611,35 @@ local function PositionBlizzardInfoSlot(nameplate, anchorFrame)
     local classificationFrame = unitFrame.ClassificationFrame
     local raidTargetFrame = unitFrame.RaidTargetFrame
 
-    -- Classification and raid-target artwork intentionally share one slot.
-    -- Blizzard decides which is visible; TinyThreatPlus only standardizes
-    -- where that slot lives.
+    if TTP.Compat.IsForever() then
+        -- Anniversary parity: rarity/classification owns the immediate-left
+        -- slot; Blizzard's raid marker sits above that cluster instead of
+        -- replacing it.
+        if classificationFrame then
+            classificationFrame:ClearAllPoints()
+            classificationFrame:SetPoint(
+                "RIGHT",
+                anchorFrame,
+                "LEFT",
+                -2,
+                0
+            )
+        end
+
+        if raidTargetFrame then
+            raidTargetFrame:ClearAllPoints()
+            raidTargetFrame:SetPoint(
+                "BOTTOM",
+                anchorFrame,
+                "TOPLEFT",
+                -7,
+                2
+            )
+        end
+        return
+    end
+
+    -- Anniversary/Classic keeps its established shared information slot.
     if classificationFrame then
         classificationFrame:ClearAllPoints()
         classificationFrame:SetPoint(
@@ -947,7 +975,6 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         "LevelFrame",
         "PlayerLevelDifferentialFrame",
         "PlayerLevelDiffFrame",
-        "ClassificationFrame",
     }) do
         local frame = unitFrame[key]
         if frame then frame:SetAlpha(0) end
@@ -2235,7 +2262,7 @@ function TTP.UpdateNameplate(unit)
 
     if box.counterRing then
         box.counterRing:ClearAllPoints()
-        box.counterRing:SetPoint("CENTER", box, "RIGHT", 5, 0)
+        box.counterRing:SetPoint("CENTER", box, "RIGHT", 4, 0)
     end
 
     ApplyTargetCounterScale(box)
