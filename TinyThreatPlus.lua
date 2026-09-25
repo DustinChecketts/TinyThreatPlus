@@ -820,63 +820,31 @@ function TTP.ApplyForeverRoundedChrome(
             return t
         end
 
-        -- Forever unit bars are not pills. They are rectangular shells with
-        -- a restrained ~2px radius. Build that geometry explicitly so radius
-        -- is independent of frame width.
-        c.edgeCenter = Tex("BACKGROUND")
-        c.edgeCenter:SetPoint("TOPLEFT", frame, "TOPLEFT", 2, 0)
-        c.edgeCenter:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -2, 0)
-        c.edgeSides = Tex("BACKGROUND")
-        c.edgeSides:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -2)
-        c.edgeSides:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 2)
+        -- Forever's HD unit-frame bars use a very light shell with a smooth,
+        -- shallow corner. At nameplate scale a 1px clipped corner reads
+        -- cleaner than the previous 2px stepped frame and keeps the rim thin.
+        c.edgeH = Tex("BACKGROUND")
+        c.edgeH:SetPoint("TOPLEFT", frame, "TOPLEFT", 1, 0)
+        c.edgeH:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -1, 0)
+        c.edgeV = Tex("BACKGROUND")
+        c.edgeV:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -1)
+        c.edgeV:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 1)
 
-        c.edgeTL = Tex("BACKGROUND")
-        c.edgeTR = Tex("BACKGROUND")
-        c.edgeBL = Tex("BACKGROUND")
-        c.edgeBR = Tex("BACKGROUND")
-        c.edgeTL:SetPoint("TOPLEFT", frame, "TOPLEFT", 1, -1)
-        c.edgeTR:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -1, -1)
-        c.edgeBL:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 1, 1)
-        c.edgeBR:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -1, 1)
-        for _, corner in ipairs({c.edgeTL,c.edgeTR,c.edgeBL,c.edgeBR}) do
-            corner:SetSize(1,1)
-        end
-
-        -- Inset fill leaves a one-pixel outer rim and repeats the same small
-        -- radius rather than turning short frames into ovals.
-        c.fillCenter = Tex("BORDER")
-        c.fillCenter:SetPoint("TOPLEFT", frame, "TOPLEFT", 3, -1)
-        c.fillCenter:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -3, 1)
-        c.fillSides = Tex("BORDER")
-        c.fillSides:SetPoint("TOPLEFT", frame, "TOPLEFT", 1, -3)
-        c.fillSides:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -1, 3)
-
-        c.fillTL = Tex("BORDER")
-        c.fillTR = Tex("BORDER")
-        c.fillBL = Tex("BORDER")
-        c.fillBR = Tex("BORDER")
-        c.fillTL:SetPoint("TOPLEFT", frame, "TOPLEFT", 2, -2)
-        c.fillTR:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -2, -2)
-        c.fillBL:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 2, 2)
-        c.fillBR:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -2, 2)
-        for _, corner in ipairs({c.fillTL,c.fillTR,c.fillBL,c.fillBR}) do
-            corner:SetSize(1,1)
-        end
+        c.fillH = Tex("BORDER")
+        c.fillH:SetPoint("TOPLEFT", frame, "TOPLEFT", 2, -1)
+        c.fillH:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -2, 1)
+        c.fillV = Tex("BORDER")
+        c.fillV:SetPoint("TOPLEFT", frame, "TOPLEFT", 1, -2)
+        c.fillV:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -1, 2)
 
         frame.TinyThreatPlusRoundedChrome = c
     end
 
     local c = frame.TinyThreatPlusRoundedChrome
-    for _, t in ipairs({
-        c.edgeCenter,c.edgeSides,c.edgeTL,c.edgeTR,c.edgeBL,c.edgeBR
-    }) do
-        t:SetColorTexture(edgeR, edgeG, edgeB, edgeA)
-    end
-    for _, t in ipairs({
-        c.fillCenter,c.fillSides,c.fillTL,c.fillTR,c.fillBL,c.fillBR
-    }) do
-        t:SetColorTexture(bgR, bgG, bgB, bgA)
-    end
+    c.edgeH:SetColorTexture(edgeR, edgeG, edgeB, edgeA)
+    c.edgeV:SetColorTexture(edgeR, edgeG, edgeB, edgeA)
+    c.fillH:SetColorTexture(bgR, bgG, bgB, bgA)
+    c.fillV:SetColorTexture(bgR, bgG, bgB, bgA)
 end
 
 function TTP.ApplyBoxStyle(frame, height)
