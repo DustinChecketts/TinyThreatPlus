@@ -810,6 +810,22 @@ end
 local function PositionModernLevel(nameplate, healthBar, badge)
     badge:ClearAllPoints()
 
+    if TTP.Compat.IsForever() then
+        -- Mirror the Anniversary information hierarchy while using Forever's
+        -- circular level treatment: rarity/raid marker | health row, with
+        -- level tucked into the health bar's upper-left corner.
+        PixelSetPoint(
+            badge,
+            "CENTER",
+            healthBar,
+            "TOPLEFT",
+            0,
+            0
+        )
+        PositionBlizzardInfoSlot(nameplate, healthBar)
+        return
+    end
+
     PixelSetPoint(
         badge,
         "RIGHT",
@@ -832,9 +848,9 @@ local function ApplyForeverLevelBadgeScale(badge, healthHeight)
     -- Keep the level readable while remaining subordinate to the health row.
     -- The badge may exceed the bar by only 2px total (1px per side), rather
     -- than shrinking the numeral into an unreadable dot at Default size.
-    local size = math.max(12, (healthHeight or 12) + 2)
-    local bevelSize = math.max(10, size - 2)
-    local innerSize = math.max(8, size - 4)
+    local size = math.max(18, (healthHeight or 12) + 6)
+    local bevelSize = math.max(16, size - 2)
+    local innerSize = math.max(14, size - 4)
 
     PixelSetSize(badge, size, size)
     PixelSetSize(badge.modernBevel, bevelSize, bevelSize)
@@ -965,8 +981,8 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         healthBar.TinyThreatPlusTargetHighlight = targetHighlight
     end
     targetHighlight:ClearAllPoints()
-    targetHighlight:SetPoint("TOPLEFT", healthBar, "TOPLEFT", -2, 2)
-    targetHighlight:SetPoint("BOTTOMRIGHT", healthBar, "BOTTOMRIGHT", 2, -2)
+    targetHighlight:SetPoint("TOPLEFT", healthBar, "TOPLEFT", -1, 1)
+    targetHighlight:SetPoint("BOTTOMRIGHT", healthBar, "BOTTOMRIGHT", 1, -1)
     -- Use the same clipped-corner geometry as the health/threat row.
     -- The highlight remains a softer white background treatment rather than
     -- a second hard rectangular border.
@@ -1089,9 +1105,9 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     local nameText = GetNativeNameFontString(nameplate, healthBar)
     if nameText then
         nameText:ClearAllPoints()
-        nameText:SetJustifyH("CENTER")
-        PixelSetPoint(nameText, "BOTTOM", healthBar, "TOP", 0, 1)
-        nameText:SetWidth(0)
+        nameText:SetJustifyH("LEFT")
+        PixelSetPoint(nameText, "BOTTOMLEFT", healthBar, "TOPLEFT", 0, 1)
+        nameText:SetWidth(healthBar:GetWidth())
     end
 
     return true
@@ -1365,12 +1381,7 @@ local function AnchorThreatBox(nameplate, healthBar, box)
     -- bar. Anchor from the health bar's right edge instead. The threat box
     -- then becomes the first addon-owned element after Blizzard's native row.
     if TTP.Compat.IsForever() then
-        local levelBadge = nameplate and nameplate.TinyThreatPlusLevel
-        if levelBadge and levelBadge:IsShown() then
-            PixelSetPoint(box, "LEFT", levelBadge, "RIGHT", 1, 0)
-        else
-            PixelSetPoint(box, "LEFT", healthBar, "RIGHT", 1, 0)
-        end
+        PixelSetPoint(box, "LEFT", healthBar, "RIGHT", 1, 0)
         return
     end
 
@@ -1604,6 +1615,9 @@ local function ApplyTargetCounterScale(box)
         (TinyThreatPlusDB.nameplateThreatScale or 100) / 100
 
     local scale = classificationScale * userScale
+    if TTP.Compat.IsForever() then
+        scale = scale * 0.78
+    end
 
     box.counterRing:SetScale(scale)
 
