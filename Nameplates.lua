@@ -884,6 +884,25 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     healthBar:ClearAllPoints()
     healthBar:SetAllPoints(container)
 
+    -- Keep Blizzard's live StatusBar data but give its moving fill the same
+    -- HD corner treatment as our shell. The previous square fill edge could
+    -- stair-step against the rounded frame as health changed.
+    local statusTexture = healthBar:GetStatusBarTexture()
+    if statusTexture then
+        local fillMask = healthBar.TinyThreatPlusForeverFillMask
+        if not fillMask then
+            fillMask = healthBar:CreateMaskTexture(nil, "ARTWORK")
+            fillMask:SetTexture(
+                "Interface\\CHARACTERFRAME\\TempPortraitAlphaMask"
+            )
+            healthBar.TinyThreatPlusForeverFillMask = fillMask
+        end
+        fillMask:ClearAllPoints()
+        fillMask:SetPoint("TOPLEFT", healthBar, "TOPLEFT", 1, -1)
+        fillMask:SetPoint("BOTTOMRIGHT", healthBar, "BOTTOMRIGHT", -1, 1)
+        statusTexture:AddMaskTexture(fillMask)
+    end
+
     -- Forever-style health shell: restrained 2px corners, dark outer rim and
     -- subtle warm-gray inner field like Blizzard's modern unit frames.
     local healthShell = healthBar.TinyThreatPlusForeverShell
@@ -1046,6 +1065,23 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         castBar:ClearAllPoints()
         PixelSetPoint(castBar, "TOP", healthBar, "BOTTOM", 0, -1)
         PixelSetSize(castBar, healthBar:GetWidth(), 10 * verticalScale)
+
+        local castTexture = castBar.GetStatusBarTexture
+            and castBar:GetStatusBarTexture()
+        if castTexture then
+            local castMask = castBar.TinyThreatPlusForeverFillMask
+            if not castMask then
+                castMask = castBar:CreateMaskTexture(nil, "ARTWORK")
+                castMask:SetTexture(
+                    "Interface\\CHARACTERFRAME\\TempPortraitAlphaMask"
+                )
+                castBar.TinyThreatPlusForeverFillMask = castMask
+            end
+            castMask:ClearAllPoints()
+            castMask:SetPoint("TOPLEFT", castBar, "TOPLEFT", 1, -1)
+            castMask:SetPoint("BOTTOMRIGHT", castBar, "BOTTOMRIGHT", -1, 1)
+            castTexture:AddMaskTexture(castMask)
+        end
 
         local castShell = castBar.TinyThreatPlusForeverShell
         if not castShell then
