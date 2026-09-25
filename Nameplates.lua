@@ -1036,8 +1036,7 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
             local badge = CreateLevelBadge(nameplate)
             ApplyForeverLevelBadgeScale(badge, healthBar:GetHeight())
             ApplyLevelBadgeStyle(badge)
-            badge:ClearAllPoints()
-            PixelSetPoint(badge, "LEFT", healthBar, "RIGHT", 1, 0)
+            PositionModernLevel(nameplate, healthBar, badge)
 
             if level < 0 then
                 badge.text:Hide()
@@ -1067,9 +1066,11 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
             badge:Show()
         else
             HideLevelBadge(nameplate)
+            PositionInfoWithoutLevel(nameplate, healthBar)
         end
     else
         HideLevelBadge(nameplate)
+        PositionInfoWithoutLevel(nameplate, healthBar)
     end
 
     -- Forever cast presentation is a sibling system, not part of the health
@@ -1119,6 +1120,7 @@ local function UpdateLevelAndClassification(nameplate, healthBar, unit)
     -- pass will replace it with a TinyThreatPlus level treatment matching the
     -- target-frame artwork. Leave non-hostile plates alone.
     if TTP.Compat.IsForever() then
+        UpdateClassificationFrame(nameplate, healthBar, unit)
         ApplyForeverCustomLayout(nameplate, healthBar, unit)
         return
     end
