@@ -2201,10 +2201,12 @@ function TTP.UpdateNameplate(unit)
         if nativeHeight and nativeHeight > 0 then
             boxHeight = nativeHeight
             boxFontSize =
-                math.max(8, math.min(11, nativeHeight * 0.52)) * userScale
+                math.max(8, math.min(11, nativeHeight * 0.52))
         end
 
-        boxWidth = 34 * userScale
+        -- Compact Forever threat cell: same height as health, just wide
+        -- enough for signed deltas without becoming a second health bar.
+        boxWidth = 28 * userScale
     end
 
     box:SetScale(1)
