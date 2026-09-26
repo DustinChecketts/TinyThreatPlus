@@ -450,7 +450,20 @@ local function CaptureForeverThreatForVisibleTargets(eventUnit)
     local function CaptureOnce(unit)
         if not unit or not UnitExists(unit) or not UnitCanAttack("player", unit) then return end
         local guid = UnitGUID(unit)
-        if not guid or capturedGUIDs[guid] then return end
+        if not guid then return end
+
+        -- Forever can return a secret GUID for nameplate units in grouped
+        -- combat. Secret strings cannot legally be used as Lua table keys.
+        -- Capture the event/token directly in that case; de-duplication is
+        -- only an optimization and must never index protected data.
+        if TTP.Compat.IsSecretValue(guid)
+            or not TTP.Compat.CanAccessValue(guid)
+        then
+            CaptureForeverThreatSnapshot(unit)
+            return
+        end
+
+        if capturedGUIDs[guid] then return end
         capturedGUIDs[guid] = true
         CaptureForeverThreatSnapshot(unit)
     end
