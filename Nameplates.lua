@@ -142,29 +142,30 @@ end
 local THREAT_BOX_STYLE_PROFILES = {
     [STYLE_FAMILY_LARGE] = {
         width = 42,
-        fontSize = 12,
-
-        -- Calibrated to visually match Blizzard's combined health-bar +
-        -- border height at Nameplate Sizes 1-5.
-        heights = {
-            [1] = 22,
-            [2] = 25,
-            [3] = 28,
-            [4] = 30,
-            [5] = 32,
-        },
-    },
-    [STYLE_FAMILY_THIN] = {
-        width = 42,
         fontSize = 10,
 
-        -- Classic shares the thin family for threat-box height.
+        -- Live Forever calibration: the geometry previously used by our
+        -- Default/Cast Focus plate visually matches Blizzard Large/Block.
         heights = {
             [1] = 14,
             [2] = 16,
             [3] = 17,
             [4] = 18,
             [5] = 21,
+        },
+    },
+    [STYLE_FAMILY_THIN] = {
+        width = 42,
+        fontSize = 9,
+
+        -- Default/Cast Focus are distinctly slimmer in Blizzard's preview.
+        -- Keep the same size progression but at the thinner native profile.
+        heights = {
+            [1] = 9,
+            [2] = 10,
+            [3] = 11,
+            [4] = 12,
+            [5] = 14,
         },
     },
 }
@@ -1175,7 +1176,7 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
 
     local healthFontSize = math.max(
         8,
-        math.min(11, math.floor(nativeRowHeight * 0.58 + 0.5))
+        math.min(10, math.floor(nativeRowHeight * 0.58 + 0.5))
     )
 
     -- Live Forever testing shows the native fields are semantically reversed:
