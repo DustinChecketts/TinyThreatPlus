@@ -1187,27 +1187,28 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     -- Keep the readout at a crisp 9px for thin bars and allow 10px on tall.
     local healthFontSize = nativeRowHeight <= 12 and 9 or 10
 
-    -- Live Forever testing shows the native fields are semantically reversed:
-    -- the field exposed as the percentage text is the numeric value, while
-    -- the value field renders the percentage. Position by observed content.
-    if healthPercentText and healthPercentText.ClearAllPoints then
-        healthPercentText:ClearAllPoints()
-        PixelSetPoint(healthPercentText, "LEFT", healthBar, "LEFT", 4, 0)
-        if healthPercentText.SetJustifyH then
-            healthPercentText:SetJustifyH("LEFT")
-        end
-        if healthPercentText.SetFont then
-            healthPercentText:SetFont(STANDARD_TEXT_FONT, healthFontSize, "")
-        end
-    end
+    -- Match Forever's player/target unit-frame convention:
+    -- percentage on the left, current health value on the right.
+    -- Live Forever exposes these native fields with counterintuitive names:
+    -- healthValue renders the percentage and healthPercent renders the value.
     if healthValueText and healthValueText.ClearAllPoints then
         healthValueText:ClearAllPoints()
-        PixelSetPoint(healthValueText, "RIGHT", healthBar, "RIGHT", -4, 0)
+        PixelSetPoint(healthValueText, "LEFT", healthBar, "LEFT", 4, 0)
         if healthValueText.SetJustifyH then
-            healthValueText:SetJustifyH("RIGHT")
+            healthValueText:SetJustifyH("LEFT")
         end
         if healthValueText.SetFont then
             healthValueText:SetFont(STANDARD_TEXT_FONT, healthFontSize, "")
+        end
+    end
+    if healthPercentText and healthPercentText.ClearAllPoints then
+        healthPercentText:ClearAllPoints()
+        PixelSetPoint(healthPercentText, "RIGHT", healthBar, "RIGHT", -4, 0)
+        if healthPercentText.SetJustifyH then
+            healthPercentText:SetJustifyH("RIGHT")
+        end
+        if healthPercentText.SetFont then
+            healthPercentText:SetFont(STANDARD_TEXT_FONT, healthFontSize, "")
         end
     end
 
