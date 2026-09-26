@@ -876,9 +876,9 @@ local function ApplyForeverLevelBadgeScale(badge, healthHeight)
     -- Keep the level readable while remaining subordinate to the health row.
     -- The badge may exceed the bar by only 2px total (1px per side), rather
     -- than shrinking the numeral into an unreadable dot at Default size.
-    local size = math.max(18, (healthHeight or 12) + 6)
-    local bevelSize = math.max(16, size - 2)
-    local innerSize = math.max(14, size - 4)
+    local size = math.max(16, (healthHeight or 12) + 4)
+    local bevelSize = math.max(14, size - 2)
+    local innerSize = math.max(11, size - 5)
 
     PixelSetSize(badge, size, size)
     PixelSetSize(badge.modernBevel, bevelSize, bevelSize)
@@ -1064,6 +1064,15 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
             local badge = CreateLevelBadge(nameplate)
             ApplyForeverLevelBadgeScale(badge, healthBar:GetHeight())
             ApplyLevelBadgeStyle(badge)
+
+            -- Forever's player/target level medallions use a warm bronze/gold
+            -- rim around a dark center. Tint the smooth circular layers here
+            -- instead of inheriting Anniversary's silver treatment.
+            badge.modernOuter:SetVertexColor(0.18, 0.12, 0.055, 1)
+            badge.modernBevel:SetVertexColor(0.72, 0.48, 0.18, 1)
+            badge.modernInner:SetVertexColor(0.10, 0.075, 0.045, 1)
+            badge.fill:SetColorTexture(0.025, 0.025, 0.022, 0.98)
+
             PositionModernLevel(nameplate, healthBar, badge)
 
             if level < 0 then
@@ -1074,7 +1083,7 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
                 badge.skull:Hide()
                 badge.text:SetFont(
                     STANDARD_TEXT_FONT,
-                    math.max(9, math.floor(healthBar:GetHeight() * 0.72)),
+                    math.max(8, math.floor(healthBar:GetHeight() * 0.62)),
                     "OUTLINE"
                 )
                 badge.text:ClearAllPoints()
@@ -1150,18 +1159,32 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         or healthBar.RightText
         or healthBar.rightText
 
-    if healthValueText and healthValueText.ClearAllPoints then
-        healthValueText:ClearAllPoints()
-        healthValueText:SetPoint("LEFT", healthBar, "LEFT", 4, 0)
-        if healthValueText.SetJustifyH then
-            healthValueText:SetJustifyH("LEFT")
-        end
-    end
+    local healthFontSize = math.max(
+        7,
+        math.min(10, math.floor(nativeRowHeight * 0.52 + 0.5))
+    )
+
+    -- Live Forever testing shows the native fields are semantically reversed:
+    -- the field exposed as the percentage text is the numeric value, while
+    -- the value field renders the percentage. Position by observed content.
     if healthPercentText and healthPercentText.ClearAllPoints then
         healthPercentText:ClearAllPoints()
-        healthPercentText:SetPoint("RIGHT", healthBar, "RIGHT", -4, 0)
+        healthPercentText:SetPoint("LEFT", healthBar, "LEFT", 4, 0)
         if healthPercentText.SetJustifyH then
-            healthPercentText:SetJustifyH("RIGHT")
+            healthPercentText:SetJustifyH("LEFT")
+        end
+        if healthPercentText.SetFont then
+            healthPercentText:SetFont(STANDARD_TEXT_FONT, healthFontSize, "OUTLINE")
+        end
+    end
+    if healthValueText and healthValueText.ClearAllPoints then
+        healthValueText:ClearAllPoints()
+        healthValueText:SetPoint("RIGHT", healthBar, "RIGHT", -4, 0)
+        if healthValueText.SetJustifyH then
+            healthValueText:SetJustifyH("RIGHT")
+        end
+        if healthValueText.SetFont then
+            healthValueText:SetFont(STANDARD_TEXT_FONT, healthFontSize, "OUTLINE")
         end
     end
 
