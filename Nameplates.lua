@@ -93,6 +93,17 @@ end
 local function GetNameplateStyleFamily()
     local style = GetNameplateStyleValue()
 
+    if TTP.Compat.IsForever() then
+        -- Forever's four visible presets are ordered:
+        -- Default (thin), Large (large), Block (large), Cast Focus (thin).
+        -- Use the actual CVar index instead of Retail enum semantics; the
+        -- latter classified Forever Default as a large bar.
+        if style == 1 or style == 2 then
+            return STYLE_FAMILY_LARGE
+        end
+        return STYLE_FAMILY_THIN
+    end
+
     if Enum and Enum.NamePlateStyle then
         if style == Enum.NamePlateStyle.Modern
             or style == Enum.NamePlateStyle.Block
@@ -847,7 +858,7 @@ local function PositionModernLevel(nameplate, healthBar, badge)
             "CENTER",
             healthBar,
             "TOPLEFT",
-            0,
+            -4,
             0
         )
         PositionBlizzardInfoSlot(nameplate, healthBar)
@@ -876,9 +887,12 @@ local function ApplyForeverLevelBadgeScale(badge, healthHeight)
     -- Keep the level readable while remaining subordinate to the health row.
     -- The badge may exceed the bar by only 2px total (1px per side), rather
     -- than shrinking the numeral into an unreadable dot at Default size.
-    local size = math.max(16, (healthHeight or 12) + 4)
-    local bevelSize = math.max(14, size - 2)
-    local innerSize = math.max(12, size - 4)
+    -- Fixed Forever medallion size across all four Blizzard styles.
+    -- Default/Cast Focus therefore stay slim without shrinking the level,
+    -- while Large/Block gain height independently beneath the same badge.
+    local size = 17
+    local bevelSize = 15
+    local innerSize = 13
 
     PixelSetSize(badge, size, size)
     PixelSetSize(badge.modernBevel, bevelSize, bevelSize)
@@ -1083,7 +1097,7 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
                 badge.skull:Hide()
                 badge.text:SetFont(
                     STANDARD_TEXT_FONT,
-                    math.max(9, math.floor(healthBar:GetHeight() * 0.64)),
+                    9,
                     ""
                 )
                 badge.text:ClearAllPoints()
