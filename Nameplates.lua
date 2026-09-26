@@ -1027,8 +1027,14 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         healthBar.TinyThreatPlusTargetHighlight = targetHighlight
     end
     targetHighlight:ClearAllPoints()
-    targetHighlight:SetPoint("TOPLEFT", healthBar, "TOPLEFT", -1, 1)
-    targetHighlight:SetPoint("BOTTOMRIGHT", healthBar, "BOTTOMRIGHT", 1, -1)
+    if styleProfile == STYLE_FAMILY_THIN then
+        -- A 1px outer halo is visually dominant on a ~10px row. Keep the
+        -- selection treatment flush to the thin health-bar geometry.
+        targetHighlight:SetAllPoints(healthBar)
+    else
+        targetHighlight:SetPoint("TOPLEFT", healthBar, "TOPLEFT", -1, 1)
+        targetHighlight:SetPoint("BOTTOMRIGHT", healthBar, "BOTTOMRIGHT", 1, -1)
+    end
     -- Use the same clipped-corner geometry as the health/threat row.
     -- The highlight remains a softer white background treatment rather than
     -- a second hard rectangular border.
@@ -1177,10 +1183,9 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         or healthBar.RightText
         or healthBar.rightText
 
-    local healthFontSize = math.max(
-        8,
-        math.min(10, math.floor(nativeRowHeight * 0.58 + 0.5))
-    )
+    -- Eight-pixel Friz glyphs rasterize poorly on Forever's thin rows.
+    -- Keep the readout at a crisp 9px for thin bars and allow 10px on tall.
+    local healthFontSize = nativeRowHeight <= 12 and 9 or 10
 
     -- Live Forever testing shows the native fields are semantically reversed:
     -- the field exposed as the percentage text is the numeric value, while
@@ -1338,6 +1343,128 @@ local function UpdateLevelAndClassification(nameplate, healthBar, unit)
     end
 
     badge:Show()
+end
+
+-- ---------------------------------------------------------------------------
+-- Forever hover art diagnostic
+-- ---------------------------------------------------------------------------
+local function SafeObjectName(object)
+    if not object or not object.GetName then return "<unnamed>" end
+    local ok, value = pcall(object.GetName, object)
+    return ok and value or "<protected>"
+end
+
+local function PrintArtRegion(region, prefix)
+    if not region or not region.GetObjectType then return end
+    local kind = region:GetObjectType()
+    if kind ~= "Texture" and kind ~= "MaskTexture" then return end
+
+    local atlas
+    if region.GetAtlas then
+        local ok, value = pcall(region.GetAtlas, region)
+        if ok then atlas = value end
+    end
+
+    local texture
+    if region.GetTexture then
+        local ok, value = pcall(region.GetTexture, region)
+        if ok then texture = value end
+    end
+
+    local layer, sublevel
+    if region.GetDrawLayer then
+        local ok, a, b = pcall(region.GetDrawLayer, region)
+        if ok then layer, sublevel = a, b end
+    end
+
+    local width = region.GetWidth and region:GetWidth() or 0
+    local height = region.GetHeight and region:GetHeight() or 0
+    print(string.format(
+        "%s%s name=%s size=%.1fx%.1f atlas=%s texture=%s layer=%s:%s",
+        prefix or "",
+        kind,
+        tostring(SafeObjectName(region)),
+        width or 0,
+        height or 0,
+        tostring(atlas),
+        tostring(texture),
+        tostring(layer),
+        tostring(sublevel)
+    ))
+
+    if region.GetTexCoord then
+        local ok, l, r, t, b = pcall(region.GetTexCoord, region)
+        if ok and l then
+            print(string.format(
+                "%s  texcoord=%.4f,%.4f,%.4f,%.4f",
+                prefix or "", l, r, t, b
+            ))
+        end
+    end
+end
+
+local function DumpArtObject(object, depth, seen)
+    if not object or seen[object] or depth > 3 then return end
+    seen[object] = true
+
+    local kind = object.GetObjectType and object:GetObjectType() or "?"
+    local width = object.GetWidth and object:GetWidth() or 0
+    local height = object.GetHeight and object:GetHeight() or 0
+    local prefix = string.rep("  ", depth)
+    print(string.format(
+        "%s[%s] %s size=%.1fx%.1f",
+        prefix, kind, tostring(SafeObjectName(object)), width or 0, height or 0
+    ))
+
+    if kind == "Texture" or kind == "MaskTexture" then
+        PrintArtRegion(object, prefix .. "  ")
+    end
+
+    if object.GetRegions then
+        local regions = { object:GetRegions() }
+        for _, region in ipairs(regions) do
+            PrintArtRegion(region, prefix .. "  ")
+        end
+    end
+
+    if object.GetChildren then
+        local children = { object:GetChildren() }
+        for _, child in ipairs(children) do
+            DumpArtObject(child, depth + 1, seen)
+        end
+    end
+end
+
+function TTP.DumpHoveredArt()
+    if not TTP.Compat.IsForever() then
+        print("TinyThreatPlus art diagnostic is intended for WoW Forever.")
+        return
+    end
+
+    local foci = type(GetMouseFoci) == "function" and { GetMouseFoci() } or {}
+    if #foci == 0 and type(GetMouseFocus) == "function" then
+        local focus = GetMouseFocus()
+        if focus then foci[1] = focus end
+    end
+
+    if #foci == 0 then
+        print("TinyThreatPlus art diagnostic: no mouse focus. Hover the UI art and run /ttp art.")
+        return
+    end
+
+    print("TinyThreatPlus Forever hover art diagnostic:")
+    local seen = {}
+    for index, focus in ipairs(foci) do
+        print(string.format("Focus %d: %s", index, tostring(SafeObjectName(focus))))
+        -- Include the hovered frame and its immediate parent; textures often
+        -- live on the parent while a child frame owns mouse interaction.
+        DumpArtObject(focus, 0, seen)
+        local parent = focus.GetParent and focus:GetParent() or nil
+        if parent then
+            print("Parent:")
+            DumpArtObject(parent, 0, seen)
+        end
+    end
 end
 
 -- ---------------------------------------------------------------------------
