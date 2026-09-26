@@ -918,20 +918,21 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     local container = unitFrame and unitFrame.HealthBarsContainer
     if not unitFrame or not container then return false end
 
-    -- Follow the player's Blizzard style family/size rather than imposing a
-    -- single TTP geometry. Default/Cast Focus use the thin family; Large/Block
-    -- use the large family. This keeps custom presentation visually native.
-    local horizontalScale, verticalScale = GetNameplateVisualScales()
-    local styleFamily = GetNameplateStyleFamily()
+    -- Blizzard's own threat-box profile already encodes the visible height
+    -- of each selected Nameplate Style + Nameplate Size combination. Use that
+    -- same value as the health row's single geometry authority so health and
+    -- threat can never drift apart again.
+    local horizontalScale = select(1, GetNameplateVisualScales())
+    local styleProfile = GetThreatBoxStyleProfile()
+    local nativeRowHeight = GetThreatBoxHeight(styleProfile)
     local baseWidth = 137
-    local baseHeight = styleFamily == STYLE_FAMILY_LARGE and 20 or 12
 
     container:SetScale(1)
     container:ClearAllPoints()
     PixelSetSize(
         container,
         baseWidth * horizontalScale,
-        baseHeight * verticalScale
+        nativeRowHeight
     )
     PixelSetPoint(container, "BOTTOM", unitFrame, "BOTTOM", 0, 4)
 
