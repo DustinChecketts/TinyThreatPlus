@@ -1110,8 +1110,9 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
 
     if castBar then
         castBar:ClearAllPoints()
-        PixelSetPoint(castBar, "TOP", healthBar, "BOTTOM", 0, -1)
-        PixelSetSize(castBar, healthBar:GetWidth(), 10 * verticalScale)
+        PixelSetPoint(castBar, "TOP", healthBar, "BOTTOM", 0, -3)
+        local castHeight = math.max(9, math.floor(nativeRowHeight * 0.55 + 0.5))
+        PixelSetSize(castBar, healthBar:GetWidth(), castHeight)
 
         local castShell = castBar.TinyThreatPlusForeverShell
         if not castShell then
@@ -1129,6 +1130,39 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     elseif castContainer then
         castContainer:ClearAllPoints()
         PixelSetPoint(castContainer, "TOP", healthBar, "BOTTOM", 0, -2)
+    end
+
+    -- Classic-style health readout: current value left, percentage right.
+    -- Forever exposes these FontStrings under different keys between builds,
+    -- so resolve the known native fields without creating duplicate text.
+    local healthValueText =
+        healthBar.healthValue
+        or healthBar.HealthValue
+        or healthBar.healthText
+        or healthBar.HealthText
+        or healthBar.LeftText
+        or healthBar.leftText
+    local healthPercentText =
+        healthBar.healthPercent
+        or healthBar.HealthPercent
+        or healthBar.healthPercentage
+        or healthBar.HealthPercentage
+        or healthBar.RightText
+        or healthBar.rightText
+
+    if healthValueText and healthValueText.ClearAllPoints then
+        healthValueText:ClearAllPoints()
+        healthValueText:SetPoint("LEFT", healthBar, "LEFT", 4, 0)
+        if healthValueText.SetJustifyH then
+            healthValueText:SetJustifyH("LEFT")
+        end
+    end
+    if healthPercentText and healthPercentText.ClearAllPoints then
+        healthPercentText:ClearAllPoints()
+        healthPercentText:SetPoint("RIGHT", healthBar, "RIGHT", -4, 0)
+        if healthPercentText.SetJustifyH then
+            healthPercentText:SetJustifyH("RIGHT")
+        end
     end
 
     local nameText = GetNativeNameFontString(nameplate, healthBar)
