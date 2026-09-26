@@ -98,7 +98,10 @@ local function GetNameplateStyleFamily()
         -- Default (thin), Large (large), Block (large), Cast Focus (thin).
         -- Use the actual CVar index instead of Retail enum semantics; the
         -- latter classified Forever Default as a large bar.
-        if style == 1 or style == 2 then
+        -- Live Forever testing shows Default and Large are the inverse
+        -- of the initial CVar mapping.  Block remains tall; Cast Focus thin.
+        -- Forever CVar order: Default=0, Large=1, Block=2, Cast Focus=3.
+        if style == 0 or style == 2 then
             return STYLE_FAMILY_LARGE
         end
         return STYLE_FAMILY_THIN
