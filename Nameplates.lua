@@ -878,7 +878,7 @@ local function ApplyForeverLevelBadgeScale(badge, healthHeight)
     -- than shrinking the numeral into an unreadable dot at Default size.
     local size = math.max(16, (healthHeight or 12) + 4)
     local bevelSize = math.max(14, size - 2)
-    local innerSize = math.max(11, size - 5)
+    local innerSize = math.max(12, size - 4)
 
     PixelSetSize(badge, size, size)
     PixelSetSize(badge.modernBevel, bevelSize, bevelSize)
@@ -1083,8 +1083,8 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
                 badge.skull:Hide()
                 badge.text:SetFont(
                     STANDARD_TEXT_FONT,
-                    math.max(8, math.floor(healthBar:GetHeight() * 0.62)),
-                    "OUTLINE"
+                    math.max(9, math.floor(healthBar:GetHeight() * 0.64)),
+                    ""
                 )
                 badge.text:ClearAllPoints()
                 badge.text:SetPoint(
@@ -1160,8 +1160,8 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         or healthBar.rightText
 
     local healthFontSize = math.max(
-        7,
-        math.min(10, math.floor(nativeRowHeight * 0.52 + 0.5))
+        8,
+        math.min(11, math.floor(nativeRowHeight * 0.58 + 0.5))
     )
 
     -- Live Forever testing shows the native fields are semantically reversed:
@@ -1169,22 +1169,22 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     -- the value field renders the percentage. Position by observed content.
     if healthPercentText and healthPercentText.ClearAllPoints then
         healthPercentText:ClearAllPoints()
-        healthPercentText:SetPoint("LEFT", healthBar, "LEFT", 4, 0)
+        PixelSetPoint(healthPercentText, "LEFT", healthBar, "LEFT", 4, 0)
         if healthPercentText.SetJustifyH then
             healthPercentText:SetJustifyH("LEFT")
         end
         if healthPercentText.SetFont then
-            healthPercentText:SetFont(STANDARD_TEXT_FONT, healthFontSize, "OUTLINE")
+            healthPercentText:SetFont(STANDARD_TEXT_FONT, healthFontSize, "")
         end
     end
     if healthValueText and healthValueText.ClearAllPoints then
         healthValueText:ClearAllPoints()
-        healthValueText:SetPoint("RIGHT", healthBar, "RIGHT", -4, 0)
+        PixelSetPoint(healthValueText, "RIGHT", healthBar, "RIGHT", -4, 0)
         if healthValueText.SetJustifyH then
             healthValueText:SetJustifyH("RIGHT")
         end
         if healthValueText.SetFont then
-            healthValueText:SetFont(STANDARD_TEXT_FONT, healthFontSize, "OUTLINE")
+            healthValueText:SetFont(STANDARD_TEXT_FONT, healthFontSize, "")
         end
     end
 
@@ -1192,7 +1192,7 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     if nameText then
         nameText:ClearAllPoints()
         nameText:SetJustifyH("LEFT")
-        PixelSetPoint(nameText, "BOTTOMLEFT", healthBar, "TOPLEFT", 0, 1)
+        PixelSetPoint(nameText, "BOTTOMLEFT", healthBar, "TOPLEFT", 0, 2)
         nameText:SetWidth(healthBar:GetWidth())
     end
 
