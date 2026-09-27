@@ -2547,6 +2547,115 @@ local function HookHealthBarColor(healthBar)
     end)
 end
 
+
+-- Focused Forever nameplate-art diagnostic. Unlike /ttp unitart, this only
+-- inspects the live Blizzard nameplate and its health-bar container so short
+-- and tall style assets can be compared without flooding chat.
+local function PlateArtDescribeRegion(region, indent)
+    if not region then return end
+    indent = indent or "  "
+
+    local objectType = region.GetObjectType and region:GetObjectType() or "Region"
+    local width = region.GetWidth and region:GetWidth() or 0
+    local height = region.GetHeight and region:GetHeight() or 0
+    local layer, sublevel
+    if region.GetDrawLayer then
+        layer, sublevel = region:GetDrawLayer()
+    end
+
+    local atlas = region.GetAtlas and region:GetAtlas() or nil
+    local texture = region.GetTexture and region:GetTexture() or nil
+    local effectiveScale = region.GetEffectiveScale and region:GetEffectiveScale() or nil
+
+    print(string.format(
+        "%s%s size=%.1fx%.1f atlas=%s texture=%s layer=%s:%s scale=%s",
+        indent,
+        tostring(objectType),
+        tonumber(width) or 0,
+        tonumber(height) or 0,
+        tostring(atlas),
+        tostring(texture),
+        tostring(layer),
+        tostring(sublevel),
+        effectiveScale and string.format("%.3f", effectiveScale) or "nil"
+    ))
+end
+
+local function PlateArtDumpFrame(label, frame)
+    if not frame then
+        print(label .. ": <nil>")
+        return
+    end
+
+    local width = frame.GetWidth and frame:GetWidth() or 0
+    local height = frame.GetHeight and frame:GetHeight() or 0
+    local scale = frame.GetScale and frame:GetScale() or nil
+    local effectiveScale = frame.GetEffectiveScale and frame:GetEffectiveScale() or nil
+
+    print(string.format(
+        "%s size=%.1fx%.1f scale=%s effective=%s",
+        label,
+        tonumber(width) or 0,
+        tonumber(height) or 0,
+        scale and string.format("%.3f", scale) or "nil",
+        effectiveScale and string.format("%.3f", effectiveScale) or "nil"
+    ))
+
+    if frame.GetRegions then
+        local regions = { frame:GetRegions() }
+        for _, region in ipairs(regions) do
+            PlateArtDescribeRegion(region, "  ")
+        end
+    end
+end
+
+function TTP.DumpForeverNameplateArt(unit)
+    if not TTP.Compat.IsForever() then
+        print("TinyThreatPlus /ttp plateart is Forever-only.")
+        return
+    end
+
+    unit = unit or "target"
+    if not UnitExists(unit) then
+        print("TinyThreatPlus /ttp plateart: target a unit with a visible Blizzard nameplate.")
+        return
+    end
+
+    local nameplate = C_NamePlate.GetNamePlateForUnit(unit)
+    if not nameplate then
+        print("TinyThreatPlus /ttp plateart: no live nameplate found for target.")
+        return
+    end
+
+    local unitFrame = nameplate.UnitFrame
+    local container = unitFrame and unitFrame.HealthBarsContainer
+    local healthBar = TTP.GetNameplateHealthBar(nameplate)
+
+    print("=== TinyThreatPlus Forever nameplate health art ===")
+    print("Style CVar:", tostring(GetNameplateStyleValue()), "Size CVar:", tostring(GetNameplateSizeSetting()))
+    PlateArtDumpFrame("NamePlate", nameplate)
+    PlateArtDumpFrame("UnitFrame", unitFrame)
+    PlateArtDumpFrame("HealthBarsContainer", container)
+    PlateArtDumpFrame("HealthBar", healthBar)
+
+    -- These are the direct children most likely to own border/background art.
+    if container and container.GetChildren then
+        local children = { container:GetChildren() }
+        for index, child in ipairs(children) do
+            PlateArtDumpFrame("HealthBarsContainer child " .. index, child)
+        end
+    end
+
+    if healthBar and healthBar.GetChildren then
+        local children = { healthBar:GetChildren() }
+        for index, child in ipairs(children) do
+            PlateArtDumpFrame("HealthBar child " .. index, child)
+        end
+    end
+
+    print("=== end /ttp plateart ===")
+end
+
 function TTP.UpdateNameplate(unit)
     local nameplate = C_NamePlate.GetNamePlateForUnit(unit)
 
