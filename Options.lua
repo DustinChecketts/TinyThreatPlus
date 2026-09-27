@@ -326,90 +326,69 @@ end
 
 Section("Custom Nameplates", -85)
 SectionDescription(
-    "TinyThreatPlus custom nameplates use their own layout and settings. Blizzard's Nameplates options only control which world nameplates exist.",
+    "One TinyThreatPlus-owned nameplate design with focused controls for scale, typography, level badge, and target highlight.",
     -116
 )
-MakeToggle(
-    "Enable Custom Nameplates",
-    "enableCustomNameplates",
-    -146,
-    "Replaces the visible presentation of hostile NPC nameplates with TinyThreatPlus custom nameplates."
-)
-MakeSlider(
-    "Nameplate Scale",
-    "customNameplateScale",
-    75,
-    150,
-    5,
-    -188,
-    "%",
-    "Scales the complete TinyThreatPlus custom nameplate."
-)
-MakeSlider(
-    "Health Bar Height",
-    "customNameplateBarHeight",
-    12,
-    32,
-    1,
-    -230,
-    " px",
-    "Sets the custom health-bar height. Text uses discrete sizing so smaller bars remain readable."
-)
-MakeToggle(
-    "Show Mob Level",
-    "showMobLevel",
-    -272,
-    "Shows the mob level in the Blizzard-style circular badge."
-)
-MakeToggle(
-    "Highlight Current Target",
-    "showTargetHighlight",
-    -304,
-    "Uses Blizzard's Forever target-highlight artwork around the current target's health bar."
-)
+MakeToggle("Enable Custom Nameplates", "enableCustomNameplates", -146,
+    "Replaces hostile NPC nameplate presentation with TinyThreatPlus custom nameplates.")
+MakeSlider("Nameplate Scale", "customNameplateScale", 75, 150, 5, -188, "%",
+    "Scales the complete TinyThreatPlus custom nameplate.")
+MakeSlider("Health Bar Height", "customNameplateBarHeight", 12, 32, 1, -230, " px",
+    "Sets the custom health-bar height.")
 
-MakeColorPicker(
-    "Target Highlight Color",
-    "targetHighlightColor",
-    -336,
-    "Tints the desaturated Blizzard target-highlight artwork. White is the default."
-)
+Section("Mob Name", -285)
+MakeSlider("Font Size", "customNameFontSize", 8, 18, 1, -327, " px",
+    "Sets the mob-name font size.")
+MakeColorPicker("Font Color", "customNameFontColor", -369,
+    "Sets the mob-name text color.")
+MakeToggle("Text Shadow", "customNameFontShadow", -401,
+    "Adds a black shadow for readability against the world.")
 
-Section("Health Bar", -381)
+Section("Mob Level", -456)
+MakeToggle("Show Mob Level", "showMobLevel", -498,
+    "Shows the mob level in the Blizzard-style circular badge.")
+MakeSlider("Badge Size", "customLevelBadgeSize", 20, 32, 1, -540, " px",
+    "Sets the mob-level badge size.")
+MakeSlider("Level Font Size", "customLevelFontSize", 8, 14, 1, -582, " px",
+    "Sets the level number font size.")
+
+Section("Current Target", -637)
+MakeToggle("Highlight Current Target", "showTargetHighlight", -679,
+    "Shows Blizzard's target-highlight artwork around the current target.")
+MakeColorPicker("Highlight Color", "targetHighlightColor", -711,
+    "Tints the desaturated Blizzard target-highlight artwork. White is the default.")
+
+Section("Health Bar", -766)
 SectionDescription(
     "Uses the custom health bar itself as an immediate threat warning based on your role.",
-    -380
+    -797
 )
-MakeToggle(
-    "Enable Threat Coloring",
-    "roleBasedColors",
-    -442,
-    "Colors hostile NPC health bars by threat state. Other assigned tanks holding aggro are treated as safe."
-)
+MakeToggle("Enable Threat Coloring", "roleBasedColors", -827,
+    "Colors hostile NPC health bars by threat state. Other assigned tanks holding aggro are treated as safe.")
 
-Section("Threat Indicator", -497)
+Section("Threat Indicator", -882)
 SectionDescription(
-    "Shows how far you are ahead of or behind the current threat leader.",
-    -496
+    "Nameplate and target-frame threat indicators can be sized independently.",
+    -913
 )
-MakeToggle(
-    "Show on Custom Nameplates",
-    "showNameplateThreat",
-    -622,
-    "Shows the TinyThreatPlus threat indicator beside custom hostile nameplates."
-)
-MakeToggle(
-    "Show on Target Frame",
-    "showTargetFrame",
-    -558,
-    "Shows the threat indicator above the target frame."
-)
-MakeToggle(
-    "Always Show Indicator",
-    "alwaysShowThreatBoxes",
-    -590,
-    "Shows an idle indicator even before active threat information exists."
-)
+MakeToggle("Show on Custom Nameplates", "showNameplateThreat", -943,
+    "Shows the TinyThreatPlus threat indicator beside custom hostile nameplates.")
+MakeSlider("Nameplate Box Width", "nameplateThreatWidth", 28, 60, 1, -985, " px",
+    "Sets the nameplate threat-box width without changing its height.")
+MakeSlider("Nameplate Font Size", "nameplateThreatFontSize", 8, 14, 1, -1027, " px",
+    "Sets the nameplate threat-value font size.")
+MakeToggle("Show on Target Frame", "showTargetFrame", -1069,
+    "Shows the threat indicator above the target frame.")
+MakeSlider("Target Box Width", "targetThreatWidth", 28, 64, 1, -1111, " px",
+    "Sets the Forever target-frame threat-box width.")
+MakeSlider("Target Box Height", "targetThreatHeight", 16, 28, 1, -1153, " px",
+    "Sets the Forever target-frame threat-box height.")
+MakeSlider("Target Font Size", "targetThreatFontSize", 8, 16, 1, -1195, " px",
+    "Sets the Forever target-frame threat-value font size.")
+MakeSlider("Target Indicator Scale", "targetThreatScale", 50, 150, 5, -1237, "%",
+    "Scales the complete target-frame threat indicator.")
+MakeToggle("Always Show Indicator", "alwaysShowThreatBoxes", -1279,
+    "Shows an idle indicator even before active threat information exists.")
 MakeChoice(
     "Threat Indicator Mode",
     "displayMode",
@@ -417,18 +396,8 @@ MakeChoice(
         { label = "Value Difference", value = "VALUE" },
         { label = "Percentage", value = "PERCENT" },
     },
-    -664,
+    -1321,
     "Choose between exact threat difference and percentage display."
-)
-MakeSlider(
-    "Target Frame Indicator Scale",
-    "targetThreatScale",
-    50,
-    150,
-    5,
-    -706,
-    "%",
-    "Scales the complete target-frame threat indicator."
 )
 
 Section("Threat Leader", -766)
