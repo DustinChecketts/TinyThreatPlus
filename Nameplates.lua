@@ -349,7 +349,7 @@ local function CreateLevelBadge(nameplate)
     -- Forever has a native HD circular unit-frame medallion. Keep this on the
     -- addon-owned badge so the level background uses Blizzard art rather than
     -- masked ColorTextures. Anniversary continues to use the legacy layers.
-    badge.foreverCircle = badge:CreateTexture(nil, "BORDER", nil, 0)
+    badge.foreverCircle = badge:CreateTexture(nil, "OVERLAY", nil, 5)
     badge.foreverCircle:SetAllPoints()
     badge.foreverCircle:SetAtlas("UI-HUD-UnitFrame-SmallCircle", false)
     badge.foreverCircle:SetIgnoreParentAlpha(true)
@@ -450,6 +450,7 @@ local function CreateLevelBadge(nameplate)
             "GameFontNormal",
             7
         )
+    badge.text:SetDrawLayer("OVERLAY", 7)
 
     PixelSetSize(badge.text, 20, 20)
     badge.text:SetIgnoreParentAlpha(true)
@@ -1066,11 +1067,16 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     -- preserves Blizzard's anti-aliased corners instead of redrawing them.
     local healthShell = healthBar.TinyThreatPlusForeverShell
     if not healthShell then
-        healthShell = CreateFrame("Frame", nil, container)
-        healthShell:SetFrameLevel(math.max(0, (healthBar:GetFrameLevel() or 1) - 1))
+        healthShell = CreateFrame("Frame", nil, healthBar)
+        healthShell:SetAllPoints(healthBar)
+        healthShell:SetFrameLevel((healthBar:GetFrameLevel() or 1) + 2)
 
-        local frameArt = healthShell:CreateTexture(nil, "ARTWORK", nil, 0)
+        -- Native diagnostic reports this atlas on the StatusBar's OVERLAY
+        -- layer. Keep it above the health fill; placing it behind the bar made
+        -- almost the entire Blizzard frame disappear beneath the opaque fill.
+        local frameArt = healthShell:CreateTexture(nil, "OVERLAY", nil, 0)
         frameArt:SetAtlas("ui-hud-nameplates-deselected-overlay", false)
+        frameArt:SetIgnoreParentAlpha(true)
         healthShell.frameArt = frameArt
 
         healthBar.TinyThreatPlusForeverShell = healthShell
