@@ -54,7 +54,7 @@ scrollFrame:SetPoint("TOPLEFT", 8, -8)
 scrollFrame:SetPoint("BOTTOMRIGHT", -28, 8)
 
 local content = CreateFrame("Frame", nil, scrollFrame)
-content:SetSize(620, 1440)
+content:SetSize(620, 1600)
 scrollFrame:SetScrollChild(content)
 
 local title = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
@@ -332,7 +332,23 @@ local function MakeChoice(label, key, choices, y, tooltip)
     return choice
 end
 
-Section("Health Bar", -85)
+Section("Nameplate Presentation", -85)
+SectionDescription(
+    "Choose whether TinyThreatPlus replaces Blizzard's visible nameplate presentation or keeps Blizzard artwork and only adds TinyThreatPlus information.",
+    -116
+)
+MakeChoice(
+    "Presentation",
+    "nameplatePresentation",
+    {
+        { label = "TinyThreatPlus Custom", value = "CUSTOM" },
+        { label = "Blizzard + TTP Additions", value = "BLIZZARD" },
+    },
+    -146,
+    "Use Blizzard + TTP Additions to preserve the native Forever nameplate artwork and geometry. This is also the correct mode for inspecting Blizzard art with /ttp art."
+)
+
+Section("Health Bar", -201)
 SectionDescription(
     "Uses the health bar itself as an immediate threat warning based on your role.",
     -116
