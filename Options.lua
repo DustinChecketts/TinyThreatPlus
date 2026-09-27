@@ -427,7 +427,7 @@ MakeSlider(
 Section("Threat Leader", -734)
 SectionDescription(
     "Identifies who currently has the most threat on an enemy and provides useful player or pet context.",
-    -659
+    -765
 )
 MakeToggle(
     "Show Threat Leader",
@@ -451,7 +451,7 @@ MakeToggle(
 Section("Target Priority", -919)
 SectionDescription(
     "Highlights one enemy that deserves attention when fighting multiple targets. Tank and Damage roles use different priority logic.",
-    -844
+    -950
 )
 MakeToggle(
     "Enable Target Priority",
@@ -505,7 +505,7 @@ MakeSlider(
 Section("Target Counter", -1252)
 SectionDescription(
     "Shows how many party or raid members are currently targeting an enemy.",
-    -1177
+    -1283
 )
 MakeToggle(
     "Show Target Counter on Nameplate",
