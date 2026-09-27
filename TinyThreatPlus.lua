@@ -891,8 +891,7 @@ function TTP.ApplyBoxStyle(frame, height)
     if forever then
         -- Backdrop edges are square. The Forever renderer uses our clipped
         -- one-pixel-corner chrome instead.
-        frame:SetBackdropColor(0, 0, 0, 0)
-        frame:SetBackdropBorderColor(0, 0, 0, 0)
+        frame:SetBackdrop(nil)
         -- ApplyBoxStyle lives in the core file; the nameplate-local
         -- SetRoundedChromeShown helper is not in scope here. Hide any legacy
         -- core chrome directly before showing Blizzard's confirmed frame art.
