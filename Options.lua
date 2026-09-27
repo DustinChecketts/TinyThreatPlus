@@ -63,7 +63,7 @@ title:SetText("TinyThreatPlus")
 
 local subtitle = content:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
 subtitle:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -7)
-subtitle:SetText("Threat intelligence and information enhancements for Blizzard nameplates.")
+subtitle:SetText("Threat-focused custom nameplates and target-frame information.")
 
 local reset = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
 reset:SetSize(100, 22)
@@ -518,24 +518,6 @@ MakeToggle(
     "showTargetFrameCounter",
     -1239,
     "Shows how many party or raid members are targeting your current target."
-)
-
-Section("Nameplate Information", -1299)
-SectionDescription(
-    "Controls TinyThreatPlus information added to Blizzard's native nameplates.",
-    -1330
-)
-MakeToggle(
-    "Show Enemy Level",
-    "showMobLevel",
-    -1360,
-    "Restores enemy levels on modern Blizzard nameplate styles. Classic displays levels natively."
-)
-MakeToggle(
-    "Show Friendly Level",
-    "showFriendlyLevel",
-    -1392,
-    "Restores friendly NPC levels on modern Blizzard nameplate styles."
 )
 
 reset:SetScript("OnClick", function()
