@@ -9,6 +9,7 @@ TinyThreatPlusDB = TinyThreatPlusDB or {}
 -- ---------------------------------------------------------------------------
 TTP.defaults = {
     showNameplates = true,
+    nameplatePresentation = "CUSTOM",
     showTargetFrame = true,
     alwaysShowThreatBoxes = true,
     roleBasedColors = true,
