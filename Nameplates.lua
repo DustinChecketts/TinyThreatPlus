@@ -1061,63 +1061,48 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     healthBar:ClearAllPoints()
     healthBar:SetAllPoints(container)
 
-    -- Asset lab: render several Blizzard-owned candidates simultaneously so
-    -- one live-client screenshot can identify which atlas gives us the exact
-    -- Forever shell. Selection highlighting is intentionally disabled during
-    -- this diagnostic pass.
+    -- Blizzard's native Forever bar shell. The live asset lab confirmed
+    -- UI-HUD-CoolDownManager-Bar-BG is the neutral HD frame/background that
+    -- matches the native presentation without adding selection or aggro glow.
     local healthShell = healthBar.TinyThreatPlusForeverShell
     if not healthShell then
         healthShell = CreateFrame("Frame", nil, healthBar)
         healthShell:SetAllPoints(healthBar)
         healthShell:SetFrameLevel((healthBar:GetFrameLevel() or 1) + 2)
 
-        local candidates = {
-            { atlas = "ui-hud-nameplates-deselected-overlay", label = "A" },
-            { atlas = "UI-HUD-CoolDownManager-Bar-BG", label = "B" },
-            { atlas = "UI-HUD-CoolDownManager-Selected-yellow", label = "C" },
-            { atlas = "UI-HUD-Nameplates-TargetedByEnemy", label = "D" },
-        }
-        healthShell.candidates = {}
-        for index, candidate in ipairs(candidates) do
-            local texture = healthShell:CreateTexture(nil, "OVERLAY", nil, index)
-            local ok = pcall(texture.SetAtlas, texture, candidate.atlas, false)
-            if ok then
-                texture:SetIgnoreParentAlpha(true)
-                local label = healthShell:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-                label:SetText(candidate.label)
-                label:SetTextColor(1, 0.82, 0)
-                healthShell.candidates[#healthShell.candidates + 1] = {
-                    texture = texture,
-                    label = label,
-                    atlas = candidate.atlas,
-                }
-            end
-        end
+        local frameArt = healthShell:CreateTexture(nil, "OVERLAY", nil, 0)
+        frameArt:SetAtlas("UI-HUD-CoolDownManager-Bar-BG", false)
+        frameArt:SetIgnoreParentAlpha(true)
+        healthShell.frameArt = frameArt
+
         healthBar.TinyThreatPlusForeverShell = healthShell
     end
 
     SetRoundedChromeShown(healthShell, false)
     healthShell:ClearAllPoints()
     healthShell:SetPoint("CENTER", healthBar, "CENTER", 0, 0)
-    local shellHeight = nativeRowHeight * (15.2 / 12.7)
-    local shellWidth = healthBar:GetWidth()
+
+    -- The diagnostic reported the native BG at 140.5x21.6 around a
+    -- 132.9x12.7 StatusBar. Preserve that overhang/aspect as the bar scales.
+    local shellWidth = healthBar:GetWidth() * (140.5 / 132.9)
+    local shellHeight = nativeRowHeight * (21.6 / 12.7)
     PixelSetSize(healthShell, shellWidth, shellHeight)
-    if healthShell.frameArt then healthShell.frameArt:Hide() end
 
-    local rows = healthShell.candidates or {}
-    for index, entry in ipairs(rows) do
-        local texture = entry.texture
-        texture:ClearAllPoints()
-        texture:SetPoint("BOTTOMLEFT", healthBar, "TOPLEFT", 0, 4 + ((index - 1) * (shellHeight + 5)))
-        PixelSetSize(texture, shellWidth, shellHeight)
-        texture:SetVertexColor(1, 1, 1, 1)
-        texture:Show()
-
-        entry.label:ClearAllPoints()
-        entry.label:SetPoint("RIGHT", texture, "LEFT", -3, 0)
-        entry.label:Show()
-    end
+    healthShell.frameArt:ClearAllPoints()
+    healthShell.frameArt:SetAllPoints(healthShell)
+    healthShell.frameArt:SetVertexColor(1, 1, 1, 1)
+    healthShell.frameArt:Show()
     healthShell:Show()
+
+    -- Remove any temporary asset-lab regions left on frames created before a
+    -- /reload; a reload normally recreates these, but this keeps ownership
+    -- explicit for future diagnostic passes.
+    if healthShell.candidates then
+        for _, entry in ipairs(healthShell.candidates) do
+            if entry.texture then entry.texture:Hide() end
+            if entry.label then entry.label:Hide() end
+        end
+    end
 
     -- Suppress Blizzard's presentation art while retaining the StatusBar.
     -- The visible Forever level cap is coupled to this presentation rather
@@ -1158,7 +1143,7 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         if region then region:SetAlpha(0) end
     end
 
-    -- Selection highlight intentionally disabled during the asset-lab pass.
+    -- Selection highlight intentionally remains disabled while the native shell is validated.
     if healthBar.TinyThreatPlusTargetHighlight then
         healthBar.TinyThreatPlusTargetHighlight:Hide()
     end
