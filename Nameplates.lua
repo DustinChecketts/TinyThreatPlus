@@ -563,10 +563,15 @@ local function UpdatePlate(nameplate, plate, unit, nativeHealth)
     local targeted = UnitIsUnit(unit, "target")
     local active = data and data.hasThreatData
         and ((data.playerThreat or 0) > 0 or (data.highestOtherThreat or 0) > 0)
-    local opacity = targeted or active
-        and 1
-        or math.max(0.20, math.min(1.00,
+    -- Lua's and/or expression would return the boolean true when targeted.
+    -- Resolve the state explicitly so SetAlpha always receives a number.
+    local opacity
+    if targeted or active then
+        opacity = 1
+    else
+        opacity = math.max(0.20, math.min(1.00,
             (tonumber(TinyThreatPlusDB.customNameplateInactiveOpacity) or 70) / 100))
+    end
     plate:SetAlpha(opacity)
     plate:Show()
 end
