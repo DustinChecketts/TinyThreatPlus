@@ -147,7 +147,7 @@ local function ApplyForeverHealthRow(nameplate, healthBar)
 
     local shell = GetForeverShell(healthBar)
     shell:ClearAllPoints()
-    shell:SetPoint("CENTER", healthBar, "CENTER", 0, 0)
+    shell:SetPoint("CENTER", healthBar, "CENTER", 1, -1)
     PixelSize(shell, healthBar:GetWidth() + 8, healthBar:GetHeight() + 9)
     shell:Show()
 
@@ -211,7 +211,7 @@ local function UpdateForeverLevel(nameplate, healthBar, unit)
     badge:ClearAllPoints()
     PixelPoint(badge, "CENTER", healthBar, "TOPLEFT", -4, 0)
 
-    badge.text:SetFont(STANDARD_TEXT_FONT, 9, "")
+    badge.text:SetFont(STANDARD_TEXT_FONT, 8, "")
     badge.text:SetText(level < 0 and "??" or tostring(level))
     badge.text:SetTextColor(1, 1, 1)
     badge:Show()
@@ -243,17 +243,20 @@ local function UpdateForeverText(nameplate, healthBar)
     -- percentage readout and RightText is the current value in the live UI.
     local left = healthBar.LeftText
     local right = healthBar.RightText
-    local fontSize = healthBar:GetHeight() <= 14 and 9 or 10
+    -- Use discrete typography for the two native bar families. Scaling the
+    -- same font with the bar made the thin styles feel crowded and uneven.
+    local thin = healthBar:GetHeight() < 17
+    local fontSize = thin and 8 or 10
 
     if left then
         left:ClearAllPoints()
-        PixelPoint(left, "LEFT", healthBar, "LEFT", 4, 0)
+        PixelPoint(left, "LEFT", healthBar, "LEFT", thin and 3 or 4, 0)
         left:SetJustifyH("LEFT")
         left:SetFont(STANDARD_TEXT_FONT, fontSize, "OUTLINE")
     end
     if right then
         right:ClearAllPoints()
-        PixelPoint(right, "RIGHT", healthBar, "RIGHT", -4, 0)
+        PixelPoint(right, "RIGHT", healthBar, "RIGHT", thin and -3 or -4, 0)
         right:SetJustifyH("RIGHT")
         right:SetFont(STANDARD_TEXT_FONT, fontSize, "OUTLINE")
     end
