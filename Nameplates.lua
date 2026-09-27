@@ -1131,21 +1131,12 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         targetHighlight:Hide()
     end
 
-    -- Exact-fit inner border. Selection is handled by the background frame
-    -- above so the health bar never gets the old double-border appearance.
-    local border = healthBar.TinyThreatPlusForeverBorder
-    if not border then
-        border = CreateFrame("Frame", nil, healthBar, "BackdropTemplate")
-        border:SetAllPoints(healthBar)
-        border:SetFrameLevel((healthBar:GetFrameLevel() or 1) + 5)
-        border:SetBackdrop({
-            edgeFile = "Interface\\Buttons\\WHITE8X8",
-            edgeSize = 1,
-        })
-        healthBar.TinyThreatPlusForeverBorder = border
+    -- The native targeted atlas supplies the visible edge treatment. Do not
+    -- stack the legacy WHITE8X8 rectangle over it; that produced the 1px
+    -- black box visible along the custom bar.
+    if healthBar.TinyThreatPlusForeverBorder then
+        healthBar.TinyThreatPlusForeverBorder:Hide()
     end
-    border:SetBackdropBorderColor(0.20, 0.20, 0.22, 1)
-    border:Show()
 
     -- Reuse our addon-owned circular level badge. Unlike Forever's native
     -- cap this is a normal FontString/texture hierarchy we fully control.
@@ -1634,6 +1625,35 @@ function TTP.DumpHoveredArt()
             object = object.GetParent and object:GetParent() or nil
         end
     end
+end
+
+-- ---------------------------------------------------------------------------
+-- Forever player/target-frame art diagnostic
+-- ---------------------------------------------------------------------------
+function TTP.DumpForeverUnitFrameArt()
+    if not TTP.Compat.IsForever() then
+        print("TinyThreatPlus unit-frame art diagnostic is Forever-only.")
+        return
+    end
+
+    print("TinyThreatPlus Forever art diagnostic: PLAYER / TARGET UNIT FRAMES")
+
+    local candidates = {
+        { "PlayerFrame", _G.PlayerFrame },
+        { "TargetFrame", _G.TargetFrame },
+        { "PlayerFrame.PlayerFrameContent", _G.PlayerFrame and _G.PlayerFrame.PlayerFrameContent },
+        { "TargetFrame.TargetFrameContent", _G.TargetFrame and _G.TargetFrame.TargetFrameContent },
+    }
+
+    for _, candidate in ipairs(candidates) do
+        local label, object = candidate[1], candidate[2]
+        if object then
+            print("=== " .. label .. " ===")
+            DumpArtObject(object, 0, {})
+        end
+    end
+
+    print("Tip: look for bronze portrait/level-ring atlas names in this output.")
 end
 
 -- ---------------------------------------------------------------------------
