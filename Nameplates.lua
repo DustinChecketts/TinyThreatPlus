@@ -349,41 +349,12 @@ local function CreateLevelBadge(nameplate)
     -- Forever has a native HD circular unit-frame medallion. Keep this on the
     -- addon-owned badge so the level background uses Blizzard art rather than
     -- masked ColorTextures. Anniversary continues to use the legacy layers.
-    -- Level asset lab. Render Blizzard-owned candidates beside the badge so
-    -- a single live-client screenshot can identify the native Forever bronze
-    -- medallion/cap treatment without guessing atlas ownership.
+    -- Confirmed Blizzard Forever level medallion.
     badge.foreverCircle = badge:CreateTexture(nil, "OVERLAY", nil, 5)
     badge.foreverCircle:SetAllPoints()
     badge.foreverCircle:SetAtlas("UI-HUD-UnitFrame-SmallCircle", false)
     badge.foreverCircle:SetIgnoreParentAlpha(true)
     badge.foreverCircle:Hide()
-
-    badge.foreverAssetLab = {}
-    local levelCandidates = {
-        { atlas = "UI-HUD-UnitFrame-SmallCircle", label = "A" },
-        { atlas = "UI-HUD-Nameplates-LevelIndicator", label = "B" },
-        { atlas = "UI-HUD-Nameplates-LevelIndicator-rectangle-selected", label = "C" },
-        { atlas = "UI-HUD-Nameplates-LevelIndicator-Skull", label = "D" },
-    }
-    for index, candidate in ipairs(levelCandidates) do
-        local texture = badge:CreateTexture(nil, "OVERLAY", nil, index)
-        local ok = pcall(texture.SetAtlas, texture, candidate.atlas, false)
-        if ok then
-            texture:SetIgnoreParentAlpha(true)
-            texture:SetPoint("BOTTOMLEFT", badge, "TOPLEFT", (index - 1) * 38, 8)
-            PixelSetSize(texture, index == 1 and 30 or 34, index == 1 and 30 or 24)
-
-            local label = badge:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-            label:SetPoint("BOTTOM", texture, "TOP", 0, 2)
-            label:SetText(candidate.label)
-            label:SetTextColor(1, 0.82, 0)
-
-            badge.foreverAssetLab[#badge.foreverAssetLab + 1] = {
-                texture = texture,
-                label = label,
-            }
-        end
-    end
 
     badge.fill = badge:CreateTexture(nil, "BACKGROUND")
     badge.fill:SetAllPoints()
@@ -1327,7 +1298,7 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
             healthValueText:SetJustifyH("LEFT")
         end
         if healthValueText.SetFont then
-            healthValueText:SetFont(STANDARD_TEXT_FONT, healthFontSize, "")
+            healthValueText:SetFont(STANDARD_TEXT_FONT, healthFontSize, "OUTLINE")
         end
     end
     if healthPercentText and healthPercentText.ClearAllPoints then
@@ -1337,7 +1308,7 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
             healthPercentText:SetJustifyH("RIGHT")
         end
         if healthPercentText.SetFont then
-            healthPercentText:SetFont(STANDARD_TEXT_FONT, healthFontSize, "")
+            healthPercentText:SetFont(STANDARD_TEXT_FONT, healthFontSize, "OUTLINE")
         end
     end
 
