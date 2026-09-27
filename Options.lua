@@ -368,6 +368,13 @@ MakeToggle(
     "Uses Blizzard's Forever target-highlight artwork around the current target's health bar."
 )
 
+MakeColorPicker(
+    "Target Highlight Color",
+    "targetHighlightColor",
+    -336,
+    "Tints the desaturated Blizzard target-highlight artwork. White is the default."
+)
+
 Section("Health Bar", -349)
 SectionDescription(
     "Uses the custom health bar itself as an immediate threat warning based on your role.",
