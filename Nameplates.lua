@@ -869,10 +869,10 @@ local function PositionModernLevel(nameplate, healthBar, badge)
         -- level tucked into the health bar's upper-left corner.
         PixelSetPoint(
             badge,
-            "CENTER",
+            "LEFT",
             healthBar,
-            "TOPLEFT",
-            -4,
+            "RIGHT",
+            4,
             0
         )
         PositionBlizzardInfoSlot(nameplate, healthBar)
@@ -905,7 +905,7 @@ local function ApplyForeverLevelBadgeScale(badge, healthHeight)
     -- Default/Cast Focus therefore stay slim without shrinking the level,
     -- while Large/Block gain height independently beneath the same badge.
     local sizeSetting = GetNameplateSizeSetting()
-    local size = ({ 16, 18, 20, 22, 24 })[sizeSetting] or 18
+    local size = ({ 19, 20, 21, 23, 25 })[sizeSetting] or 20
     local bevelSize = size - 2
     local innerSize = size - 4
 
@@ -1072,7 +1072,9 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     if statusTexture and statusTexture.SetAtlas then
         statusTexture:SetAtlas("UI-HUD-CoolDownManager-Bar", false)
         statusTexture:SetTexCoord(0, 1, 0, 1)
+        statusTexture:SetAlpha(1)
     end
+    healthBar:SetAlpha(1)
 
     -- Blizzard's native Forever bar shell. The live asset lab confirmed
     -- UI-HUD-CoolDownManager-Bar-BG is the neutral HD frame/background that
@@ -1164,9 +1166,22 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         if region then region:SetAlpha(0) end
     end
 
-    -- Selection highlight intentionally remains disabled while the native shell is validated.
-    if healthBar.TinyThreatPlusTargetHighlight then
-        healthBar.TinyThreatPlusTargetHighlight:Hide()
+    -- Optional target highlight. Reuse Blizzard's confirmed Forever targeted
+    -- nameplate atlas instead of drawing addon-owned border lines.
+    local targetHighlight = healthBar.TinyThreatPlusTargetHighlight
+    if not targetHighlight then
+        targetHighlight = healthBar:CreateTexture(nil, "OVERLAY", nil, 1)
+        targetHighlight:SetAtlas("UI-HUD-Nameplates-TargetedByEnemy", false)
+        targetHighlight:SetIgnoreParentAlpha(true)
+        healthBar.TinyThreatPlusTargetHighlight = targetHighlight
+    end
+    targetHighlight:ClearAllPoints()
+    targetHighlight:SetPoint("CENTER", healthShell, "CENTER", 0, 0)
+    PixelSetSize(targetHighlight, healthShell:GetWidth(), healthShell:GetHeight())
+    if TinyThreatPlusDB.showTargetHighlight and UnitIsUnit(unit, "target") then
+        targetHighlight:Show()
+    else
+        targetHighlight:Hide()
     end
 
     -- The native targeted atlas supplies the visible edge treatment. Do not
@@ -1860,7 +1875,12 @@ local function AnchorThreatBox(nameplate, healthBar, box)
     -- bar. Anchor from the health bar's right edge instead. The threat box
     -- then becomes the first addon-owned element after Blizzard's native row.
     if TTP.Compat.IsForever() then
-        PixelSetPoint(box, "LEFT", healthBar, "RIGHT", 1, 0)
+        local anchor = healthBar
+        local badge = nameplate.TinyThreatPlusLevelBadge
+        if badge and badge:IsShown() then
+            anchor = badge
+        end
+        PixelSetPoint(box, "LEFT", anchor, "RIGHT", 3, 0)
         return
     end
 
