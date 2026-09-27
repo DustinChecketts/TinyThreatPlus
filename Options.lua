@@ -375,7 +375,7 @@ MakeColorPicker(
     "Tints the desaturated Blizzard target-highlight artwork. White is the default."
 )
 
-Section("Health Bar", -349)
+Section("Health Bar", -381)
 SectionDescription(
     "Uses the custom health bar itself as an immediate threat warning based on your role.",
     -380
@@ -383,11 +383,11 @@ SectionDescription(
 MakeToggle(
     "Enable Threat Coloring",
     "roleBasedColors",
-    -410,
+    -442,
     "Colors hostile NPC health bars by threat state. Other assigned tanks holding aggro are treated as safe."
 )
 
-Section("Threat Indicator", -465)
+Section("Threat Indicator", -497)
 SectionDescription(
     "Shows how far you are ahead of or behind the current threat leader.",
     -496
@@ -395,7 +395,7 @@ SectionDescription(
 MakeToggle(
     "Show on Custom Nameplates",
     "showNameplateThreat",
-    -526,
+    -622,
     "Shows the TinyThreatPlus threat indicator beside custom hostile nameplates."
 )
 MakeToggle(
@@ -417,7 +417,7 @@ MakeChoice(
         { label = "Value Difference", value = "VALUE" },
         { label = "Percentage", value = "PERCENT" },
     },
-    -632,
+    -664,
     "Choose between exact threat difference and percentage display."
 )
 MakeSlider(
@@ -426,20 +426,20 @@ MakeSlider(
     50,
     150,
     5,
-    -674,
+    -706,
     "%",
     "Scales the complete target-frame threat indicator."
 )
 
-Section("Threat Leader", -734)
+Section("Threat Leader", -766)
 SectionDescription(
     "Identifies who currently has the most threat on an enemy and provides useful player or pet context.",
-    -765
+    -797
 )
 MakeToggle(
     "Show Threat Leader",
     "showThreatLeader",
-    -795,
+    -891,
     "Shows the unit currently leading threat below the threat indicator."
 )
 MakeToggle(
@@ -455,15 +455,15 @@ MakeToggle(
     "Shows the Tank, Healer, or Damage role for player threat leaders when available."
 )
 
-Section("Target Priority", -919)
+Section("Target Priority", -951)
 SectionDescription(
     "Highlights one enemy that deserves attention when fighting multiple targets. Tank and Damage roles use different priority logic.",
-    -950
+    -982
 )
 MakeToggle(
     "Enable Target Priority",
     "showPriorityMarker",
-    -992,
+    -1056,
     "Highlights one useful priority target when multiple hostile nameplates are visible. Automatic priority is normally limited to parties and raids."
 )
 MakeToggle(
@@ -475,7 +475,7 @@ MakeToggle(
 MakeColorPicker(
     "Priority Color",
     "priorityMarkerColor",
-    -1066,
+    -1098,
     "Choose the background color used to identify the Target Priority."
 )
 MakeSlider(
@@ -484,7 +484,7 @@ MakeSlider(
     10,
     100,
     5,
-    -1108,
+    -1140,
     "%",
     "Controls the opacity of the Target Priority background."
 )
@@ -494,7 +494,7 @@ MakeSlider(
     1,
     6,
     1,
-    -1150,
+    -1182,
     "",
     "Controls Target Priority background size from 1 to 6. Each step adds 1 pixel of padding: 1 = 5 px through 6 = 10 px."
 )
@@ -504,20 +504,20 @@ MakeSlider(
     0,
     100,
     5,
-    -1192,
+    -1224,
     "%",
     "Threat safety gate for Target Priority. Tanks mark the enemy most at risk of being lost. Damage only considers targets at or below this percentage of the threat leader, then prefers group focus, lower health, and finally lower personal threat. Healers receive no automatic priority target."
 )
 
-Section("Target Counter", -1252)
+Section("Target Counter", -1284)
 SectionDescription(
     "Shows how many party or raid members are currently targeting an enemy.",
-    -1283
+    -1315
 )
 MakeToggle(
     "Show Target Counter on Nameplate",
     "showTargetCounter",
-    -1313,
+    -1377,
     "Shows how many party or raid members are targeting each enemy nameplate."
 )
 MakeToggle(
