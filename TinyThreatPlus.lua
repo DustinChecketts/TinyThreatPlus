@@ -31,9 +31,6 @@ TTP.defaults = {
     showMobLevel = true,
     showFriendlyLevel = true,
 
-    enemyPlayerClassColors = true,
-    friendlyPlayerClassColors = false,
-
     displayMode = "VALUE",
 
     nameplateThreatScale = 100,
@@ -146,33 +143,6 @@ function TTP.GetCVar(name)
     return TTP.Compat.GetCVar(name)
 end
 
-local function SetBooleanCVar(name, enabled)
-    local value = enabled and "1" or "0"
-
-    if TTP.GetCVar(name) == value then
-        return
-    end
-
-    TTP.Compat.SetCVar(name, value)
-end
-
-
-function TTP.ApplyClassColorSettings()
-    TTP.ApplyDefaults()
-
-    SetBooleanCVar(
-        "nameplateShowClassColor",
-        TinyThreatPlusDB.enemyPlayerClassColors
-    )
-
-    SetBooleanCVar(
-        "nameplateShowFriendlyClassColor",
-        TinyThreatPlusDB.friendlyPlayerClassColors
-    )
-end
-
-TinyThreatPlus_ApplyClassColorSettings = TTP.ApplyClassColorSettings
-
 function TTP.ResetDefaults()
     TinyThreatPlusDB = {}
 
@@ -187,8 +157,6 @@ function TTP.ResetDefaults()
             TinyThreatPlusDB[key] = value
         end
     end
-
-    TTP.ApplyClassColorSettings()
     TTP.UpdateAll()
 end
 
@@ -1761,7 +1729,6 @@ eventFrame:SetScript("OnEvent", function(_, event, arg1)
         end
 
         TTP.ApplyDefaults()
-        TTP.ApplyClassColorSettings()
         TTP.UpdateAll()
         return
     end
@@ -1842,26 +1809,6 @@ SlashCmdList.TINYTHREATPLUS = function(message)
             "TinyThreatPlus role-based colors:",
             TinyThreatPlusDB.roleBasedColors and "on" or "off"
         )
-    elseif command == "enemyclass" then
-        TinyThreatPlusDB.enemyPlayerClassColors =
-            not TinyThreatPlusDB.enemyPlayerClassColors
-
-        TTP.ApplyClassColorSettings()
-
-        print(
-            "TinyThreatPlus enemy player class colors:",
-            TinyThreatPlusDB.enemyPlayerClassColors and "on" or "off"
-        )
-    elseif command == "friendlyclass" then
-        TinyThreatPlusDB.friendlyPlayerClassColors =
-            not TinyThreatPlusDB.friendlyPlayerClassColors
-
-        TTP.ApplyClassColorSettings()
-
-        print(
-            "TinyThreatPlus friendly player class colors:",
-            TinyThreatPlusDB.friendlyPlayerClassColors and "on" or "off"
-        )
     elseif command == "levels" then
         TinyThreatPlusDB.showMobLevel =
             not TinyThreatPlusDB.showMobLevel
@@ -1923,8 +1870,6 @@ SlashCmdList.TINYTHREATPLUS = function(message)
     else
         print("TinyThreatPlus commands:")
         print("/ttp colors")
-        print("/ttp enemyclass")
-        print("/ttp friendlyclass")
         print("/ttp levels")
         print("/ttp friendlylevels")
         print("/ttp counter")
