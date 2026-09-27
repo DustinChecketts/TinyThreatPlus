@@ -1810,8 +1810,9 @@ function TTP.UpdateNameplate(unit)
 
     box:SetAlpha(emphasizeThreatBox and 1.00 or 0.58)
 
-    UpdateSideAuraLayout(nameplate, box)
-    UpdateThreatLeader(nameplate, box, data)
+    -- Side-aura and threat-leader presentation experiments were retired
+    -- with the Forever cleanup. Blizzard owns those regions; TTP only adds
+    -- the compact threat cell here.
 
     local canApplyThreatColor =
         data.hasThreatData
