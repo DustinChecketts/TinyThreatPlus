@@ -54,7 +54,7 @@ scrollFrame:SetPoint("TOPLEFT", 8, -8)
 scrollFrame:SetPoint("BOTTOMRIGHT", -28, 8)
 
 local content = CreateFrame("Frame", nil, scrollFrame)
-content:SetSize(620, 1600)
+content:SetSize(620, 2200)
 scrollFrame:SetScrollChild(content)
 
 local title = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
@@ -400,51 +400,51 @@ MakeChoice(
     "Choose between exact threat difference and percentage display."
 )
 
-Section("Threat Leader", -766)
+Section("Threat Leader", -1376)
 SectionDescription(
     "Identifies who currently has the most threat on an enemy and provides useful player or pet context.",
-    -797
+    -1407
 )
 MakeToggle(
     "Show Threat Leader",
     "showThreatLeader",
-    -891,
+    -1501,
     "Shows the unit currently leading threat below the threat indicator."
 )
 MakeToggle(
     "Show Class / Pet Icon",
     "showThreatLeaderClassIcon",
-    -827,
+    -1437,
     "Shows a player class icon or pet portrait for the current threat leader."
 )
 MakeToggle(
     "Show Role Icon",
     "showThreatLeaderRole",
-    -859,
+    -1469,
     "Shows the Tank, Healer, or Damage role for player threat leaders when available."
 )
 
-Section("Target Priority", -951)
+Section("Target Priority", -1561)
 SectionDescription(
     "Highlights one enemy that deserves attention when fighting multiple targets. Tank and Damage roles use different priority logic.",
-    -982
+    -1592
 )
 MakeToggle(
     "Enable Target Priority",
     "showPriorityMarker",
-    -1056,
+    -1666,
     "Highlights one useful priority target when multiple hostile nameplates are visible. Automatic priority is normally limited to parties and raids."
 )
 MakeToggle(
     "Enable While Solo (Pet Classes)",
     "priorityWhileSolo",
-    -1024,
+    -1634,
     "Allows Target Priority while solo when you have an active pet. Uses real threat when available and combat-log fallback only when real threat data is unavailable."
 )
 MakeColorPicker(
     "Priority Color",
     "priorityMarkerColor",
-    -1098,
+    -1708,
     "Choose the background color used to identify the Target Priority."
 )
 MakeSlider(
@@ -453,7 +453,7 @@ MakeSlider(
     10,
     100,
     5,
-    -1140,
+    -1750,
     "%",
     "Controls the opacity of the Target Priority background."
 )
@@ -463,7 +463,7 @@ MakeSlider(
     1,
     6,
     1,
-    -1182,
+    -1792,
     "",
     "Controls Target Priority background size from 1 to 6. Each step adds 1 pixel of padding: 1 = 5 px through 6 = 10 px."
 )
@@ -473,26 +473,26 @@ MakeSlider(
     0,
     100,
     5,
-    -1224,
+    -1834,
     "%",
     "Threat safety gate for Target Priority. Tanks mark the enemy most at risk of being lost. Damage only considers targets at or below this percentage of the threat leader, then prefers group focus, lower health, and finally lower personal threat. Healers receive no automatic priority target."
 )
 
-Section("Target Counter", -1284)
+Section("Target Counter", -1894)
 SectionDescription(
     "Shows how many party or raid members are currently targeting an enemy.",
-    -1315
+    -1925
 )
 MakeToggle(
     "Show Target Counter on Nameplate",
     "showTargetCounter",
-    -1377,
+    -1987,
     "Shows how many party or raid members are targeting each enemy nameplate."
 )
 MakeToggle(
     "Show Target Counter on Target Frame",
     "showTargetFrameCounter",
-    -1345,
+    -1955,
     "Shows how many party or raid members are targeting your current target."
 )
 
