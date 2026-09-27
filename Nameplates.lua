@@ -1050,20 +1050,32 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     healthBar:ClearAllPoints()
     healthBar:SetAllPoints(container)
 
-    -- Forever-style health shell: restrained 2px corners, dark outer rim and
-    -- subtle warm-gray inner field like Blizzard's modern unit frames.
+    -- Use Blizzard's own Forever nameplate frame art as the permanent shell.
+    -- /ttp art identified this atlas on the native health StatusBar at
+    -- 132.9x15.2 around a 132.9x12.7 bar. Keeping the native aspect/overhang
+    -- preserves Blizzard's anti-aliased corners instead of redrawing them.
     local healthShell = healthBar.TinyThreatPlusForeverShell
     if not healthShell then
         healthShell = CreateFrame("Frame", nil, container)
-        healthShell:SetAllPoints(healthBar)
         healthShell:SetFrameLevel(math.max(0, (healthBar:GetFrameLevel() or 1) - 1))
+
+        local frameArt = healthShell:CreateTexture(nil, "ARTWORK", nil, 0)
+        frameArt:SetAtlas("ui-hud-nameplates-deselected-overlay", false)
+        healthShell.frameArt = frameArt
+
         healthBar.TinyThreatPlusForeverShell = healthShell
     end
-    TTP.ApplyForeverRoundedChrome(
-        healthShell,
-        0.07, 0.07, 0.07, 1,
-        0.30, 0.28, 0.24, 0.95
-    )
+
+    SetRoundedChromeShown(healthShell, false)
+    healthShell:ClearAllPoints()
+    healthShell:SetPoint("CENTER", healthBar, "CENTER", 0, 0)
+
+    local shellHeight = nativeRowHeight * (15.2 / 12.7)
+    local shellWidth = healthBar:GetWidth() * (132.9 / 132.9)
+    PixelSetSize(healthShell, shellWidth, shellHeight)
+    healthShell.frameArt:ClearAllPoints()
+    healthShell.frameArt:SetAllPoints(healthShell)
+    healthShell.frameArt:SetVertexColor(1, 1, 1, 1)
     healthShell:Show()
 
     -- Suppress Blizzard's presentation art while retaining the StatusBar.
@@ -1105,9 +1117,9 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         if region then region:SetAlpha(0) end
     end
 
-    -- Reuse Blizzard's own HD selected-nameplate art discovered by /ttp art.
-    -- This gives the custom presentation the same anti-aliased corners and
-    -- edge treatment as Forever instead of approximating them with 1px rects.
+    -- Selection is a second Blizzard atlas layered over the permanent native
+    -- shell. The base frame therefore never changes shape/color when targeted;
+    -- targeting only adds Blizzard's own highlight treatment.
     local targetHighlight = healthBar.TinyThreatPlusTargetHighlight
     if not targetHighlight then
         targetHighlight = healthBar:CreateTexture(nil, "OVERLAY", nil, 6)
