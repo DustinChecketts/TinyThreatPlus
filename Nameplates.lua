@@ -1783,9 +1783,17 @@ function TTP.UpdateNameplate(unit)
     if box.counterRing then
         box.counterRing:ClearAllPoints()
         box.counterRing:SetPoint("CENTER", box, "RIGHT", 4, 0)
-    end
 
-    ApplyTargetCounterScale(box)
+        -- Keep nameplate target-counter sizing local to the presentation.
+        -- The old ApplyTargetCounterScale helper was diagnostic-era code and
+        -- was removed during cleanup; the counter itself only needs to follow
+        -- the current nameplate scale.
+        local counterScale = math.max(0.75, math.min(1.25, userScale))
+        box.counterRing:SetScale(counterScale)
+        if box.counterText then
+            box.counterText:SetScale(1)
+        end
+    end
 
     -- Forever now has a sanitized numeric threat path too, so active threat
     -- should receive the same full-opacity treatment as other clients.
