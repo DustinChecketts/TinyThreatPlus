@@ -1,10 +1,24 @@
 local TTP = _G.TinyThreatPlus or select(2, ...)
 if not TTP then return end
 
--- Nameplate presentation only.
--- Threat collection and shared threat-box behavior live in TinyThreatPlus.lua.
--- Forever keeps Blizzard's live nameplate/StatusBar and replaces only the
--- visible arrangement with positively identified Blizzard UI assets.
+-- TinyThreatPlus custom nameplates
+--
+-- Blizzard owns discovery, visibility, world positioning and unit tokens.
+-- TinyThreatPlus owns every visible element of the custom presentation.
+-- We never resize or repurpose Blizzard's visual health/cast bars on Forever.
+--
+-- Lifecycle:
+--   CreatePlate -> LayoutPlate -> UpdatePlate -> ResetPlate
+--
+-- Threat calculation remains in TinyThreatPlus.lua. Diagnostics remain in
+-- ThreatDiagnostic.lua. This file is presentation only.
+
+local BASE_WIDTH = 172
+local BASE_BAR_HEIGHT = 20
+local THREAT_WIDTH = 28
+local BAR_GAP = 3
+local LEVEL_SIZE = 21
+local CAST_HEIGHT = 10
 
 local function PixelSize(frame, width, height)
     if PixelUtil and PixelUtil.SetSize then
@@ -22,155 +36,52 @@ local function PixelPoint(frame, point, relativeTo, relativePoint, x, y)
     end
 end
 
-function TTP.GetNameplateHealthBar(nameplate)
-    local unitFrame = nameplate and nameplate.UnitFrame
-    if not unitFrame then return nil end
-
-    local container = unitFrame.HealthBarsContainer
-    if container and container.healthBar then
-        return container.healthBar
-    end
-
-    return unitFrame.healthBar or unitFrame.HealthBar
-end
-
 local function IsAccessible(value)
     return value ~= nil
         and not TTP.Compat.IsSecretValue(value)
         and TTP.Compat.CanAccessValue(value)
 end
 
-local function GetCustomProfile()
-    -- Custom geometry is intentionally independent of Blizzard's Nameplates
-    -- Style and Size settings. Blizzard still owns plate discovery/visibility.
-    local scale = math.max(0.75, math.min(1.50,
-        (tonumber(TinyThreatPlusDB.customNameplateScale) or 100) / 100))
-    local height = math.max(12, math.min(32,
-        tonumber(TinyThreatPlusDB.customNameplateBarHeight) or 20))
-
-    return 172 * scale, height * scale, scale
-end
-
-local function HideRegion(region)
-    if region and region.SetAlpha then region:SetAlpha(0) end
-end
-
-local function ShowRegion(region)
-    if region and region.SetAlpha then region:SetAlpha(1) end
-end
-
-local function GetNameText(nameplate, healthBar)
+function TTP.GetNameplateHealthBar(nameplate)
     local unitFrame = nameplate and nameplate.UnitFrame
-    return (unitFrame and unitFrame.name)
-        or (healthBar and healthBar.unitNameFontString)
-end
-
-local function RestoreForeverNative(nameplate, healthBar)
-    local unitFrame = nameplate and nameplate.UnitFrame
-    if not unitFrame or not healthBar then return end
-
-    local shell = healthBar.TinyThreatPlusForeverShell
-    if shell then shell:Hide() end
-    local highlight = healthBar.TinyThreatPlusTargetHighlight
-    if highlight then highlight:Hide() end
-
-    ShowRegion(healthBar.bgTexture)
-    ShowRegion(healthBar.selectedBorder)
-    ShowRegion(healthBar.SelectedBorder)
-    ShowRegion(healthBar.deselectedOverlay)
-    ShowRegion(healthBar.DeselectedOverlay)
-    ShowRegion(unitFrame.selectionHighlight)
-    ShowRegion(unitFrame.SelectionHighlight)
-    ShowRegion(unitFrame.LevelFrame)
-    ShowRegion(unitFrame.PlayerLevelDifferentialFrame)
-    ShowRegion(unitFrame.PlayerLevelDiffFrame)
-end
-
-local function GetForeverShell(healthBar)
-    local shell = healthBar.TinyThreatPlusForeverShell
-    if shell then return shell end
-
-    -- Crucially, the native Bar-BG is behind the StatusBar fill. The previous
-    -- renderer put this atlas above the fill and darkened the health color.
-    shell = CreateFrame("Frame", nil, healthBar:GetParent())
-    shell:SetFrameStrata(healthBar:GetFrameStrata())
-    shell:SetFrameLevel(math.max(0, (healthBar:GetFrameLevel() or 1) - 1))
-
-    shell.art = shell:CreateTexture(nil, "BACKGROUND")
-    shell.art:SetAllPoints()
-    shell.art:SetAtlas("UI-HUD-CoolDownManager-Bar-BG", false)
-    shell.art:SetIgnoreParentAlpha(true)
-
-    healthBar.TinyThreatPlusForeverShell = shell
-    return shell
-end
-
-local function ApplyForeverHealthRow(nameplate, healthBar)
-    local unitFrame = nameplate.UnitFrame
+    if not unitFrame then return nil end
     local container = unitFrame.HealthBarsContainer
-    if not container then return false end
-
-    local width, height = GetCustomProfile()
-
-    container:SetScale(1)
-    container:ClearAllPoints()
-    PixelSize(container, width, height)
-    PixelPoint(container, "BOTTOM", unitFrame, "BOTTOM", 0, 4)
-
-    healthBar:ClearAllPoints()
-    healthBar:SetAllPoints(container)
-    healthBar:SetAlpha(1)
-
-    local fill = healthBar:GetStatusBarTexture()
-    if fill and fill.SetAtlas then
-        fill:SetAtlas("UI-HUD-CoolDownManager-Bar", false)
-        fill:SetTexCoord(0, 1, 0, 1)
-        fill:SetAlpha(1)
-    end
-
-    -- Hide Blizzard presentation layers that no longer match our geometry.
-    HideRegion(healthBar.bgTexture)
-    HideRegion(healthBar.selectedBorder)
-    HideRegion(healthBar.SelectedBorder)
-    HideRegion(healthBar.deselectedOverlay)
-    HideRegion(healthBar.DeselectedOverlay)
-    HideRegion(unitFrame.selectionHighlight)
-    HideRegion(unitFrame.SelectionHighlight)
-    HideRegion(unitFrame.LevelFrame)
-    HideRegion(unitFrame.PlayerLevelDifferentialFrame)
-    HideRegion(unitFrame.PlayerLevelDiffFrame)
-
-    local shell = GetForeverShell(healthBar)
-    shell:ClearAllPoints()
-    shell:SetPoint("CENTER", healthBar, "CENTER", 1, -1)
-    PixelSize(shell, healthBar:GetWidth() + 8, healthBar:GetHeight() + 9)
-    shell:Show()
-
-    local highlight = healthBar.TinyThreatPlusTargetHighlight
-    if not highlight then
-        highlight = healthBar:CreateTexture(nil, "OVERLAY")
-        highlight:SetAtlas("UI-HUD-CoolDownManager-Selected-yellow", false)
-        highlight:SetIgnoreParentAlpha(true)
-        healthBar.TinyThreatPlusTargetHighlight = highlight
-    end
-    highlight:ClearAllPoints()
-    highlight:SetPoint("CENTER", healthBar, "CENTER", 0, 0)
-    PixelSize(highlight, healthBar:GetWidth() + 11, healthBar:GetHeight() + 9)
-    if TinyThreatPlusDB.showTargetHighlight and UnitIsUnit(healthBar.TinyThreatPlusUnit, "target") then
-        highlight:Show()
-    else
-        highlight:Hide()
-    end
-
-    return true
+    if container and container.healthBar then return container.healthBar end
+    return unitFrame.healthBar or unitFrame.HealthBar
 end
 
-local function GetLevelBadge(nameplate)
-    local badge = nameplate.TinyThreatPlusLevel
-    if badge then return badge end
+local function GetNativeCastBar(nameplate)
+    local unitFrame = nameplate and nameplate.UnitFrame
+    if not unitFrame then return nil end
+    local container = unitFrame.CastBarsContainer
+    if container then
+        return container.castBar or container.CastBar
+    end
+    return unitFrame.castBar or unitFrame.CastBar
+end
 
-    badge = CreateFrame("Frame", nil, nameplate)
-    badge:SetFrameStrata("HIGH")
+local function GetCustomScale()
+    return math.max(0.75, math.min(1.50,
+        (tonumber(TinyThreatPlusDB.customNameplateScale) or 100) / 100))
+end
+
+local function GetBarHeight()
+    return math.max(12, math.min(32,
+        tonumber(TinyThreatPlusDB.customNameplateBarHeight) or BASE_BAR_HEIGHT))
+end
+
+local function SetStatusBarAtlas(bar, atlas)
+    bar:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8")
+    local texture = bar:GetStatusBarTexture()
+    if texture and texture.SetAtlas then
+        texture:SetAtlas(atlas, false)
+        texture:SetTexCoord(0, 1, 0, 1)
+    end
+end
+
+local function CreateLevelBadge(parent)
+    local badge = CreateFrame("Frame", nil, parent)
+    badge:SetFrameLevel(parent:GetFrameLevel() + 5)
 
     badge.art = badge:CreateTexture(nil, "ARTWORK")
     badge.art:SetAllPoints()
@@ -181,212 +92,230 @@ local function GetLevelBadge(nameplate)
     badge.text:SetAllPoints()
     badge.text:SetJustifyH("CENTER")
     badge.text:SetJustifyV("MIDDLE")
+    badge.text:SetFont(STANDARD_TEXT_FONT, 8, "")
+    badge.text:SetTextColor(1, 1, 1)
 
-    nameplate.TinyThreatPlusLevel = badge
     return badge
 end
 
-local function UpdateForeverLevel(nameplate, healthBar, unit)
-    local badge = nameplate.TinyThreatPlusLevel
+local function CreateThreatBox(parent)
+    local box = TTP.CreateThreatBox(parent, nil)
+    box:SetFrameLevel(parent:GetFrameLevel() + 6)
+    return box
+end
 
+local function CreatePlate(nameplate)
+    if nameplate.TinyThreatPlusPlate then
+        return nameplate.TinyThreatPlusPlate
+    end
+
+    local unitFrame = nameplate.UnitFrame
+    local plate = CreateFrame("Frame", nil, nameplate)
+    plate:SetFrameStrata(nameplate:GetFrameStrata())
+    plate:SetFrameLevel((unitFrame and unitFrame:GetFrameLevel() or 1) + 20)
+    plate:Hide()
+
+    plate.health = CreateFrame("StatusBar", nil, plate)
+    plate.health:SetFrameLevel(plate:GetFrameLevel() + 2)
+    SetStatusBarAtlas(plate.health, "UI-HUD-CoolDownManager-Bar")
+
+    plate.healthShell = plate:CreateTexture(nil, "BACKGROUND")
+    plate.healthShell:SetAtlas("UI-HUD-CoolDownManager-Bar-BG", false)
+    plate.healthShell:SetIgnoreParentAlpha(true)
+
+    plate.targetHighlight = plate:CreateTexture(nil, "OVERLAY")
+    plate.targetHighlight:SetAtlas("UI-HUD-CoolDownManager-Selected-yellow", false)
+    plate.targetHighlight:SetIgnoreParentAlpha(true)
+    plate.targetHighlight:Hide()
+
+    plate.name = plate:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    plate.name:SetJustifyH("LEFT")
+    plate.name:SetTextColor(1, 1, 1)
+    plate.name:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+
+    plate.healthPercent = plate:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    plate.healthPercent:SetJustifyH("LEFT")
+    plate.healthPercent:SetTextColor(1, 1, 1)
+
+    plate.healthValue = plate:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    plate.healthValue:SetJustifyH("RIGHT")
+    plate.healthValue:SetTextColor(1, 1, 1)
+
+    plate.level = CreateLevelBadge(plate)
+    plate.threat = CreateThreatBox(plate)
+
+    plate.cast = CreateFrame("StatusBar", nil, plate)
+    plate.cast:SetFrameLevel(plate:GetFrameLevel() + 2)
+    SetStatusBarAtlas(plate.cast, "UI-HUD-CoolDownManager-Bar")
+    plate.cast:SetStatusBarColor(1.0, 0.70, 0.15)
+
+    plate.castShell = plate:CreateTexture(nil, "BACKGROUND")
+    plate.castShell:SetAtlas("UI-HUD-CoolDownManager-Bar-BG", false)
+    plate.castShell:SetIgnoreParentAlpha(true)
+
+    plate.castName = plate:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    plate.castName:SetJustifyH("LEFT")
+    plate.castName:SetTextColor(1, 1, 1)
+    plate.castName:SetFont(STANDARD_TEXT_FONT, 8, "OUTLINE")
+    plate.cast:Hide()
+    plate.castShell:Hide()
+    plate.castName:Hide()
+
+    nameplate.TinyThreatPlusPlate = plate
+    return plate
+end
+
+local function LayoutPlate(nameplate, plate)
+    local unitFrame = nameplate.UnitFrame
+    if not unitFrame then return end
+
+    local height = GetBarHeight()
+    local scale = GetCustomScale()
+
+    plate:SetScale(scale)
+    plate:ClearAllPoints()
+    PixelPoint(plate, "BOTTOM", unitFrame, "BOTTOM", 0, 4)
+    PixelSize(plate, BASE_WIDTH + BAR_GAP + THREAT_WIDTH, height + 28)
+
+    plate.health:ClearAllPoints()
+    PixelPoint(plate.health, "BOTTOMLEFT", plate, "BOTTOMLEFT", 0, 0)
+    PixelSize(plate.health, BASE_WIDTH, height)
+
+    plate.healthShell:ClearAllPoints()
+    PixelPoint(plate.healthShell, "CENTER", plate.health, "CENTER", 1, -1)
+    PixelSize(plate.healthShell, BASE_WIDTH + 8, height + 9)
+
+    plate.targetHighlight:ClearAllPoints()
+    PixelPoint(plate.targetHighlight, "CENTER", plate.health, "CENTER", 0, 0)
+    PixelSize(plate.targetHighlight, BASE_WIDTH + 11, height + 9)
+
+    plate.name:ClearAllPoints()
+    PixelPoint(plate.name, "BOTTOMLEFT", plate.health, "TOPLEFT", 0, 2)
+    plate.name:SetWidth(BASE_WIDTH)
+    plate.name:SetHeight(14)
+
+    local healthFont = height < 17 and 8 or 10
+    local inset = height < 17 and 3 or 4
+    plate.healthPercent:SetFont(STANDARD_TEXT_FONT, healthFont, "OUTLINE")
+    plate.healthPercent:ClearAllPoints()
+    PixelPoint(plate.healthPercent, "LEFT", plate.health, "LEFT", inset, 0)
+
+    plate.healthValue:SetFont(STANDARD_TEXT_FONT, healthFont, "OUTLINE")
+    plate.healthValue:ClearAllPoints()
+    PixelPoint(plate.healthValue, "RIGHT", plate.health, "RIGHT", -inset, 0)
+
+    PixelSize(plate.level, LEVEL_SIZE, LEVEL_SIZE)
+    plate.level:ClearAllPoints()
+    PixelPoint(plate.level, "CENTER", plate.health, "TOPLEFT", -4, 0)
+
+    plate.threat:ClearAllPoints()
+    PixelPoint(plate.threat, "LEFT", plate.health, "RIGHT", BAR_GAP, 0)
+
+    plate.cast:ClearAllPoints()
+    PixelPoint(plate.cast, "TOPLEFT", plate.health, "BOTTOMLEFT", 0, -3)
+    PixelSize(plate.cast, BASE_WIDTH, CAST_HEIGHT)
+
+    plate.castShell:ClearAllPoints()
+    PixelPoint(plate.castShell, "CENTER", plate.cast, "CENTER", 1, -1)
+    PixelSize(plate.castShell, BASE_WIDTH + 8, CAST_HEIGHT + 7)
+
+    plate.castName:ClearAllPoints()
+    PixelPoint(plate.castName, "LEFT", plate.cast, "LEFT", 3, 0)
+    plate.castName:SetWidth(BASE_WIDTH - 6)
+end
+
+local function SetNativePresentation(nameplate, visible)
+    local unitFrame = nameplate and nameplate.UnitFrame
+    if not unitFrame then return end
+
+    if visible then
+        if unitFrame.TinyThreatPlusOriginalAlpha ~= nil then
+            unitFrame:SetAlpha(unitFrame.TinyThreatPlusOriginalAlpha)
+            unitFrame.TinyThreatPlusOriginalAlpha = nil
+        else
+            unitFrame:SetAlpha(1)
+        end
+        return
+    end
+
+    if unitFrame.TinyThreatPlusOriginalAlpha == nil then
+        unitFrame.TinyThreatPlusOriginalAlpha = unitFrame:GetAlpha()
+    end
+    unitFrame:SetAlpha(0)
+end
+
+local function CopyStatus(nativeBar, customBar)
+    if not nativeBar or not customBar then return end
+
+    -- Secret numeric values can still be passed directly between StatusBars.
+    -- We never compare or perform arithmetic on them.
+    local minValue, maxValue = nativeBar:GetMinMaxValues()
+    local value = nativeBar:GetValue()
+    customBar:SetMinMaxValues(minValue, maxValue)
+    customBar:SetValue(value)
+end
+
+local function CopyNativeHealthText(nativeBar, plate)
+    -- Blizzard already formats secret health values safely. Reuse the rendered
+    -- strings rather than performing arithmetic on protected numbers.
+    local left = nativeBar and nativeBar.LeftText
+    local right = nativeBar and nativeBar.RightText
+
+    plate.healthPercent:SetText(left and left:GetText() or "")
+    plate.healthValue:SetText(right and right:GetText() or "")
+end
+
+local function UpdateLevel(plate, unit)
     if not TinyThreatPlusDB.showMobLevel then
-        if badge then badge:Hide() end
+        plate.level:Hide()
         return
     end
 
     local level = UnitLevel(unit)
     if not IsAccessible(level) or type(level) ~= "number" or level == 0 then
-        if badge then badge:Hide() end
+        plate.level:Hide()
         return
     end
 
-    badge = GetLevelBadge(nameplate)
-    local size = 21
-    PixelSize(badge, size, size)
-    badge:ClearAllPoints()
-    PixelPoint(badge, "CENTER", healthBar, "TOPLEFT", -4, 0)
-
-    badge.text:SetFont(STANDARD_TEXT_FONT, 8, "")
-    badge.text:SetText(level < 0 and "??" or tostring(level))
-    badge.text:SetTextColor(1, 1, 1)
-    badge:Show()
+    plate.level.text:SetText(level < 0 and "??" or tostring(level))
+    plate.level:Show()
 end
 
-local function UpdateForeverText(nameplate, healthBar)
-    local name = GetNameText(nameplate, healthBar)
-    if name then
-        name:ClearAllPoints()
-        PixelPoint(name, "BOTTOMLEFT", healthBar, "TOPLEFT", 0, 2)
-        name:SetWidth(healthBar:GetWidth())
-        name:SetJustifyH("LEFT")
-        if not name.TinyThreatPlusOriginalFontSize and name.GetFont then
-            local file, size, flags = name:GetFont()
-            name.TinyThreatPlusOriginalFontFile = file
-            name.TinyThreatPlusOriginalFontSize = size
-            name.TinyThreatPlusOriginalFontFlags = flags
-        end
-        if name.TinyThreatPlusOriginalFontSize then
-            name:SetFont(
-                name.TinyThreatPlusOriginalFontFile or STANDARD_TEXT_FONT,
-                math.max(9, name.TinyThreatPlusOriginalFontSize - 4),
-                name.TinyThreatPlusOriginalFontFlags or "OUTLINE"
-            )
-        end
-    end
-
-    -- Forever's native fields are counterintuitively named: LeftText is the
-    -- percentage readout and RightText is the current value in the live UI.
-    local left = healthBar.LeftText
-    local right = healthBar.RightText
-    -- Use discrete typography for the two native bar families. Scaling the
-    -- same font with the bar made the thin styles feel crowded and uneven.
-    local thin = healthBar:GetHeight() < 17
-    local fontSize = thin and 8 or 10
-
-    if left then
-        left:ClearAllPoints()
-        PixelPoint(left, "LEFT", healthBar, "LEFT", thin and 3 or 4, 0)
-        left:SetJustifyH("LEFT")
-        left:SetFont(STANDARD_TEXT_FONT, fontSize, "OUTLINE")
-    end
-    if right then
-        right:ClearAllPoints()
-        PixelPoint(right, "RIGHT", healthBar, "RIGHT", thin and -3 or -4, 0)
-        right:SetJustifyH("RIGHT")
-        right:SetFont(STANDARD_TEXT_FONT, fontSize, "OUTLINE")
-    end
-end
-
-local function UpdateForeverCastBar(nameplate, healthBar)
-    local unitFrame = nameplate.UnitFrame
-    local container = unitFrame.CastBarsContainer
-    local castBar = container and (container.castBar or container.CastBar)
-        or unitFrame.castBar
-        or unitFrame.CastBar
-
-    if not castBar then return end
-
-    castBar:ClearAllPoints()
-    PixelPoint(castBar, "TOP", healthBar, "BOTTOM", 0, -3)
-    PixelSize(castBar, healthBar:GetWidth(), math.max(9, healthBar:GetHeight() * 0.55))
-end
-
-local function ApplyForeverPresentation(nameplate, healthBar, unit)
-    healthBar.TinyThreatPlusUnit = unit
-    if not ApplyForeverHealthRow(nameplate, healthBar) then return false end
-    UpdateForeverLevel(nameplate, healthBar, unit)
-    UpdateForeverText(nameplate, healthBar)
-    UpdateForeverCastBar(nameplate, healthBar)
-    return true
-end
-
-local function AnchorThreatBox(healthBar, box)
-    box:ClearAllPoints()
-    if TTP.Compat.IsForever() then
-        PixelPoint(box, "LEFT", healthBar, "RIGHT", 3, 0)
-    else
-        PixelPoint(box, "LEFT", healthBar, "RIGHT", 2, 0)
-    end
-end
-
-local function RestoreHealthColor(healthBar)
-    if not healthBar or not healthBar.SetStatusBarColor then return end
-    -- Ask Blizzard to refresh naturally on the next nameplate update. Avoid
-    -- caching protected color/health state in the presentation layer.
-    healthBar.TinyThreatPlusUnit = nil
-end
-
-local function ApplyThreatColor(healthBar, unit, data)
-    if not TinyThreatPlusDB.roleBasedColors then return end
-    local r, g, b = TTP.GetThreatColor(unit, data)
-    TTP.applyingHealthColor = true
-    healthBar:SetStatusBarColor(r, g, b)
-    TTP.applyingHealthColor = false
-end
-
-local function GetOrCreateThreatBox(nameplate)
-    return TTP.CreateThreatBox(nameplate, "TinyThreatPlusBox")
-end
-
-local function HideAddonPresentation(nameplate)
-    if nameplate.TinyThreatPlusBox then nameplate.TinyThreatPlusBox:Hide() end
-    if nameplate.TinyThreatPlusLevel then nameplate.TinyThreatPlusLevel:Hide() end
-    local healthBar = TTP.GetNameplateHealthBar(nameplate)
-    if healthBar and healthBar.TinyThreatPlusTargetHighlight then
-        healthBar.TinyThreatPlusTargetHighlight:Hide()
-    end
-end
-
-function TTP.ClearNameplate(nameplate)
-    if not nameplate then return end
-    local healthBar = nameplate.TinyThreatPlusHealthBar or TTP.GetNameplateHealthBar(nameplate)
-
-    HideAddonPresentation(nameplate)
-
-    if TTP.Compat.IsForever() and healthBar then
-        RestoreForeverNative(nameplate, healthBar)
-    end
-
-    if healthBar then RestoreHealthColor(healthBar) end
-    nameplate.TinyThreatPlusHealthBar = nil
-end
-
-function TTP.UpdateNameplate(unit)
-    if not TTP.Compat.HasNamePlateAPI() then return end
-
-    local nameplate = C_NamePlate.GetNamePlateForUnit(unit)
-    if not nameplate or nameplate:IsForbidden() then return end
-
-    local healthBar = TTP.GetNameplateHealthBar(nameplate)
-    if not healthBar then
-        TTP.ClearNameplate(nameplate)
+local function UpdateCast(nameplate, plate)
+    local nativeCast = GetNativeCastBar(nameplate)
+    if not nativeCast or not nativeCast:IsShown() then
+        plate.cast:Hide()
+        plate.castShell:Hide()
+        plate.castName:Hide()
         return
     end
 
-    nameplate.TinyThreatPlusHealthBar = healthBar
+    CopyStatus(nativeCast, plate.cast)
 
-    if not TTP.IsHostileNPC(unit) then
-        HideAddonPresentation(nameplate)
-        RestoreHealthColor(healthBar)
+    local r, g, b = nativeCast:GetStatusBarColor()
+    if r and g and b then plate.cast:SetStatusBarColor(r, g, b) end
+
+    local text = nativeCast.Text or nativeCast.text or nativeCast.SpellName
+    plate.castName:SetText(text and text.GetText and text:GetText() or "")
+    plate.cast:Show()
+    plate.castShell:Show()
+    plate.castName:Show()
+end
+
+local function UpdateThreat(plate, unit, data)
+    if not TinyThreatPlusDB.showNameplateThreat or not data then
+        plate.threat:Hide()
         return
     end
 
-    if TTP.Compat.IsForever() then
-        if not TinyThreatPlusDB.enableCustomNameplates then
-            HideAddonPresentation(nameplate)
-            RestoreForeverNative(nameplate, healthBar)
-            RestoreHealthColor(healthBar)
-            return
-        end
-
-        ApplyForeverPresentation(nameplate, healthBar, unit)
-    end
-
-    if not TinyThreatPlusDB.showNameplateThreat then
-        if nameplate.TinyThreatPlusBox then nameplate.TinyThreatPlusBox:Hide() end
-        RestoreHealthColor(healthBar)
-        return
-    end
-
-    local data = TTP.GetThreatData(unit)
-    if not data then
-        if nameplate.TinyThreatPlusBox then nameplate.TinyThreatPlusBox:Hide() end
-        RestoreHealthColor(healthBar)
-        return
-    end
-
-    local box = GetOrCreateThreatBox(nameplate)
-    AnchorThreatBox(healthBar, box)
-
-    local height = TTP.Compat.IsForever() and healthBar:GetHeight() or 18
-    local width = TTP.Compat.IsForever() and 28 or 42
-    local fontSize = TTP.Compat.IsForever() and 8 or 10
+    local height = GetBarHeight()
+    local fontSize = height < 17 and 8 or 9
     local text = TTP.GetThreatDisplayText(data)
     local r, g, b = TTP.GetThreatColor(unit, data)
 
     TTP.UpdateThreatBox(
-        box,
-        width,
+        plate.threat,
+        THREAT_WIDTH,
         height,
         fontSize,
         text,
@@ -396,9 +325,131 @@ function TTP.UpdateNameplate(unit)
 
     local active = data.hasThreatData
         and ((data.playerThreat or 0) > 0 or (data.highestOtherThreat or 0) > 0)
-    box:SetAlpha((UnitIsUnit(unit, "target") or active) and 1 or 0.58)
+    plate.threat:SetAlpha((UnitIsUnit(unit, "target") or active) and 1 or 0.58)
+end
+
+local function UpdateHealthColor(nativeBar, plate, unit, data)
+    local active = data and data.hasThreatData
+        and ((data.playerThreat or 0) > 0 or (data.highestOtherThreat or 0) > 0)
 
     if TinyThreatPlusDB.roleBasedColors and active then
-        ApplyThreatColor(healthBar, unit, data)
+        local r, g, b = TTP.GetThreatColor(unit, data)
+        plate.health:SetStatusBarColor(r, g, b)
+        return
+    end
+
+    local r, g, b = nativeBar:GetStatusBarColor()
+    if r and g and b then
+        plate.health:SetStatusBarColor(r, g, b)
+    else
+        plate.health:SetStatusBarColor(1, 0, 0)
+    end
+end
+
+local function UpdatePlate(nameplate, plate, unit, nativeHealth)
+    LayoutPlate(nameplate, plate)
+    SetNativePresentation(nameplate, false)
+
+    CopyStatus(nativeHealth, plate.health)
+    CopyNativeHealthText(nativeHealth, plate)
+
+    local name = UnitName(unit)
+    plate.name:SetText(IsAccessible(name) and name or "")
+
+    UpdateLevel(plate, unit)
+
+    local data = TTP.GetThreatData(unit)
+    UpdateHealthColor(nativeHealth, plate, unit, data)
+    UpdateThreat(plate, unit, data)
+
+    if TinyThreatPlusDB.showTargetHighlight and UnitIsUnit(unit, "target") then
+        plate.targetHighlight:Show()
+    else
+        plate.targetHighlight:Hide()
+    end
+
+    UpdateCast(nameplate, plate)
+    plate:Show()
+end
+
+local function ResetPlate(nameplate)
+    if not nameplate then return end
+    local plate = nameplate.TinyThreatPlusPlate
+    if plate then
+        plate:Hide()
+        plate.threat:Hide()
+        plate.level:Hide()
+        plate.targetHighlight:Hide()
+        plate.cast:Hide()
+        plate.castShell:Hide()
+        plate.castName:Hide()
+    end
+    SetNativePresentation(nameplate, true)
+end
+
+function TTP.ClearNameplate(nameplate)
+    ResetPlate(nameplate)
+end
+
+local function UpdateForeverNameplate(unit, nameplate)
+    local nativeHealth = TTP.GetNameplateHealthBar(nameplate)
+    if not nativeHealth then
+        ResetPlate(nameplate)
+        return
+    end
+
+    if not TinyThreatPlusDB.enableCustomNameplates or not TTP.IsHostileNPC(unit) then
+        ResetPlate(nameplate)
+        return
+    end
+
+    local plate = CreatePlate(nameplate)
+    UpdatePlate(nameplate, plate, unit, nativeHealth)
+end
+
+local function UpdateLegacyNameplate(unit, nameplate)
+    -- Anniversary/Era retain Blizzard presentation. TinyThreatPlus only adds
+    -- the compact threat box, preserving the established legacy behavior.
+    local healthBar = TTP.GetNameplateHealthBar(nameplate)
+    if not healthBar or not TTP.IsHostileNPC(unit) then
+        if nameplate.TinyThreatPlusLegacyThreat then
+            nameplate.TinyThreatPlusLegacyThreat:Hide()
+        end
+        return
+    end
+
+    if not TinyThreatPlusDB.showNameplateThreat then
+        if nameplate.TinyThreatPlusLegacyThreat then
+            nameplate.TinyThreatPlusLegacyThreat:Hide()
+        end
+        return
+    end
+
+    local data = TTP.GetThreatData(unit)
+    if not data then return end
+
+    local box = nameplate.TinyThreatPlusLegacyThreat
+    if not box then
+        box = TTP.CreateThreatBox(nameplate, "TinyThreatPlusLegacyThreat")
+    end
+
+    box:ClearAllPoints()
+    PixelPoint(box, "LEFT", healthBar, "RIGHT", 2, 0)
+
+    local text = TTP.GetThreatDisplayText(data)
+    local r, g, b = TTP.GetThreatColor(unit, data)
+    TTP.UpdateThreatBox(box, 42, 18, 10, text, r, g, b, TTP.GetTargetCounter(unit))
+end
+
+function TTP.UpdateNameplate(unit)
+    if not TTP.Compat.HasNamePlateAPI() then return end
+
+    local nameplate = C_NamePlate.GetNamePlateForUnit(unit)
+    if not nameplate or nameplate:IsForbidden() then return end
+
+    if TTP.Compat.IsForever() then
+        UpdateForeverNameplate(unit, nameplate)
+    else
+        UpdateLegacyNameplate(unit, nameplate)
     end
 end
