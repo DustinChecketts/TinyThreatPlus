@@ -1900,6 +1900,9 @@ SlashCmdList.TINYTHREATPLUS = function(message)
     elseif command == "art" then
         if TTP.DumpHoveredArt then TTP.DumpHoveredArt() end
         return
+    elseif command == "unitart" then
+        if TTP.DumpForeverUnitFrameArt then TTP.DumpForeverUnitFrameArt() end
+        return
     elseif command == "reset" then
         TTP.ResetDefaults()
         print("TinyThreatPlus settings reset.")
@@ -1921,6 +1924,7 @@ SlashCmdList.TINYTHREATPLUS = function(message)
         print("/ttp threatreport")
         print("/ttp threatlive")
         print("/ttp art")
+        print("/ttp unitart")
         print("/ttp reset")
     end
 
