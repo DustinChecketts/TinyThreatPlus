@@ -368,8 +368,8 @@ local function UpdateAuras(plate, unit)
             shown = shown + 1
             local button = plate.auras[shown]
             button.icon:SetTexture(aura.icon)
-            local count = aura.applications or 0
-            button.count:SetText(count and count > 1 and count or "")
+            local count = TTP.Compat.GetAccessibleValue(aura.applications)
+            button.count:SetText(type(count) == "number" and count > 1 and count or "")
             button:Show()
         end
     end
