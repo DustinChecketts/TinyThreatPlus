@@ -1095,10 +1095,13 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     healthShell:ClearAllPoints()
     healthShell:SetPoint("CENTER", healthBar, "CENTER", 0, 0)
 
-    -- The diagnostic reported the native BG at 140.5x21.6 around a
-    -- 132.9x12.7 StatusBar. Preserve that overhang/aspect as the bar scales.
-    local shellWidth = healthBar:GetWidth() * (140.5 / 132.9)
-    local shellHeight = nativeRowHeight * (21.6 / 12.7)
+    -- The Default/Large live diagnostics show that Blizzard does NOT scale
+    -- the shell proportionally with row height. The same art keeps essentially
+    -- fixed edge thickness: 216.4x21.0 -> 224.0x29.8 (Default) and
+    -- 216.4x31.7 -> 224.0x40.6 (Large). Preserve that fixed overhang so the
+    -- HD edge/corner pixels are not stretched on thin bars.
+    local shellWidth = healthBar:GetWidth() + 7.6
+    local shellHeight = healthBar:GetHeight() + 8.8
     PixelSetSize(healthShell, shellWidth, shellHeight)
 
     healthShell.frameArt:ClearAllPoints()
@@ -2770,6 +2773,16 @@ function TTP.UpdateNameplate(unit)
     end
 
     box:SetScale(1)
+
+    -- Keep addon-owned threat information above Blizzard's selected-nameplate
+    -- presentation. The native selected shell grows beyond the health row and
+    -- otherwise occludes the threat cell even though its anchor is correct.
+    if TTP.Compat.IsForever() and box.SetFrameLevel then
+        local unitFrame = nameplate and nameplate.UnitFrame
+        local healthLevel = healthBar.GetFrameLevel and healthBar:GetFrameLevel() or 1
+        local unitLevel = unitFrame and unitFrame.GetFrameLevel and unitFrame:GetFrameLevel() or 1
+        box:SetFrameLevel(math.max(healthLevel, unitLevel) + 8)
+    end
 
     AnchorThreatBox(nameplate, healthBar, box)
 
