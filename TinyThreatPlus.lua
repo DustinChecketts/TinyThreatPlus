@@ -893,14 +893,20 @@ function TTP.ApplyBoxStyle(frame, height)
         -- one-pixel-corner chrome instead.
         frame:SetBackdropColor(0, 0, 0, 0)
         frame:SetBackdropBorderColor(0, 0, 0, 0)
-        TTP.ApplyForeverRoundedChrome(
-            frame,
-            TTP.colors.background[1],
-            TTP.colors.background[2],
-            TTP.colors.background[3],
-            TTP.colors.background[4],
-            0.34, 0.34, 0.38, 0.95
-        )
+        SetRoundedChromeShown(frame, false)
+
+        if not frame.TinyThreatPlusForeverFrameArt then
+            local art = frame:CreateTexture(nil, "BACKGROUND", nil, 0)
+            art:SetAtlas("UI-HUD-Nameplates-LevelIndicator", false)
+            art:SetIgnoreParentAlpha(true)
+            frame.TinyThreatPlusForeverFrameArt = art
+        end
+
+        local art = frame.TinyThreatPlusForeverFrameArt
+        art:ClearAllPoints()
+        art:SetAllPoints(frame)
+        art:SetVertexColor(1, 1, 1, 1)
+        art:Show()
     else
         frame:SetBackdropColor(unpack(TTP.colors.background))
         frame:SetBackdropBorderColor(unpack(TTP.colors.border))
