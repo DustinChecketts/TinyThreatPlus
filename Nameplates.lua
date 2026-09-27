@@ -1452,6 +1452,55 @@ function TTP.DumpHoveredArt()
         return
     end
 
+    local function DumpCandidate(label, object)
+        if not object then return false end
+        print(label .. ": " .. tostring(SafeObjectName(object)))
+        DumpArtObject(object, 0, {})
+        return true
+    end
+
+    -- World nameplates are not normal mouse-interactive UI, so GetMouseFoci()
+    -- commonly returns an anonymous 0x0 world-cursor proxy. When the player
+    -- has a target, inspect the target's actual Blizzard nameplate directly.
+    local targetPlate =
+        C_NamePlate
+        and C_NamePlate.GetNamePlateForUnit
+        and C_NamePlate.GetNamePlateForUnit("target")
+
+    if targetPlate then
+        print("TinyThreatPlus Forever art diagnostic: TARGET NAMEPLATE")
+        DumpCandidate("NamePlate", targetPlate)
+
+        local unitFrame = targetPlate.UnitFrame
+        if unitFrame then
+            DumpCandidate("UnitFrame", unitFrame)
+
+            local container = unitFrame.HealthBarsContainer
+            if container then
+                DumpCandidate("HealthBarsContainer", container)
+                DumpCandidate(
+                    "HealthBar",
+                    container.healthBar
+                        or unitFrame.healthBar
+                        or unitFrame.HealthBar
+                )
+            else
+                DumpCandidate(
+                    "HealthBar",
+                    unitFrame.healthBar or unitFrame.HealthBar
+                )
+            end
+
+            DumpCandidate("LevelFrame", unitFrame.LevelFrame)
+            DumpCandidate("ClassificationFrame", unitFrame.ClassificationFrame)
+            DumpCandidate("RaidTargetFrame", unitFrame.RaidTargetFrame)
+        end
+        return
+    end
+
+    -- Normal UI frames (player/target frame, options, etc.) can still be
+    -- inspected by hover. Walk upward through several parents because the
+    -- visible border texture is often owned above the mouse-enabled child.
     local foci = type(GetMouseFoci) == "function" and { GetMouseFoci() } or {}
     if #foci == 0 and type(GetMouseFocus) == "function" then
         local focus = GetMouseFocus()
@@ -1459,21 +1508,25 @@ function TTP.DumpHoveredArt()
     end
 
     if #foci == 0 then
-        print("TinyThreatPlus art diagnostic: no mouse focus. Hover the UI art and run /ttp art.")
+        print("TinyThreatPlus art diagnostic: no target nameplate or mouse focus.")
         return
     end
 
-    print("TinyThreatPlus Forever hover art diagnostic:")
-    local seen = {}
+    print("TinyThreatPlus Forever art diagnostic: HOVERED UI")
     for index, focus in ipairs(foci) do
-        print(string.format("Focus %d: %s", index, tostring(SafeObjectName(focus))))
-        -- Include the hovered frame and its immediate parent; textures often
-        -- live on the parent while a child frame owns mouse interaction.
-        DumpArtObject(focus, 0, seen)
-        local parent = focus.GetParent and focus:GetParent() or nil
-        if parent then
-            print("Parent:")
-            DumpArtObject(parent, 0, seen)
+        local object = focus
+        local seenParents = {}
+        for depth = 0, 6 do
+            if not object or seenParents[object] then break end
+            seenParents[object] = true
+            print(string.format(
+                "Focus %d parent-depth %d: %s",
+                index,
+                depth,
+                tostring(SafeObjectName(object))
+            ))
+            DumpArtObject(object, 0, {})
+            object = object.GetParent and object:GetParent() or nil
         end
     end
 end
