@@ -272,9 +272,11 @@ local function EnableNativeHealthDataFeed(nativeBar)
     -- Forever protects health arithmetic in combat. Keep Blizzard's hidden
     -- health bar producing both already-safe display strings for our custom
     -- text, without changing any Blizzard CVar or visible presentation.
-    if nativeBar.TinyThreatPlusOriginalShowPercentage == nil then
-        nativeBar.TinyThreatPlusOriginalShowPercentage = nativeBar.showPercentage
-        nativeBar.TinyThreatPlusOriginalShowNumeric = nativeBar.showNumeric
+    if not nativeBar.TinyThreatPlusOriginalTextFlags then
+        nativeBar.TinyThreatPlusOriginalTextFlags = {
+            percentage = nativeBar.showPercentage,
+            numeric = nativeBar.showNumeric,
+        }
     end
     nativeBar.showPercentage = true
     nativeBar.showNumeric = true
@@ -282,11 +284,11 @@ end
 
 local function RestoreNativeHealthDataFeed(nativeBar)
     if not nativeBar then return end
-    if nativeBar.TinyThreatPlusOriginalShowPercentage ~= nil then
-        nativeBar.showPercentage = nativeBar.TinyThreatPlusOriginalShowPercentage
-        nativeBar.showNumeric = nativeBar.TinyThreatPlusOriginalShowNumeric
-        nativeBar.TinyThreatPlusOriginalShowPercentage = nil
-        nativeBar.TinyThreatPlusOriginalShowNumeric = nil
+    local flags = nativeBar.TinyThreatPlusOriginalTextFlags
+    if flags then
+        nativeBar.showPercentage = flags.percentage
+        nativeBar.showNumeric = flags.numeric
+        nativeBar.TinyThreatPlusOriginalTextFlags = nil
     end
 end
 
