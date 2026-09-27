@@ -351,12 +351,12 @@ MakeChoice(
 Section("Health Bar", -201)
 SectionDescription(
     "Uses the health bar itself as an immediate threat warning based on your role.",
-    -116
+    -232
 )
 MakeToggle(
     "Enable Threat Coloring",
     "roleBasedColors",
-    -146,
+    -262,
     "Colors hostile NPC health bars by threat state. Other assigned tanks holding aggro are treated as safe."
 )
 
