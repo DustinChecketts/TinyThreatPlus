@@ -344,27 +344,27 @@ MakeToggle(
     "Colors hostile NPC health bars by threat state. Other assigned tanks holding aggro are treated as safe."
 )
 
-Section("Threat Indicator", -201)
+Section("Threat Indicator", -317)
 SectionDescription(
     "Shows how far you are ahead of or behind the current threat leader.",
-    -232
+    -348
 )
 MakeToggle(
     "Show on Nameplates",
     "showNameplates",
-    -262,
+    -378,
     "Shows TinyThreatPlus threat information beside hostile nameplates."
 )
 MakeToggle(
     "Show on Target Frame",
     "showTargetFrame",
-    -294,
+    -410,
     "Shows the threat indicator above the target frame."
 )
 MakeToggle(
     "Always Show Indicator",
     "alwaysShowThreatBoxes",
-    -326,
+    -442,
     "Shows an idle indicator even before active threat information exists."
 )
 MakeChoice(
@@ -374,7 +374,7 @@ MakeChoice(
         { label = "Value Difference", value = "VALUE" },
         { label = "Percentage", value = "PERCENT" },
     },
-    -368,
+    -484,
     "Choose between exact threat difference and percentage display."
 )
 MakeSlider(
@@ -383,7 +383,7 @@ MakeSlider(
     50,
     150,
     5,
-    -410,
+    -526,
     "%",
     "Scales the complete nameplate threat indicator."
 )
@@ -393,56 +393,56 @@ MakeSlider(
     50,
     150,
     5,
-    -452,
+    -568,
     "%",
     "Scales the complete target-frame threat indicator."
 )
 
-Section("Threat Leader", -512)
+Section("Threat Leader", -628)
 SectionDescription(
     "Identifies who currently has the most threat on an enemy and provides useful player or pet context.",
-    -543
+    -659
 )
 MakeToggle(
     "Show Threat Leader",
     "showThreatLeader",
-    -573,
+    -689,
     "Shows the unit currently leading threat below the threat indicator."
 )
 MakeToggle(
     "Show Class / Pet Icon",
     "showThreatLeaderClassIcon",
-    -605,
+    -721,
     "Shows a player class icon or pet portrait for the current threat leader."
 )
 MakeToggle(
     "Show Role Icon",
     "showThreatLeaderRole",
-    -637,
+    -753,
     "Shows the Tank, Healer, or Damage role for player threat leaders when available."
 )
 
-Section("Target Priority", -697)
+Section("Target Priority", -813)
 SectionDescription(
     "Highlights one enemy that deserves attention when fighting multiple targets. Tank and Damage roles use different priority logic.",
-    -728
+    -844
 )
 MakeToggle(
     "Enable Target Priority",
     "showPriorityMarker",
-    -770,
+    -886,
     "Highlights one useful priority target when multiple hostile nameplates are visible. Automatic priority is normally limited to parties and raids."
 )
 MakeToggle(
     "Enable While Solo (Pet Classes)",
     "priorityWhileSolo",
-    -802,
+    -918,
     "Allows Target Priority while solo when you have an active pet. Uses real threat when available and combat-log fallback only when real threat data is unavailable."
 )
 MakeColorPicker(
     "Priority Color",
     "priorityMarkerColor",
-    -844,
+    -960,
     "Choose the background color used to identify the Target Priority."
 )
 MakeSlider(
@@ -451,7 +451,7 @@ MakeSlider(
     10,
     100,
     5,
-    -886,
+    -1002,
     "%",
     "Controls the opacity of the Target Priority background."
 )
@@ -461,7 +461,7 @@ MakeSlider(
     1,
     6,
     1,
-    -928,
+    -1044,
     "",
     "Controls Target Priority background size from 1 to 6. Each step adds 1 pixel of padding: 1 = 5 px through 6 = 10 px."
 )
@@ -471,56 +471,56 @@ MakeSlider(
     0,
     100,
     5,
-    -970,
+    -1086,
     "%",
     "Threat safety gate for Target Priority. Tanks mark the enemy most at risk of being lost. Damage only considers targets at or below this percentage of the threat leader, then prefers group focus, lower health, and finally lower personal threat. Healers receive no automatic priority target."
 )
 
-Section("Target Counter", -1030)
+Section("Target Counter", -1146)
 SectionDescription(
     "Shows how many party or raid members are currently targeting an enemy.",
-    -1061
+    -1177
 )
 MakeToggle(
     "Show Target Counter on Nameplate",
     "showTargetCounter",
-    -1091,
+    -1207,
     "Shows how many party or raid members are targeting each enemy nameplate."
 )
 MakeToggle(
     "Show Target Counter on Target Frame",
     "showTargetFrameCounter",
-    -1123,
+    -1239,
     "Shows how many party or raid members are targeting your current target."
 )
 
-Section("Nameplate Information", -1183)
+Section("Nameplate Information", -1299)
 SectionDescription(
     "Controls TinyThreatPlus information added to Blizzard's native nameplates.",
-    -1214
+    -1330
 )
 MakeToggle(
     "Show Enemy Level",
     "showMobLevel",
-    -1244,
+    -1360,
     "Restores enemy levels on modern Blizzard nameplate styles. Classic displays levels natively."
 )
 MakeToggle(
     "Show Friendly Level",
     "showFriendlyLevel",
-    -1276,
+    -1392,
     "Restores friendly NPC levels on modern Blizzard nameplate styles."
 )
 MakeToggle(
     "Enemy Player Class Colors",
     "enemyPlayerClassColors",
-    -1308,
+    -1424,
     "Uses Blizzard class colors for hostile players."
 )
 MakeToggle(
     "Friendly Player Class Colors",
     "friendlyPlayerClassColors",
-    -1340,
+    -1456,
     "Uses Blizzard class colors for friendly players."
 )
 
