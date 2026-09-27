@@ -346,6 +346,15 @@ local function CreateLevelBadge(nameplate)
     badge:SetIgnoreParentAlpha(true)
     badge:SetAlpha(1)
 
+    -- Forever has a native HD circular unit-frame medallion. Keep this on the
+    -- addon-owned badge so the level background uses Blizzard art rather than
+    -- masked ColorTextures. Anniversary continues to use the legacy layers.
+    badge.foreverCircle = badge:CreateTexture(nil, "BORDER", nil, 0)
+    badge.foreverCircle:SetAllPoints()
+    badge.foreverCircle:SetAtlas("UI-HUD-UnitFrame-SmallCircle", false)
+    badge.foreverCircle:SetIgnoreParentAlpha(true)
+    badge.foreverCircle:Hide()
+
     badge.fill = badge:CreateTexture(nil, "BACKGROUND")
     badge.fill:SetAllPoints()
     badge.fill:SetIgnoreParentAlpha(true)
@@ -903,6 +912,7 @@ local function ApplyForeverLevelBadgeScale(badge, healthHeight)
     PixelSetSize(badge.modernInner, innerSize, innerSize)
     PixelSetSize(badge.text, size, size)
     PixelSetSize(badge.skull, math.max(6, size - 4), math.max(6, size - 4))
+    PixelSetSize(badge.foreverCircle, size, size)
 
     badge.TinyThreatPlusLevelScale = 1
     badge.TinyThreatPlusLevelBaseSize = size
@@ -1171,12 +1181,14 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
             ApplyForeverLevelBadgeScale(badge, healthBar:GetHeight())
             ApplyLevelBadgeStyle(badge)
 
-            -- Forever's player/target level medallions use a warm bronze/gold
-            -- rim around a dark center. Tint the smooth circular layers here
-            -- instead of inheriting Anniversary's silver treatment.
-            badge.modernOuter:SetVertexColor(0.18, 0.12, 0.055, 1)
-            badge.modernBevel:SetVertexColor(0.72, 0.48, 0.18, 1)
-            badge.modernInner:SetVertexColor(0.10, 0.075, 0.045, 1)
+            -- Use the same HD circular frame Blizzard uses on Forever's
+            -- player/target unit frames. Hide the old hand-built bronze rings;
+            -- retain only a dark masked center behind the level numeral.
+            badge.foreverCircle:Show()
+            badge.foreverCircle:SetVertexColor(1, 1, 1, 1)
+            badge.modernOuter:Hide()
+            badge.modernBevel:Hide()
+            badge.modernInner:Hide()
             badge.fill:SetColorTexture(0.025, 0.025, 0.022, 0.98)
 
             PositionModernLevel(nameplate, healthBar, badge)
