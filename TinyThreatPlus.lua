@@ -11,6 +11,7 @@ TTP.defaults = {
     enableCustomNameplates = true,
     showNameplateThreat = true,
     showTargetHighlight = false,
+    targetHighlightColor = { 1, 1, 1 },
     customNameplateScale = 100,
     customNameplateBarHeight = 20,
     showTargetFrame = true,
