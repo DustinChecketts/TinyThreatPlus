@@ -8,9 +8,11 @@ TinyThreatPlusDB = TinyThreatPlusDB or {}
 -- Defaults and persistent settings
 -- ---------------------------------------------------------------------------
 TTP.defaults = {
-    showNameplates = true,
-    nameplatePresentation = "CUSTOM",
+    enableCustomNameplates = true,
+    showNameplateThreat = true,
     showTargetHighlight = false,
+    customNameplateScale = 100,
+    customNameplateBarHeight = 20,
     showTargetFrame = true,
     alwaysShowThreatBoxes = true,
     roleBasedColors = true,
@@ -33,7 +35,6 @@ TTP.defaults = {
 
     displayMode = "VALUE",
 
-    nameplateThreatScale = 100,
     targetThreatScale = 100,
 }
 
@@ -57,6 +58,21 @@ TTP.applyingHealthColor = false
 -- Saved-variable migrations and defaults
 -- ---------------------------------------------------------------------------
 function TTP.ApplyDefaults()
+    -- 2.0 custom-nameplate migration. The old presentation switch tried to
+    -- mirror Blizzard's visual settings. Custom nameplates are now completely
+    -- addon-owned; Blizzard settings only determine which plates exist.
+    if TinyThreatPlusDB.enableCustomNameplates == nil then
+        TinyThreatPlusDB.enableCustomNameplates =
+            TinyThreatPlusDB.nameplatePresentation ~= "BLIZZARD"
+    end
+    if TinyThreatPlusDB.showNameplateThreat == nil then
+        TinyThreatPlusDB.showNameplateThreat =
+            TinyThreatPlusDB.showNameplates ~= false
+    end
+    TinyThreatPlusDB.nameplatePresentation = nil
+    TinyThreatPlusDB.showNameplates = nil
+    TinyThreatPlusDB.nameplateThreatScale = nil
+
     TinyThreatPlusDB = TinyThreatPlusDB or {}
 
     if TinyThreatPlusDB.priorityMarkerSizeRating == nil
