@@ -1229,6 +1229,16 @@ local function UpdateLevelAndClassification(nameplate, healthBar, unit)
     -- pass will replace it with a TinyThreatPlus level treatment matching the
     -- target-frame artwork. Leave non-hostile plates alone.
     if TTP.Compat.IsForever() then
+        -- Native presentation mode deliberately leaves Blizzard's nameplate
+        -- geometry and artwork untouched. TinyThreatPlus can still append its
+        -- threat indicator/counter/leader elsewhere in the update pass. This
+        -- also gives /ttp art a pristine Blizzard frame to inspect.
+        if TinyThreatPlusDB.nameplatePresentation == "BLIZZARD" then
+            HideLevelBadge(nameplate)
+            ResetClassificationFrame(nameplate)
+            return
+        end
+
         UpdateClassificationFrame(nameplate, healthBar, unit)
         ApplyForeverCustomLayout(nameplate, healthBar, unit)
         return
