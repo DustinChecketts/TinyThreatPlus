@@ -129,6 +129,7 @@ local function CreatePlate(nameplate)
 
     plate.targetHighlight = plate:CreateTexture(nil, "OVERLAY")
     plate.targetHighlight:SetAtlas("UI-HUD-CoolDownManager-Selected-yellow", false)
+    plate.targetHighlight:SetDesaturated(true)
     plate.targetHighlight:SetIgnoreParentAlpha(true)
     plate.targetHighlight:Hide()
 
@@ -137,13 +138,24 @@ local function CreatePlate(nameplate)
     plate.name:SetTextColor(1, 1, 1)
     plate.name:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
 
-    plate.healthPercent = plate:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    -- Text lives on a dedicated top frame so the selected-target artwork can
+    -- never wash it out. A stronger shadow remains readable at world distance.
+    plate.textLayer = CreateFrame("Frame", nil, plate)
+    plate.textLayer:SetAllPoints(plate.health)
+    plate.textLayer:SetFrameLevel(plate:GetFrameLevel() + 8)
+
+    plate.healthPercent = plate.textLayer:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     plate.healthPercent:SetJustifyH("LEFT")
     plate.healthPercent:SetTextColor(1, 1, 1)
 
-    plate.healthValue = plate:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    plate.healthPercent:SetShadowColor(0, 0, 0, 1)
+    plate.healthPercent:SetShadowOffset(1, -1)
+
+    plate.healthValue = plate.textLayer:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     plate.healthValue:SetJustifyH("RIGHT")
     plate.healthValue:SetTextColor(1, 1, 1)
+    plate.healthValue:SetShadowColor(0, 0, 0, 1)
+    plate.healthValue:SetShadowOffset(1, -1)
 
     plate.level = CreateLevelBadge(plate)
     plate.threat = CreateThreatBox(plate)
@@ -194,6 +206,9 @@ local function LayoutPlate(nameplate, plate)
     plate.healthShell:ClearAllPoints()
     PixelPoint(plate.healthShell, "CENTER", plate.health, "CENTER", 1, -1)
     PixelSize(plate.healthShell, BASE_WIDTH + 8, height + 9)
+
+    plate.textLayer:ClearAllPoints()
+    plate.textLayer:SetAllPoints(plate.health)
 
     plate.targetHighlight:ClearAllPoints()
     PixelPoint(plate.targetHighlight, "CENTER", plate.health, "CENTER", 0, 0)
@@ -417,6 +432,15 @@ local function UpdatePlate(nameplate, plate, unit, nativeHealth)
     UpdateThreat(plate, unit, data)
 
     if TinyThreatPlusDB.showTargetHighlight and UnitIsUnit(unit, "target") then
+        local color = TinyThreatPlusDB.targetHighlightColor
+            or TTP.defaults.targetHighlightColor
+            or { 1, 1, 1 }
+        plate.targetHighlight:SetVertexColor(
+            color[1] or 1,
+            color[2] or 1,
+            color[3] or 1,
+            1
+        )
         plate.targetHighlight:Show()
     else
         plate.targetHighlight:Hide()
