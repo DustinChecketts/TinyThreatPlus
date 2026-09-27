@@ -115,14 +115,6 @@ local function MakeToggle(label, key, y, tooltip)
         EnsureCore()
         TinyThreatPlusDB[key] = self:GetChecked() == true
 
-        if key == "enemyPlayerClassColors"
-            or key == "friendlyPlayerClassColors"
-        then
-            if type(TTP.ApplyClassColorSettings) == "function" then
-                TTP.ApplyClassColorSettings()
-            end
-        end
-
         RefreshAddon()
     end)
 
@@ -345,7 +337,13 @@ MakeChoice(
         { label = "Blizzard + TTP Additions", value = "BLIZZARD" },
     },
     -146,
-    "Use Blizzard + TTP Additions to preserve the native Forever nameplate artwork and geometry. This is also the correct mode for inspecting Blizzard art with /ttp art."
+    "Use Blizzard + TTP Additions to preserve Blizzard\'s native nameplate artwork and geometry."
+)
+MakeToggle(
+    "Highlight Current Target",
+    "showTargetHighlight",
+    -178,
+    "Uses Blizzard\'s Forever target-highlight artwork around the current target\'s health bar."
 )
 
 Section("Health Bar", -201)
@@ -527,18 +525,6 @@ MakeToggle(
     -1392,
     "Restores friendly NPC levels on modern Blizzard nameplate styles."
 )
-MakeToggle(
-    "Enemy Player Class Colors",
-    "enemyPlayerClassColors",
-    -1424,
-    "Uses Blizzard class colors for hostile players."
-)
-MakeToggle(
-    "Friendly Player Class Colors",
-    "friendlyPlayerClassColors",
-    -1456,
-    "Uses Blizzard class colors for friendly players."
-)
 
 reset:SetScript("OnClick", function()
     if type(TTP.ResetDefaults) == "function" then
@@ -552,10 +538,6 @@ end)
 
 panel:SetScript("OnShow", function()
     EnsureCore()
-
-    if type(TTP.ApplyClassColorSettings) == "function" then
-        TTP.ApplyClassColorSettings()
-    end
 
     for _, control in ipairs(controls) do
         if control.Refresh then control.Refresh() end
