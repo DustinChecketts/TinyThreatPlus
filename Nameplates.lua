@@ -1337,6 +1337,25 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         nameText:SetJustifyH("LEFT")
         PixelSetPoint(nameText, "BOTTOMLEFT", healthBar, "TOPLEFT", 0, 2)
         nameText:SetWidth(healthBar:GetWidth())
+
+        -- Keep the mob name aligned to the health bar's left edge, but make
+        -- it slightly less dominant than Blizzard's stock world-name size.
+        -- Cache Blizzard's original font metrics once so repeated update
+        -- passes never progressively shrink the text.
+        if not nameText.TinyThreatPlusOriginalFontSize and nameText.GetFont then
+            local fontFile, fontSize, fontFlags = nameText:GetFont()
+            nameText.TinyThreatPlusOriginalFontFile = fontFile
+            nameText.TinyThreatPlusOriginalFontSize = fontSize
+            nameText.TinyThreatPlusOriginalFontFlags = fontFlags
+        end
+        local originalSize = nameText.TinyThreatPlusOriginalFontSize
+        if originalSize and nameText.SetFont then
+            nameText:SetFont(
+                nameText.TinyThreatPlusOriginalFontFile or STANDARD_TEXT_FONT,
+                math.max(10, originalSize - 2),
+                nameText.TinyThreatPlusOriginalFontFlags or "OUTLINE"
+            )
+        end
     end
 
     return true
