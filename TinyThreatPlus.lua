@@ -1832,14 +1832,6 @@ SlashCmdList.TINYTHREATPLUS = function(message)
             "TinyThreatPlus enemy levels:",
             TinyThreatPlusDB.showMobLevel and "on" or "off"
         )
-    elseif command == "friendlylevels" then
-        TinyThreatPlusDB.showFriendlyLevel =
-            not TinyThreatPlusDB.showFriendlyLevel
-
-        print(
-            "TinyThreatPlus friendly levels:",
-            TinyThreatPlusDB.showFriendlyLevel and "on" or "off"
-        )
     elseif command == "counter" then
         TinyThreatPlusDB.showTargetCounter =
             not TinyThreatPlusDB.showTargetCounter
@@ -1886,7 +1878,6 @@ SlashCmdList.TINYTHREATPLUS = function(message)
         print("TinyThreatPlus commands:")
         print("/ttp colors")
         print("/ttp levels")
-        print("/ttp friendlylevels")
         print("/ttp counter")
         print("/ttp preview")
         print("/ttp priority")
