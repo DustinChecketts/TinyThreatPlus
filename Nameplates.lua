@@ -1061,37 +1061,62 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     healthBar:ClearAllPoints()
     healthBar:SetAllPoints(container)
 
-    -- Use Blizzard's own Forever nameplate frame art as the permanent shell.
-    -- /ttp art identified this atlas on the native health StatusBar at
-    -- 132.9x15.2 around a 132.9x12.7 bar. Keeping the native aspect/overhang
-    -- preserves Blizzard's anti-aliased corners instead of redrawing them.
+    -- Asset lab: render several Blizzard-owned candidates simultaneously so
+    -- one live-client screenshot can identify which atlas gives us the exact
+    -- Forever shell. Selection highlighting is intentionally disabled during
+    -- this diagnostic pass.
     local healthShell = healthBar.TinyThreatPlusForeverShell
     if not healthShell then
         healthShell = CreateFrame("Frame", nil, healthBar)
         healthShell:SetAllPoints(healthBar)
         healthShell:SetFrameLevel((healthBar:GetFrameLevel() or 1) + 2)
 
-        -- Native diagnostic reports this atlas on the StatusBar's OVERLAY
-        -- layer. Keep it above the health fill; placing it behind the bar made
-        -- almost the entire Blizzard frame disappear beneath the opaque fill.
-        local frameArt = healthShell:CreateTexture(nil, "OVERLAY", nil, 0)
-        frameArt:SetAtlas("ui-hud-nameplates-deselected-overlay", false)
-        frameArt:SetIgnoreParentAlpha(true)
-        healthShell.frameArt = frameArt
-
+        local candidates = {
+            { atlas = "ui-hud-nameplates-deselected-overlay", label = "A" },
+            { atlas = "UI-HUD-CoolDownManager-Bar-BG", label = "B" },
+            { atlas = "UI-HUD-CoolDownManager-Selected-yellow", label = "C" },
+            { atlas = "UI-HUD-Nameplates-TargetedByEnemy", label = "D" },
+        }
+        healthShell.candidates = {}
+        for index, candidate in ipairs(candidates) do
+            local texture = healthShell:CreateTexture(nil, "OVERLAY", nil, index)
+            local ok = pcall(texture.SetAtlas, texture, candidate.atlas, false)
+            if ok then
+                texture:SetIgnoreParentAlpha(true)
+                local label = healthShell:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                label:SetText(candidate.label)
+                label:SetTextColor(1, 0.82, 0)
+                healthShell.candidates[#healthShell.candidates + 1] = {
+                    texture = texture,
+                    label = label,
+                    atlas = candidate.atlas,
+                }
+            end
+        end
         healthBar.TinyThreatPlusForeverShell = healthShell
     end
 
     SetRoundedChromeShown(healthShell, false)
     healthShell:ClearAllPoints()
     healthShell:SetPoint("CENTER", healthBar, "CENTER", 0, 0)
-
     local shellHeight = nativeRowHeight * (15.2 / 12.7)
-    local shellWidth = healthBar:GetWidth() * (132.9 / 132.9)
+    local shellWidth = healthBar:GetWidth()
     PixelSetSize(healthShell, shellWidth, shellHeight)
-    healthShell.frameArt:ClearAllPoints()
-    healthShell.frameArt:SetAllPoints(healthShell)
-    healthShell.frameArt:SetVertexColor(1, 1, 1, 1)
+    if healthShell.frameArt then healthShell.frameArt:Hide() end
+
+    local rows = healthShell.candidates or {}
+    for index, entry in ipairs(rows) do
+        local texture = entry.texture
+        texture:ClearAllPoints()
+        texture:SetPoint("BOTTOMLEFT", healthBar, "TOPLEFT", 0, 4 + ((index - 1) * (shellHeight + 5)))
+        PixelSetSize(texture, shellWidth, shellHeight)
+        texture:SetVertexColor(1, 1, 1, 1)
+        texture:Show()
+
+        entry.label:ClearAllPoints()
+        entry.label:SetPoint("RIGHT", texture, "LEFT", -3, 0)
+        entry.label:Show()
+    end
     healthShell:Show()
 
     -- Suppress Blizzard's presentation art while retaining the StatusBar.
@@ -1133,30 +1158,9 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         if region then region:SetAlpha(0) end
     end
 
-    -- Selection is a second Blizzard atlas layered over the permanent native
-    -- shell. The base frame therefore never changes shape/color when targeted;
-    -- targeting only adds Blizzard's own highlight treatment.
-    local targetHighlight = healthBar.TinyThreatPlusTargetHighlight
-    if not targetHighlight then
-        targetHighlight = healthBar:CreateTexture(nil, "OVERLAY", nil, 6)
-        targetHighlight:SetAtlas("UI-HUD-Nameplates-TargetedByEnemy", false)
-        targetHighlight:SetIgnoreParentAlpha(true)
-        healthBar.TinyThreatPlusTargetHighlight = targetHighlight
-    end
-
-    targetHighlight:ClearAllPoints()
-    targetHighlight:SetPoint("CENTER", healthBar, "CENTER", 0, 0)
-    -- Native atlas aspect is 173.5x13.3. Preserve that relationship while
-    -- fitting it tightly to TTP's style-selected health row.
-    local highlightHeight = nativeRowHeight + (styleProfile == STYLE_FAMILY_THIN and 1 or 2)
-    local highlightWidth = healthBar:GetWidth() + (highlightHeight * (173.5 / 13.3) - healthBar:GetWidth()) * 0.08
-    PixelSetSize(targetHighlight, highlightWidth, highlightHeight)
-    targetHighlight:SetVertexColor(1, 1, 1, 1)
-
-    if UnitIsUnit and UnitIsUnit(unit, "target") then
-        targetHighlight:Show()
-    else
-        targetHighlight:Hide()
+    -- Selection highlight intentionally disabled during the asset-lab pass.
+    if healthBar.TinyThreatPlusTargetHighlight then
+        healthBar.TinyThreatPlusTargetHighlight:Hide()
     end
 
     -- The native targeted atlas supplies the visible edge treatment. Do not
