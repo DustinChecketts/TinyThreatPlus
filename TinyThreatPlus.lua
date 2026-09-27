@@ -1005,6 +1005,9 @@ function TTP.UpdateThreatBox(
     TTP.ApplyBoxStyle(box, height)
     box:SetSize(width, height)
 
+    if TTP.Compat.IsForever() then
+        box.text:SetFontObject(GameNormalNumberFont)
+    end
     box.text:SetFont(
         STANDARD_TEXT_FONT,
         fontSize,
