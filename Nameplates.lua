@@ -98,10 +98,9 @@ local function GetNameplateStyleFamily()
         -- Default (thin), Large (large), Block (large), Cast Focus (thin).
         -- Use the actual CVar index instead of Retail enum semantics; the
         -- latter classified Forever Default as a large bar.
-        -- Live Forever testing shows Default and Large are the inverse
-        -- of the initial CVar mapping.  Block remains tall; Cast Focus thin.
         -- Forever CVar order: Default=0, Large=1, Block=2, Cast Focus=3.
-        if style == 0 or style == 2 then
+        -- Default/Cast Focus use the short health row; Large/Block use tall.
+        if style == 1 or style == 2 then
             return STYLE_FAMILY_LARGE
         end
         return STYLE_FAMILY_THIN
@@ -164,11 +163,11 @@ local THREAT_BOX_STYLE_PROFILES = {
         -- Default/Cast Focus are distinctly slimmer in Blizzard's preview.
         -- Keep the same size progression but at the thinner native profile.
         heights = {
-            [1] = 9,
-            [2] = 10,
-            [3] = 11,
-            [4] = 12,
-            [5] = 14,
+            [1] = 11,
+            [2] = 12,
+            [3] = 13,
+            [4] = 14,
+            [5] = 16,
         },
     },
 }
@@ -905,9 +904,10 @@ local function ApplyForeverLevelBadgeScale(badge, healthHeight)
     -- Fixed Forever medallion size across all four Blizzard styles.
     -- Default/Cast Focus therefore stay slim without shrinking the level,
     -- while Large/Block gain height independently beneath the same badge.
-    local size = 17
-    local bevelSize = 15
-    local innerSize = 13
+    local sizeSetting = GetNameplateSizeSetting()
+    local size = ({ 16, 18, 20, 22, 24 })[sizeSetting] or 18
+    local bevelSize = size - 2
+    local innerSize = size - 4
 
     PixelSetSize(badge, size, size)
     if badge.modernBevel then PixelSetSize(badge.modernBevel, bevelSize, bevelSize) end
@@ -1048,7 +1048,7 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     local horizontalScale = select(1, GetNameplateVisualScales())
     local styleProfile = GetThreatBoxStyleProfile()
     local nativeRowHeight = GetThreatBoxHeight(styleProfile)
-    local baseWidth = 137
+    local baseWidth = 172
 
     container:SetScale(1)
     container:ClearAllPoints()
@@ -1352,7 +1352,7 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         if originalSize and nameText.SetFont then
             nameText:SetFont(
                 nameText.TinyThreatPlusOriginalFontFile or STANDARD_TEXT_FONT,
-                math.max(10, originalSize - 2),
+                math.max(9, originalSize - 4),
                 nameText.TinyThreatPlusOriginalFontFlags or "OUTLINE"
             )
         end
