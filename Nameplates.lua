@@ -1105,39 +1105,25 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         if region then region:SetAlpha(0) end
     end
 
-    -- TTP-owned selected-target highlight. It sits behind the health bar,
-    -- follows the exact custom geometry, and is intentionally softer than
-    -- Target Priority: bright white with low opacity rather than navy blue.
+    -- Reuse Blizzard's own HD selected-nameplate art discovered by /ttp art.
+    -- This gives the custom presentation the same anti-aliased corners and
+    -- edge treatment as Forever instead of approximating them with 1px rects.
     local targetHighlight = healthBar.TinyThreatPlusTargetHighlight
     if not targetHighlight then
-        targetHighlight = CreateFrame("Frame", nil, container, "BackdropTemplate")
-        targetHighlight:SetFrameLevel(math.max(0, (healthBar:GetFrameLevel() or 1) - 1))
-        targetHighlight:SetBackdrop({
-            bgFile = "Interface\\Buttons\\WHITE8X8",
-            edgeFile = "Interface\\Buttons\\WHITE8X8",
-            edgeSize = 1,
-        })
+        targetHighlight = healthBar:CreateTexture(nil, "OVERLAY", nil, 6)
+        targetHighlight:SetAtlas("UI-HUD-Nameplates-TargetedByEnemy", false)
+        targetHighlight:SetIgnoreParentAlpha(true)
         healthBar.TinyThreatPlusTargetHighlight = targetHighlight
     end
+
     targetHighlight:ClearAllPoints()
-    if styleProfile == STYLE_FAMILY_THIN then
-        -- A 1px outer halo is visually dominant on a ~10px row. Keep the
-        -- selection treatment flush to the thin health-bar geometry.
-        targetHighlight:SetAllPoints(healthBar)
-    else
-        targetHighlight:SetPoint("TOPLEFT", healthBar, "TOPLEFT", -1, 1)
-        targetHighlight:SetPoint("BOTTOMRIGHT", healthBar, "BOTTOMRIGHT", 1, -1)
-    end
-    -- Use the same clipped-corner geometry as the health/threat row.
-    -- The highlight remains a softer white background treatment rather than
-    -- a second hard rectangular border.
-    targetHighlight:SetBackdropColor(0, 0, 0, 0)
-    targetHighlight:SetBackdropBorderColor(0, 0, 0, 0)
-    TTP.ApplyForeverRoundedChrome(
-        targetHighlight,
-        1, 1, 1, 0,
-        0.94, 0.94, 0.96, 0.88
-    )
+    targetHighlight:SetPoint("CENTER", healthBar, "CENTER", 0, 0)
+    -- Native atlas aspect is 173.5x13.3. Preserve that relationship while
+    -- fitting it tightly to TTP's style-selected health row.
+    local highlightHeight = nativeRowHeight + (styleProfile == STYLE_FAMILY_THIN and 1 or 2)
+    local highlightWidth = healthBar:GetWidth() + (highlightHeight * (173.5 / 13.3) - healthBar:GetWidth()) * 0.08
+    PixelSetSize(targetHighlight, highlightWidth, highlightHeight)
+    targetHighlight:SetVertexColor(1, 1, 1, 1)
 
     if UnitIsUnit and UnitIsUnit(unit, "target") then
         targetHighlight:Show()
@@ -1192,7 +1178,17 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
 
             PositionModernLevel(nameplate, healthBar, badge)
 
-            if level < 0 then
+            local playerLevel = UnitLevel("player")
+            local isSkullLevel =
+                level < 0
+                or (
+                    type(playerLevel) == "number"
+                    and playerLevel > 0
+                    and level > playerLevel + 10
+                    and not TinyThreatPlusDB.showSkullEnemyLevels
+                )
+
+            if isSkullLevel then
                 badge.text:Hide()
                 badge.skull:Show()
             else
