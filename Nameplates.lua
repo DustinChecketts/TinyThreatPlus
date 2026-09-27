@@ -283,33 +283,11 @@ local function CopyStatus(nativeBar, customBar)
     pcall(customBar.SetValue, customBar, value)
 end
 
-local function EnableNativeHealthDataFeed(nativeBar)
-    -- Forever protects health arithmetic in combat. Keep Blizzard's hidden
-    -- health bar producing both already-safe display strings for our custom
-    -- text, without changing any Blizzard CVar or visible presentation.
-    if not nativeBar.TinyThreatPlusOriginalTextFlags then
-        nativeBar.TinyThreatPlusOriginalTextFlags = {
-            percentage = nativeBar.showPercentage,
-            numeric = nativeBar.showNumeric,
-        }
-    end
-    nativeBar.showPercentage = true
-    nativeBar.showNumeric = true
-end
-
-local function RestoreNativeHealthDataFeed(nativeBar)
-    if not nativeBar then return end
-    local flags = nativeBar.TinyThreatPlusOriginalTextFlags
-    if flags then
-        nativeBar.showPercentage = flags.percentage
-        nativeBar.showNumeric = flags.numeric
-        nativeBar.TinyThreatPlusOriginalTextFlags = nil
-    end
-end
-
 local function CopyNativeHealthText(nativeBar, plate)
-    -- Blizzard already formats secret health values safely. Reuse the hidden
-    -- native bar's rendered strings rather than doing protected arithmetic.
+    -- Never change Blizzard TextStatusBar display flags here. In Forever combat
+    -- the health values become secret; touching showPercentage/showNumeric from
+    -- addon execution taints Blizzard's formatter and makes its comparisons
+    -- illegal. We only consume whatever strings Blizzard already rendered.
     local left = nativeBar and nativeBar.LeftText
     local right = nativeBar and nativeBar.RightText
 
@@ -452,7 +430,6 @@ end
 
 local function ResetPlate(nameplate)
     if not nameplate then return end
-    RestoreNativeHealthDataFeed(TTP.GetNameplateHealthBar(nameplate))
     local plate = nameplate.TinyThreatPlusPlate
     if plate then
         plate:Hide()
@@ -483,7 +460,6 @@ local function UpdateForeverNameplate(unit, nameplate)
         return
     end
 
-    EnableNativeHealthDataFeed(nativeHealth)
     local plate = CreatePlate(nameplate)
     UpdatePlate(nameplate, plate, unit, nativeHealth)
 end
