@@ -15,9 +15,7 @@ if not TTP then return end
 
 local BASE_WIDTH = 172
 local BASE_BAR_HEIGHT = 20
-local THREAT_WIDTH = 28
 local BAR_GAP = 3
-local LEVEL_SIZE = 21
 local CAST_HEIGHT = 10
 
 local function PixelSize(frame, width, height)
@@ -127,6 +125,13 @@ local function CreatePlate(nameplate)
     plate.healthShell:SetAtlas("UI-HUD-CoolDownManager-Bar-BG", false)
     plate.healthShell:SetIgnoreParentAlpha(true)
 
+    -- Border-only Blizzard overlay sits above the StatusBar fill. Bar-BG stays
+    -- below as the empty-bar/background layer, so the fill can never paint
+    -- over the chrome and the background cannot darken the fill.
+    plate.healthBorder = plate:CreateTexture(nil, "OVERLAY")
+    plate.healthBorder:SetAtlas("ui-hud-nameplates-deselected-overlay", false)
+    plate.healthBorder:SetIgnoreParentAlpha(true)
+
     plate.targetHighlight = plate:CreateTexture(nil, "OVERLAY")
     plate.targetHighlight:SetAtlas("UI-HUD-CoolDownManager-Selected-yellow", false)
     plate.targetHighlight:SetDesaturated(true)
@@ -136,7 +141,6 @@ local function CreatePlate(nameplate)
     plate.name = plate:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     plate.name:SetJustifyH("LEFT")
     plate.name:SetTextColor(1, 1, 1)
-    plate.name:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
 
     -- Text lives on a dedicated top frame so the selected-target artwork can
     -- never wash it out. A stronger shadow remains readable at world distance.
@@ -191,7 +195,9 @@ local function LayoutPlate(nameplate, plate)
     plate:SetScale(scale)
     plate:ClearAllPoints()
     PixelPoint(plate, "BOTTOM", unitFrame, "BOTTOM", 0, 4)
-    PixelSize(plate, BASE_WIDTH + BAR_GAP + THREAT_WIDTH, height + 28)
+    local threatWidth = math.max(28, math.min(60,
+        tonumber(TinyThreatPlusDB.nameplateThreatWidth) or 36))
+    PixelSize(plate, BASE_WIDTH + BAR_GAP + threatWidth, height + 28)
 
     plate.health:ClearAllPoints()
     PixelPoint(plate.health, "BOTTOMLEFT", plate, "BOTTOMLEFT", 0, 0)
@@ -210,6 +216,10 @@ local function LayoutPlate(nameplate, plate)
     plate.textLayer:ClearAllPoints()
     plate.textLayer:SetAllPoints(plate.health)
 
+    plate.healthBorder:ClearAllPoints()
+    PixelPoint(plate.healthBorder, "CENTER", plate.health, "CENTER", 0, 0)
+    PixelSize(plate.healthBorder, BASE_WIDTH, height + 2)
+
     plate.targetHighlight:ClearAllPoints()
     PixelPoint(plate.targetHighlight, "CENTER", plate.health, "CENTER", 0, 0)
     PixelSize(plate.targetHighlight, BASE_WIDTH + 11, height + 9)
@@ -217,7 +227,21 @@ local function LayoutPlate(nameplate, plate)
     plate.name:ClearAllPoints()
     PixelPoint(plate.name, "BOTTOMLEFT", plate.health, "TOPLEFT", 0, 2)
     plate.name:SetWidth(BASE_WIDTH)
-    plate.name:SetHeight(14)
+    plate.name:SetHeight(18)
+    local nameSize = math.max(8, math.min(18,
+        tonumber(TinyThreatPlusDB.customNameFontSize) or 10))
+    local nameColor = TinyThreatPlusDB.customNameFontColor
+        or TTP.defaults.customNameFontColor
+        or { 1, 1, 1 }
+    plate.name:SetFont(STANDARD_TEXT_FONT, nameSize, "OUTLINE")
+    plate.name:SetTextColor(nameColor[1] or 1, nameColor[2] or 1, nameColor[3] or 1)
+    if TinyThreatPlusDB.customNameFontShadow then
+        plate.name:SetShadowColor(0, 0, 0, 1)
+        plate.name:SetShadowOffset(1, -1)
+    else
+        plate.name:SetShadowColor(0, 0, 0, 0)
+        plate.name:SetShadowOffset(0, 0)
+    end
 
     local healthFont = height < 17 and 8 or 10
     local inset = height < 17 and 3 or 4
@@ -229,7 +253,15 @@ local function LayoutPlate(nameplate, plate)
     plate.healthValue:ClearAllPoints()
     PixelPoint(plate.healthValue, "RIGHT", plate.health, "RIGHT", -inset, 0)
 
-    PixelSize(plate.level, LEVEL_SIZE, LEVEL_SIZE)
+    local levelSize = math.max(20, math.min(32,
+        tonumber(TinyThreatPlusDB.customLevelBadgeSize) or 24))
+    PixelSize(plate.level, levelSize, levelSize)
+    plate.level.text:SetFont(
+        STANDARD_TEXT_FONT,
+        math.max(8, math.min(14,
+            tonumber(TinyThreatPlusDB.customLevelFontSize) or 9)),
+        ""
+    )
     plate.level:ClearAllPoints()
     PixelPoint(plate.level, "CENTER", plate.health, "TOPLEFT", -4, 0)
 
@@ -339,13 +371,16 @@ local function UpdateThreat(plate, unit, data)
     end
 
     local height = GetBarHeight()
-    local fontSize = height < 17 and 8 or 9
+    local width = math.max(28, math.min(60,
+        tonumber(TinyThreatPlusDB.nameplateThreatWidth) or 36))
+    local fontSize = math.max(8, math.min(14,
+        tonumber(TinyThreatPlusDB.nameplateThreatFontSize) or 9))
     local text = TTP.GetThreatDisplayText(data)
     local r, g, b = TTP.GetThreatColor(unit, data)
 
     TTP.UpdateThreatBox(
         plate.threat,
-        THREAT_WIDTH,
+        width,
         height,
         fontSize,
         text,
