@@ -1062,6 +1062,18 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     healthBar:ClearAllPoints()
     healthBar:SetAllPoints(container)
 
+    -- Use Blizzard's native Forever StatusBar fill artwork as well as its
+    -- outer shell. The art diagnostic showed the live StatusBar itself using
+    -- UI-HUD-CoolDownManager-Bar at 132.9x12.7, with Bar-BG surrounding it
+    -- at 140.5x21.6. Keeping the StatusBar as the geometry authority while
+    -- applying Blizzard's fill atlas preserves normal fill/clipping behavior
+    -- and gives the red/green bar the same shaped interior as the native UI.
+    local statusTexture = healthBar:GetStatusBarTexture()
+    if statusTexture and statusTexture.SetAtlas then
+        statusTexture:SetAtlas("UI-HUD-CoolDownManager-Bar", false)
+        statusTexture:SetTexCoord(0, 1, 0, 1)
+    end
+
     -- Blizzard's native Forever bar shell. The live asset lab confirmed
     -- UI-HUD-CoolDownManager-Bar-BG is the neutral HD frame/background that
     -- matches the native presentation without adding selection or aggro glow.
