@@ -869,10 +869,10 @@ local function PositionModernLevel(nameplate, healthBar, badge)
         -- level tucked into the health bar's upper-left corner.
         PixelSetPoint(
             badge,
-            "LEFT",
+            "CENTER",
             healthBar,
-            "RIGHT",
-            4,
+            "TOPLEFT",
+            -4,
             0
         )
         PositionBlizzardInfoSlot(nameplate, healthBar)
@@ -1875,12 +1875,9 @@ local function AnchorThreatBox(nameplate, healthBar, box)
     -- bar. Anchor from the health bar's right edge instead. The threat box
     -- then becomes the first addon-owned element after Blizzard's native row.
     if TTP.Compat.IsForever() then
-        local anchor = healthBar
-        local badge = nameplate.TinyThreatPlusLevelBadge
-        if badge and badge:IsShown() then
-            anchor = badge
-        end
-        PixelSetPoint(box, "LEFT", anchor, "RIGHT", 3, 0)
+        -- Keep the validated custom layout: level at the health row's
+        -- upper-left, threat immediately to the right of the health row.
+        PixelSetPoint(box, "LEFT", healthBar, "RIGHT", 2, 0)
         return
     end
 
