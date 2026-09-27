@@ -17,6 +17,7 @@ local BASE_WIDTH = 172
 local BASE_BAR_HEIGHT = 20
 local BAR_GAP = 3
 local CAST_HEIGHT = 10
+local AURA_GAP = 2
 
 local function PixelSize(frame, width, height)
     if PixelUtil and PixelUtil.SetSize then
@@ -102,6 +103,44 @@ local function CreateThreatBox(parent)
     return box
 end
 
+local function CreateAuraButton(parent)
+    local button = CreateFrame("Frame", nil, parent)
+    button.icon = button:CreateTexture(nil, "ARTWORK")
+    button.icon:SetAllPoints()
+    button.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+
+    button.border = button:CreateTexture(nil, "OVERLAY")
+    button.border:SetTexture("Interface\\Buttons\\UI-Debuff-Overlays")
+    button.border:SetAllPoints()
+
+    button.count = button:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
+    button.count:SetPoint("BOTTOMRIGHT", 1, -1)
+    button.count:SetTextColor(1, 1, 1)
+    button:Hide()
+    return button
+end
+
+local function GetAuraData(unit, index)
+    if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
+        return C_UnitAuras.GetAuraDataByIndex(unit, index, "HARMFUL")
+    end
+    if UnitDebuff then
+        local name, icon, count, _, duration, expirationTime, source =
+            UnitDebuff(unit, index)
+        if name then
+            return {
+                name = name,
+                icon = icon,
+                applications = count,
+                duration = duration,
+                expirationTime = expirationTime,
+                sourceUnit = source,
+                isHarmful = true,
+            }
+        end
+    end
+end
+
 local function CreatePlate(nameplate)
     if nameplate.TinyThreatPlusPlate then
         return nameplate.TinyThreatPlusPlate
@@ -177,6 +216,12 @@ local function CreatePlate(nameplate)
     plate.castName:SetJustifyH("LEFT")
     plate.castName:SetTextColor(1, 1, 1)
     plate.castName:SetFont(STANDARD_TEXT_FONT, 8, "OUTLINE")
+
+    plate.auras = {}
+    for i = 1, 10 do
+        plate.auras[i] = CreateAuraButton(plate)
+    end
+
     plate.cast:Hide()
     plate.castShell:Hide()
     plate.castName:Hide()
@@ -279,6 +324,59 @@ local function LayoutPlate(nameplate, plate)
     plate.castName:ClearAllPoints()
     PixelPoint(plate.castName, "LEFT", plate.cast, "LEFT", 3, 0)
     plate.castName:SetWidth(BASE_WIDTH - 6)
+
+    local auraSize = math.max(14, math.min(40,
+        tonumber(TinyThreatPlusDB.nameplateAuraSize) or 20))
+    for i = 1, #plate.auras do
+        local aura = plate.auras[i]
+        PixelSize(aura, auraSize, auraSize)
+        aura:ClearAllPoints()
+        if i == 1 then
+            PixelPoint(aura, "BOTTOMLEFT", plate.name, "TOPLEFT", 0, 3)
+        else
+            PixelPoint(aura, "LEFT", plate.auras[i - 1], "RIGHT", AURA_GAP, 0)
+        end
+    end
+end
+
+local function UpdateAuras(plate, unit)
+    local enabled = TinyThreatPlusDB.showNameplateAuras and UnitIsUnit(unit, "target")
+    local maximum = math.max(1, math.min(10,
+        tonumber(TinyThreatPlusDB.nameplateAuraMax) or 6))
+
+    if not enabled then
+        for i = 1, #plate.auras do plate.auras[i]:Hide() end
+        return
+    end
+
+    local shown = 0
+    for index = 1, 40 do
+        if shown >= maximum then break end
+        local aura = GetAuraData(unit, index)
+        if not aura then break end
+
+        -- Prefer player/pet-applied debuffs. If source is unavailable on this
+        -- client, retain the aura rather than hiding useful target information.
+        local source = aura.sourceUnit
+        local ours = not source
+            or source == "player"
+            or source == "pet"
+            or (UnitExists(source) and UnitIsUnit(source, "player"))
+            or (UnitExists(source) and UnitIsUnit(source, "pet"))
+
+        if ours then
+            shown = shown + 1
+            local button = plate.auras[shown]
+            button.icon:SetTexture(aura.icon)
+            local count = aura.applications or 0
+            button.count:SetText(count and count > 1 and count or "")
+            button:Show()
+        end
+    end
+
+    for i = shown + 1, #plate.auras do
+        plate.auras[i]:Hide()
+    end
 end
 
 local function SetNativePresentation(nameplate, visible)
@@ -459,7 +557,17 @@ local function UpdatePlate(nameplate, plate, unit, nativeHealth)
         plate.targetHighlight:Hide()
     end
 
+    UpdateAuras(plate, unit)
     UpdateCast(nameplate, plate)
+
+    local targeted = UnitIsUnit(unit, "target")
+    local active = data and data.hasThreatData
+        and ((data.playerThreat or 0) > 0 or (data.highestOtherThreat or 0) > 0)
+    local opacity = targeted or active
+        and 1
+        or math.max(0.20, math.min(1.00,
+            (tonumber(TinyThreatPlusDB.customNameplateInactiveOpacity) or 70) / 100))
+    plate:SetAlpha(opacity)
     plate:Show()
 end
 
@@ -475,6 +583,7 @@ local function ResetPlate(nameplate)
         plate.cast:Hide()
         plate.castShell:Hide()
         plate.castName:Hide()
+        for i = 1, #plate.auras do plate.auras[i]:Hide() end
     end
     SetNativePresentation(nameplate, true)
 end
