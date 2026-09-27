@@ -910,8 +910,8 @@ local function ApplyForeverLevelBadgeScale(badge, healthHeight)
     local innerSize = 13
 
     PixelSetSize(badge, size, size)
-    PixelSetSize(badge.modernBevel, bevelSize, bevelSize)
-    PixelSetSize(badge.modernInner, innerSize, innerSize)
+    if badge.modernBevel then PixelSetSize(badge.modernBevel, bevelSize, bevelSize) end
+    if badge.modernInner then PixelSetSize(badge.modernInner, innerSize, innerSize) end
     PixelSetSize(badge.text, size, size)
     PixelSetSize(badge.skull, math.max(6, size - 4), math.max(6, size - 4))
     PixelSetSize(badge.foreverCircle, size, size)
@@ -1092,6 +1092,11 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     end
 
     SetRoundedChromeShown(healthShell, false)
+    if healthBar.TinyThreatPlusForeverBorder then healthBar.TinyThreatPlusForeverBorder:Hide() end
+    if healthBar.TinyThreatPlusTargetHighlight then
+        healthBar.TinyThreatPlusTargetHighlight:Hide()
+        SetRoundedChromeShown(healthBar.TinyThreatPlusTargetHighlight, false)
+    end
     healthShell:ClearAllPoints()
     healthShell:SetPoint("CENTER", healthBar, "CENTER", 0, 0)
 
@@ -1190,17 +1195,16 @@ local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
         if accessible and type(level) == "number" and level ~= 0 then
             local badge = CreateLevelBadge(nameplate)
             ApplyForeverLevelBadgeScale(badge, healthBar:GetHeight())
-            ApplyLevelBadgeStyle(badge)
 
             -- Use the same HD circular frame Blizzard uses on Forever's
             -- player/target unit frames. Hide the old hand-built bronze rings;
             -- retain only a dark masked center behind the level numeral.
             badge.foreverCircle:Show()
             badge.foreverCircle:SetVertexColor(1, 1, 1, 1)
-            badge.modernOuter:Hide()
-            badge.modernBevel:Hide()
-            badge.modernInner:Hide()
-            badge.fill:SetColorTexture(0.025, 0.025, 0.022, 0.98)
+            if badge.modernOuter then badge.modernOuter:Hide() end
+            if badge.modernBevel then badge.modernBevel:Hide() end
+            if badge.modernInner then badge.modernInner:Hide() end
+            if badge.fill then badge.fill:Hide() end
 
             PositionModernLevel(nameplate, healthBar, badge)
 
