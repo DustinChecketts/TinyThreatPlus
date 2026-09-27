@@ -324,61 +324,83 @@ local function MakeChoice(label, key, choices, y, tooltip)
     return choice
 end
 
-Section("Nameplate Presentation", -85)
+Section("Custom Nameplates", -85)
 SectionDescription(
-    "Choose whether TinyThreatPlus replaces Blizzard's visible nameplate presentation or keeps Blizzard artwork and only adds TinyThreatPlus information.",
+    "TinyThreatPlus custom nameplates use their own layout and settings. Blizzard's Nameplates options only control which world nameplates exist.",
     -116
 )
-MakeChoice(
-    "Presentation",
-    "nameplatePresentation",
-    {
-        { label = "TinyThreatPlus Custom", value = "CUSTOM" },
-        { label = "Blizzard + TTP Additions", value = "BLIZZARD" },
-    },
+MakeToggle(
+    "Enable Custom Nameplates",
+    "enableCustomNameplates",
     -146,
-    "Use Blizzard + TTP Additions to preserve Blizzard\'s native nameplate artwork and geometry."
+    "Replaces the visible presentation of hostile NPC nameplates with TinyThreatPlus custom nameplates."
+)
+MakeSlider(
+    "Nameplate Scale",
+    "customNameplateScale",
+    75,
+    150,
+    5,
+    -188,
+    "%",
+    "Scales the complete TinyThreatPlus custom nameplate."
+)
+MakeSlider(
+    "Health Bar Height",
+    "customNameplateBarHeight",
+    12,
+    32,
+    1,
+    -230,
+    " px",
+    "Sets the custom health-bar height. Text uses discrete sizing so smaller bars remain readable."
+)
+MakeToggle(
+    "Show Mob Level",
+    "showMobLevel",
+    -272,
+    "Shows the mob level in the Blizzard-style circular badge."
 )
 MakeToggle(
     "Highlight Current Target",
     "showTargetHighlight",
-    -178,
-    "Uses Blizzard\'s Forever target-highlight artwork around the current target\'s health bar."
+    -304,
+    "Uses Blizzard's Forever target-highlight artwork around the current target's health bar."
 )
 
-Section("Health Bar", -201)
+Section("Health Bar", -349)
 SectionDescription(
-    "Uses the health bar itself as an immediate threat warning based on your role.",
-    -232
+    "Uses the custom health bar itself as an immediate threat warning based on your role.",
+    -380
 )
 MakeToggle(
     "Enable Threat Coloring",
     "roleBasedColors",
-    -262,
+    -410,
     "Colors hostile NPC health bars by threat state. Other assigned tanks holding aggro are treated as safe."
 )
 
-Section("Threat Indicator", -317)
+Section("Threat Indicator", -465)
 SectionDescription(
     "Shows how far you are ahead of or behind the current threat leader.",
-    -348
+    -496
 )
 MakeToggle(
-    "Show on Nameplates",
-    "showNameplates",
-    -378,
-    "Shows TinyThreatPlus threat information beside hostile nameplates."
+    "Show on Custom Nameplates",
+    "showNameplateThreat",
+    -526,
+    "Shows the TinyThreatPlus threat indicator beside custom hostile nameplates."
 )
 MakeToggle(
     "Show on Target Frame",
     "showTargetFrame",
-    -410,
+    -558,
     "Shows the threat indicator above the target frame."
 )
 MakeToggle(
     "Always Show Indicator",
     "alwaysShowThreatBoxes",
-    -442,
+    -590,
     "Shows an idle indicator even before active threat information exists."
 )
 MakeChoice(
@@ -388,18 +410,8 @@ MakeChoice(
         { label = "Value Difference", value = "VALUE" },
         { label = "Percentage", value = "PERCENT" },
     },
-    -484,
+    -632,
     "Choose between exact threat difference and percentage display."
-)
-MakeSlider(
-    "Nameplate Indicator Scale",
-    "nameplateThreatScale",
-    50,
-    150,
-    5,
-    -526,
-    "%",
-    "Scales the complete nameplate threat indicator."
 )
 MakeSlider(
     "Target Frame Indicator Scale",
@@ -407,7 +419,7 @@ MakeSlider(
     50,
     150,
     5,
-    -568,
+    -674,
     "%",
     "Scales the complete target-frame threat indicator."
 )
