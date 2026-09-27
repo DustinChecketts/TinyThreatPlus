@@ -893,7 +893,17 @@ function TTP.ApplyBoxStyle(frame, height)
         -- one-pixel-corner chrome instead.
         frame:SetBackdropColor(0, 0, 0, 0)
         frame:SetBackdropBorderColor(0, 0, 0, 0)
-        SetRoundedChromeShown(frame, false)
+        -- ApplyBoxStyle lives in the core file; the nameplate-local
+        -- SetRoundedChromeShown helper is not in scope here. Hide any legacy
+        -- core chrome directly before showing Blizzard's confirmed frame art.
+        local chrome = frame.TinyThreatPlusRoundedChrome
+        if chrome then
+            for _, region in pairs(chrome) do
+                if region and region.Hide then
+                    region:Hide()
+                end
+            end
+        end
 
         if not frame.TinyThreatPlusForeverFrameArt then
             local art = frame:CreateTexture(nil, "BACKGROUND", nil, 0)
