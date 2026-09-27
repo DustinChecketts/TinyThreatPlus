@@ -912,6 +912,99 @@ end
 -- logic, but takes ownership of visible geometry/art. This follows the safe
 -- pattern proven by ClassicUIForever: never replace the world nameplate or
 -- hook into Blizzard's protected health update; restyle it from our own pass.
+local function SetRegionAlpha(region, alpha)
+    if region and region.SetAlpha then
+        region:SetAlpha(alpha)
+    end
+end
+
+local function SetRoundedChromeShown(frame, shown)
+    local chrome = frame and frame.TinyThreatPlusRoundedChrome
+    if not chrome then return end
+    for _, region in pairs(chrome) do
+        if region then
+            if shown and region.Show then region:Show()
+            elseif not shown and region.Hide then region:Hide() end
+        end
+    end
+end
+
+-- Native diagnostic mode must be a true Blizzard-owned presentation. This
+-- restores every presentation property that the Forever custom pass mutates
+-- and hides all addon-owned chrome, so recycled nameplates cannot retain a
+-- half-custom/half-native state after switching modes.
+local function RestoreForeverNativePresentation(nameplate, healthBar)
+    if not TTP.Compat.IsForever() or not nameplate or not healthBar then
+        return
+    end
+
+    local unitFrame = nameplate.UnitFrame
+    local container = unitFrame and unitFrame.HealthBarsContainer
+    if not unitFrame or not container then return end
+
+    HideLevelBadge(nameplate)
+    ResetClassificationFrame(nameplate)
+
+    if healthBar.TinyThreatPlusForeverShell then
+        healthBar.TinyThreatPlusForeverShell:Hide()
+        SetRoundedChromeShown(healthBar.TinyThreatPlusForeverShell, false)
+    end
+    if healthBar.TinyThreatPlusTargetHighlight then
+        healthBar.TinyThreatPlusTargetHighlight:Hide()
+        SetRoundedChromeShown(healthBar.TinyThreatPlusTargetHighlight, false)
+    end
+    if healthBar.TinyThreatPlusForeverBorder then
+        healthBar.TinyThreatPlusForeverBorder:Hide()
+    end
+
+    local unitSelection =
+        unitFrame.selectionHighlight or unitFrame.SelectionHighlight
+    SetRegionAlpha(unitSelection, 1)
+
+    for _, key in ipairs({
+        "LevelFrame",
+        "PlayerLevelDifferentialFrame",
+        "PlayerLevelDiffFrame",
+    }) do
+        SetRegionAlpha(unitFrame[key], 1)
+    end
+
+    for _, key in ipairs({
+        "selectedBorder",
+        "SelectedBorder",
+        "deselectedOverlay",
+        "DeselectedOverlay",
+    }) do
+        SetRegionAlpha(healthBar[key], 1)
+    end
+
+    if healthBar.bgTexture then
+        healthBar.bgTexture:SetAlpha(1)
+        if healthBar.bgTexture.SetTexCoord then
+            healthBar.bgTexture:SetTexCoord(0, 1, 0, 1)
+        end
+    end
+
+    -- Ask Blizzard's own mixins to reassert the selected/level presentation
+    -- after we restore visibility. These are presentation refreshes only; TTP
+    -- does not replace or hook their protected update path.
+    if unitFrame.UpdateLevel then
+        pcall(unitFrame.UpdateLevel, unitFrame)
+    end
+    if unitFrame.UpdateSelectionHighlight then
+        pcall(unitFrame.UpdateSelectionHighlight, unitFrame)
+    elseif unitFrame.UpdateSelection then
+        pcall(unitFrame.UpdateSelection, unitFrame)
+    end
+
+    -- We cannot reliably reconstruct Blizzard's style-specific anchors after
+    -- our custom pass has cleared them. Mark this plate native and let a
+    -- /reload (or Blizzard recycling it) instantiate pristine geometry. The
+    -- mode itself will no longer mutate native presentation after reload.
+    nameplate.TinyThreatPlusForeverHostile = nil
+    nameplate.TinyThreatPlusNativePresentation = true
+end
+
 local function ApplyForeverCustomLayout(nameplate, healthBar, unit)
     if not TTP.Compat.IsForever()
         or not nameplate
@@ -1234,8 +1327,7 @@ local function UpdateLevelAndClassification(nameplate, healthBar, unit)
         -- threat indicator/counter/leader elsewhere in the update pass. This
         -- also gives /ttp art a pristine Blizzard frame to inspect.
         if TinyThreatPlusDB.nameplatePresentation == "BLIZZARD" then
-            HideLevelBadge(nameplate)
-            ResetClassificationFrame(nameplate)
+            RestoreForeverNativePresentation(nameplate, healthBar)
             return
         end
 
@@ -1468,7 +1560,24 @@ function TTP.DumpHoveredArt()
         and C_NamePlate.GetNamePlateForUnit("target")
 
     if targetPlate then
-        print("TinyThreatPlus Forever art diagnostic: TARGET NAMEPLATE")
+        if TinyThreatPlusDB.nameplatePresentation ~= "BLIZZARD" then
+            print("TinyThreatPlus art diagnostic: switch Nameplate Presentation to Blizzard + TTP Additions, then /reload before sampling native art.")
+            return
+        end
+
+        local targetHealthBar = TTP.GetNameplateHealthBar(targetPlate)
+        if targetHealthBar
+            and (
+                (targetHealthBar.TinyThreatPlusForeverShell and targetHealthBar.TinyThreatPlusForeverShell:IsShown())
+                or (targetHealthBar.TinyThreatPlusForeverBorder and targetHealthBar.TinyThreatPlusForeverBorder:IsShown())
+                or (targetHealthBar.TinyThreatPlusTargetHighlight and targetHealthBar.TinyThreatPlusTargetHighlight:IsShown())
+            )
+        then
+            print("TinyThreatPlus art diagnostic: this nameplate still contains visible custom TTP presentation from before the mode switch. /reload once, then run /ttp art again.")
+            return
+        end
+
+        print("TinyThreatPlus Forever art diagnostic: PRISTINE TARGET NAMEPLATE")
         DumpCandidate("NamePlate", targetPlate)
 
         local unitFrame = targetPlate.UnitFrame
