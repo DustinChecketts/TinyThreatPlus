@@ -115,6 +115,10 @@ local function CreatePlate(nameplate)
     plate:SetFrameLevel((unitFrame and unitFrame:GetFrameLevel() or 1) + 20)
     plate:Hide()
 
+    plate.priority = plate:CreateTexture(nil, "BACKGROUND")
+    plate.priority:SetTexture("Interface\\Buttons\\WHITE8X8")
+    plate.priority:Hide()
+
     plate.health = CreateFrame("StatusBar", nil, plate)
     plate.health:SetFrameLevel(plate:GetFrameLevel() + 2)
     SetStatusBarAtlas(plate.health, "UI-HUD-CoolDownManager-Bar")
@@ -180,6 +184,12 @@ local function LayoutPlate(nameplate, plate)
     plate.health:ClearAllPoints()
     PixelPoint(plate.health, "BOTTOMLEFT", plate, "BOTTOMLEFT", 0, 0)
     PixelSize(plate.health, BASE_WIDTH, height)
+
+    local priorityPadding = 4 + math.max(1, math.min(6,
+        tonumber(TinyThreatPlusDB.priorityMarkerSizeRating) or 3))
+    plate.priority:ClearAllPoints()
+    PixelPoint(plate.priority, "TOPLEFT", plate.health, "TOPLEFT", -priorityPadding, priorityPadding)
+    PixelPoint(plate.priority, "BOTTOMRIGHT", plate.health, "BOTTOMRIGHT", priorityPadding, -priorityPadding)
 
     plate.healthShell:ClearAllPoints()
     PixelPoint(plate.healthShell, "CENTER", plate.health, "CENTER", 1, -1)
@@ -251,8 +261,11 @@ local function CopyStatus(nativeBar, customBar)
     -- We never compare or perform arithmetic on them.
     local minValue, maxValue = nativeBar:GetMinMaxValues()
     local value = nativeBar:GetValue()
-    customBar:SetMinMaxValues(minValue, maxValue)
-    customBar:SetValue(value)
+    -- Some Forever builds mark these numbers secret. StatusBar methods may
+    -- accept them even though Lua cannot inspect them; pcall keeps presentation
+    -- failure isolated if Blizzard tightens that contract.
+    pcall(customBar.SetMinMaxValues, customBar, minValue, maxValue)
+    pcall(customBar.SetValue, customBar, value)
 end
 
 local function CopyNativeHealthText(nativeBar, plate)
@@ -346,6 +359,22 @@ local function UpdateHealthColor(nativeBar, plate, unit, data)
     end
 end
 
+local function UpdatePriority(plate, unit)
+    if not TinyThreatPlusDB.showPriorityMarker
+        or not TTP.priorityUnit
+        or not UnitIsUnit(unit, TTP.priorityUnit)
+    then
+        plate.priority:Hide()
+        return
+    end
+
+    local color = TinyThreatPlusDB.priorityMarkerColor or TTP.defaults.priorityMarkerColor
+    local alpha = math.max(0.10, math.min(1.00,
+        (tonumber(TinyThreatPlusDB.priorityMarkerOpacity) or 100) / 100))
+    plate.priority:SetColorTexture(color[1] or 0, color[2] or 0.06, color[3] or 0.40, alpha)
+    plate.priority:Show()
+end
+
 local function UpdatePlate(nameplate, plate, unit, nativeHealth)
     LayoutPlate(nameplate, plate)
     SetNativePresentation(nameplate, false)
@@ -357,6 +386,7 @@ local function UpdatePlate(nameplate, plate, unit, nativeHealth)
     plate.name:SetText(IsAccessible(name) and name or "")
 
     UpdateLevel(plate, unit)
+    UpdatePriority(plate, unit)
 
     local data = TTP.GetThreatData(unit)
     UpdateHealthColor(nativeHealth, plate, unit, data)
@@ -380,6 +410,7 @@ local function ResetPlate(nameplate)
         plate.threat:Hide()
         plate.level:Hide()
         plate.targetHighlight:Hide()
+        plate.priority:Hide()
         plate.cast:Hide()
         plate.castShell:Hide()
         plate.castName:Hide()
