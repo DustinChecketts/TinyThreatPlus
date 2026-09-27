@@ -14,6 +14,13 @@ TTP.defaults = {
     targetHighlightColor = { 1, 1, 1 },
     customNameplateScale = 100,
     customNameplateBarHeight = 20,
+    customNameFontSize = 10,
+    customNameFontColor = { 1, 1, 1 },
+    customNameFontShadow = true,
+    customLevelBadgeSize = 24,
+    customLevelFontSize = 9,
+    nameplateThreatWidth = 36,
+    nameplateThreatFontSize = 9,
     showTargetFrame = true,
     alwaysShowThreatBoxes = true,
     roleBasedColors = true,
@@ -36,6 +43,9 @@ TTP.defaults = {
     displayMode = "VALUE",
 
     targetThreatScale = 100,
+    targetThreatWidth = 40,
+    targetThreatHeight = 20,
+    targetThreatFontSize = 12,
 }
 
 TTP.colors = {
