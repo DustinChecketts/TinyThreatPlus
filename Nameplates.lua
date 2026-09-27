@@ -120,27 +120,6 @@ local function CreateAuraButton(parent)
     return button
 end
 
-local function GetAuraData(unit, index)
-    if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
-        return C_UnitAuras.GetAuraDataByIndex(unit, index, "HARMFUL")
-    end
-    if UnitDebuff then
-        local name, icon, count, _, duration, expirationTime, source =
-            UnitDebuff(unit, index)
-        if name then
-            return {
-                name = name,
-                icon = icon,
-                applications = count,
-                duration = duration,
-                expirationTime = expirationTime,
-                sourceUnit = source,
-                isHarmful = true,
-            }
-        end
-    end
-end
-
 local function CreatePlate(nameplate)
     if nameplate.TinyThreatPlusPlate then
         return nameplate.TinyThreatPlusPlate
@@ -340,41 +319,11 @@ local function LayoutPlate(nameplate, plate)
 end
 
 local function UpdateAuras(plate, unit)
-    local enabled = TinyThreatPlusDB.showNameplateAuras and UnitIsUnit(unit, "target")
-    local maximum = math.max(1, math.min(10,
-        tonumber(TinyThreatPlusDB.nameplateAuraMax) or 6))
-
-    if not enabled then
-        for i = 1, #plate.auras do plate.auras[i]:Hide() end
-        return
-    end
-
-    local shown = 0
-    for index = 1, 40 do
-        if shown >= maximum then break end
-        local aura = GetAuraData(unit, index)
-        if not aura then break end
-
-        -- Prefer player/pet-applied debuffs. If source is unavailable on this
-        -- client, retain the aura rather than hiding useful target information.
-        local source = aura.sourceUnit
-        local ours = not source
-            or source == "player"
-            or source == "pet"
-            or (UnitExists(source) and UnitIsUnit(source, "player"))
-            or (UnitExists(source) and UnitIsUnit(source, "pet"))
-
-        if ours then
-            shown = shown + 1
-            local button = plate.auras[shown]
-            button.icon:SetTexture(aura.icon)
-            local count = TTP.Compat.GetAccessibleValue(aura.applications)
-            button.count:SetText(type(count) == "number" and count > 1 and count or "")
-            button:Show()
-        end
-    end
-
-    for i = shown + 1, #plate.auras do
+    -- Forever marks nameplate aura collections secret in combat. Direct
+    -- C_UnitAuras/UnitDebuff enumeration from addon execution taints the
+    -- protected aura path, so custom aura rendering is disabled on Forever
+    -- until we identify a Blizzard-owned safe data source.
+    for i = 1, #plate.auras do
         plate.auras[i]:Hide()
     end
 end
