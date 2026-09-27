@@ -366,7 +366,7 @@ local function CreateLevelBadge(nameplate)
         { atlas = "UI-HUD-Nameplates-LevelIndicator-Skull", label = "D" },
     }
     for index, candidate in ipairs(levelCandidates) do
-        local texture = badge:CreateTexture(nil, "OVERLAY", nil, 10 + index)
+        local texture = badge:CreateTexture(nil, "OVERLAY", nil, index)
         local ok = pcall(texture.SetAtlas, texture, candidate.atlas, false)
         if ok then
             texture:SetIgnoreParentAlpha(true)
