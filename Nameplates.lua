@@ -40,20 +40,15 @@ local function IsAccessible(value)
         and TTP.Compat.CanAccessValue(value)
 end
 
-local function GetForeverProfile()
-    -- Forever CVar order: Default=0, Large=1, Block=2, Cast Focus=3.
-    local style = tonumber(TTP.GetCVar("nameplateStyle")) or 0
-    local size = tonumber(TTP.GetCVar("nameplateSize")) or 1
-    local tall = style == 1 or style == 2
+local function GetCustomProfile()
+    -- Custom geometry is intentionally independent of Blizzard's Nameplates
+    -- Style and Size settings. Blizzard still owns plate discovery/visibility.
+    local scale = math.max(0.75, math.min(1.50,
+        (tonumber(TinyThreatPlusDB.customNameplateScale) or 100) / 100))
+    local height = math.max(12, math.min(32,
+        tonumber(TinyThreatPlusDB.customNameplateBarHeight) or 20))
 
-    -- Keep two explicit native families instead of stretching one layout.
-    local height = tall and 20 or 14
-    local width = 172
-
-    -- The live client exposes size as a small ordinal. Keep scaling restrained
-    -- and deterministic; Blizzard remains responsible for world plate scale.
-    local scale = ({ 0.85, 1.00, 1.10, 1.20, 1.30 })[size] or 1.00
-    return width * scale, height * scale
+    return 172 * scale, height * scale, scale
 end
 
 local function HideRegion(region)
@@ -115,7 +110,7 @@ local function ApplyForeverHealthRow(nameplate, healthBar)
     local container = unitFrame.HealthBarsContainer
     if not container then return false end
 
-    local width, height = GetForeverProfile()
+    local width, height = GetCustomProfile()
 
     container:SetScale(1)
     container:ClearAllPoints()
@@ -357,14 +352,17 @@ function TTP.UpdateNameplate(unit)
     end
 
     if TTP.Compat.IsForever() then
-        if TinyThreatPlusDB.nameplatePresentation == "BLIZZARD" then
+        if not TinyThreatPlusDB.enableCustomNameplates then
+            HideAddonPresentation(nameplate)
             RestoreForeverNative(nameplate, healthBar)
-        else
-            ApplyForeverPresentation(nameplate, healthBar, unit)
+            RestoreHealthColor(healthBar)
+            return
         end
+
+        ApplyForeverPresentation(nameplate, healthBar, unit)
     end
 
-    if not TinyThreatPlusDB.showNameplates then
+    if not TinyThreatPlusDB.showNameplateThreat then
         if nameplate.TinyThreatPlusBox then nameplate.TinyThreatPlusBox:Hide() end
         RestoreHealthColor(healthBar)
         return
@@ -380,7 +378,6 @@ function TTP.UpdateNameplate(unit)
     local box = GetOrCreateThreatBox(nameplate)
     AnchorThreatBox(healthBar, box)
 
-    local scale = (TinyThreatPlusDB.nameplateThreatScale or 100) / 100
     local height = TTP.Compat.IsForever() and healthBar:GetHeight() or 18
     local width = TTP.Compat.IsForever() and 28 or 42
     local fontSize = TTP.Compat.IsForever() and 8 or 10
@@ -389,7 +386,7 @@ function TTP.UpdateNameplate(unit)
 
     TTP.UpdateThreatBox(
         box,
-        width * scale,
+        width,
         height,
         fontSize,
         text,
