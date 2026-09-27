@@ -31,7 +31,6 @@ TTP.defaults = {
     showThreatLeaderRole = true,
 
     showMobLevel = true,
-    showFriendlyLevel = true,
 
     displayMode = "VALUE",
 
