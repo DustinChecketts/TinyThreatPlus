@@ -891,6 +891,25 @@ local function PositionModernLevel(nameplate, healthBar, badge)
     PositionBlizzardInfoSlot(nameplate, badge)
 end
 
+local function AnchorThreatBox(nameplate, healthBar, box)
+    if not healthBar or not box then
+        return
+    end
+
+    box:ClearAllPoints()
+
+    if TTP.Compat.IsForever() then
+        -- Forever custom layout: threat is the final cell in the health row.
+        -- Anchor directly to the addon-controlled StatusBar so Blizzard's
+        -- hidden native level/selection regions cannot affect placement.
+        PixelSetPoint(box, "LEFT", healthBar, "RIGHT", 3, 0)
+        return
+    end
+
+    -- Anniversary/Classic retains the established right-of-health placement.
+    PixelSetPoint(box, "LEFT", healthBar, "RIGHT", 2, 0)
+end
+
 local function PositionInfoWithoutLevel(nameplate, healthBar)
     -- If the custom modern level is disabled, rarity / raid-marker artwork
     -- simply occupies the position immediately left of the health bar.
