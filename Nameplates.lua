@@ -241,7 +241,9 @@ local function LayoutPlate(nameplate, plate)
     plate.textLayer:SetAllPoints(plate.health)
 
     plate.healthBorder:ClearAllPoints()
-    PixelPoint(plate.healthBorder, "CENTER", plate.health, "CENTER", 0, 0)
+    -- The deselected-overlay atlas has asymmetric internal padding. Align its
+    -- visible chrome to the StatusBar fill rather than its texture bounds.
+    PixelPoint(plate.healthBorder, "CENTER", plate.health, "CENTER", 1, -1)
     PixelSize(plate.healthBorder, BASE_WIDTH, height + 2)
 
     plate.targetHighlight:ClearAllPoints()
