@@ -374,7 +374,22 @@ local function CopyNativeHealthText(nativeBar, plate)
     plate.healthValue:SetText(right and right:GetText() or "")
 end
 
-local function UpdateLevel(plate, unit)
+local function GetNativeLevelText(nameplate)
+    local unitFrame = nameplate and nameplate.UnitFrame
+    if not unitFrame then return nil end
+
+    local levelFrame = unitFrame.LevelFrame
+        or unitFrame.levelFrame
+        or (unitFrame.HealthBarsContainer and unitFrame.HealthBarsContainer.LevelFrame)
+    if not levelFrame then return nil end
+
+    return levelFrame.LevelText
+        or levelFrame.levelText
+        or levelFrame.Text
+        or levelFrame.text
+end
+
+local function UpdateLevel(nameplate, plate, unit)
     if not TinyThreatPlusDB.showMobLevel then
         plate.level:Hide()
         return
@@ -388,9 +403,21 @@ local function UpdateLevel(plate, unit)
 
     plate.level.text:SetText(level < 0 and "??" or tostring(level))
 
-    -- Match Blizzard's unit-frame creature difficulty coloring. Creature
-    -- difficulty uses the player's effective level, while quest difficulty uses
-    -- raw UnitLevel and can therefore disagree with Blizzard's target frame.
+    -- Prefer Blizzard's own rendered nameplate level color. This is the same
+    -- presentation data Blizzard has already resolved for the unit and avoids
+    -- trying to reproduce Forever's creature/XP difficulty rules ourselves.
+    local nativeLevelText = GetNativeLevelText(nameplate)
+    if nativeLevelText and nativeLevelText.GetTextColor then
+        local r, g, b = nativeLevelText:GetTextColor()
+        if r and g and b then
+            plate.level.text:SetTextColor(r, g, b)
+            plate.level:Show()
+            return
+        end
+    end
+
+    -- Compatibility fallback for clients/layouts without an exposed native
+    -- level FontString.
     local difficultyColor = GetCreatureDifficultyColor or GetQuestDifficultyColor
     if level > 0 and difficultyColor then
         local color = difficultyColor(level)
@@ -500,7 +527,7 @@ local function UpdatePlate(nameplate, plate, unit, nativeHealth)
     local name = UnitName(unit)
     plate.name:SetText(IsAccessible(name) and name or "")
 
-    UpdateLevel(plate, unit)
+    UpdateLevel(nameplate, plate, unit)
     UpdatePriority(plate, unit)
 
     local data = TTP.GetThreatData(unit)
