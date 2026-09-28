@@ -387,6 +387,21 @@ local function UpdateLevel(plate, unit)
     end
 
     plate.level.text:SetText(level < 0 and "??" or tostring(level))
+
+    -- Match Blizzard's standard level-difficulty colors relative to the player.
+    -- GetQuestDifficultyColor owns the grey/green/yellow/orange/red thresholds
+    -- (including expansion/client-specific rules), so we do not duplicate them.
+    if level > 0 and GetQuestDifficultyColor then
+        local color = GetQuestDifficultyColor(level)
+        if color then
+            plate.level.text:SetTextColor(color.r or 1, color.g or 1, color.b or 1)
+        else
+            plate.level.text:SetTextColor(1, 1, 1)
+        end
+    else
+        plate.level.text:SetTextColor(1, 0.1, 0.1)
+    end
+
     plate.level:Show()
 end
 
