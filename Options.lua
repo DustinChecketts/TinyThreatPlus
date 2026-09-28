@@ -335,10 +335,10 @@ MakeSlider("Nameplate Scale", "customNameplateScale", 75, 150, 5, -188, "%",
     "Scales the complete TinyThreatPlus custom nameplate.")
 MakeSlider("Health Bar Height", "customNameplateBarHeight", 12, 32, 1, -230, " px",
     "Sets the custom health-bar height.")
-MakeSlider("Border X Offset", "healthBorderOffsetX", -4, 4, 1, -272, " px",
-    "Temporary calibration control: moves the health-bar border left or right.")
-MakeSlider("Border Y Offset", "healthBorderOffsetY", -4, 4, 1, -314, " px",
-    "Temporary calibration control: moves the health-bar border down or up.")
+MakeSlider("Frame X Offset", "healthFrameOffsetX", -4, 4, 1, -272, " px",
+    "Temporary calibration control: moves the visible health-bar frame left or right.")
+MakeSlider("Frame Y Offset", "healthFrameOffsetY", -4, 4, 1, -314, " px",
+    "Temporary calibration control: moves the visible health-bar frame down or up.")
 
 MakeSlider("Inactive Opacity", "customNameplateInactiveOpacity", 20, 100, 5, -356, "%",
     "Controls opacity for distant or inactive custom nameplates. Your current target and enemies with active threat remain fully opaque.")
