@@ -215,6 +215,8 @@ local function LayoutPlate(nameplate, plate)
 
     local height = GetBarHeight()
     local scale = GetCustomScale()
+    local healthScale = math.max(0.75, math.min(1.50,
+        (tonumber(TinyThreatPlusDB.customHealthScale) or 100) / 100))
 
     plate:SetScale(scale)
     plate:ClearAllPoints()
@@ -225,7 +227,7 @@ local function LayoutPlate(nameplate, plate)
 
     plate.health:ClearAllPoints()
     PixelPoint(plate.health, "BOTTOMLEFT", plate, "BOTTOMLEFT", 0, 0)
-    PixelSize(plate.health, BASE_WIDTH, height)
+    PixelSize(plate.health, BASE_WIDTH * healthScale, height * healthScale)
 
     local priorityPadding = 4 + math.max(1, math.min(6,
         tonumber(TinyThreatPlusDB.priorityMarkerSizeRating) or 3))
@@ -234,10 +236,10 @@ local function LayoutPlate(nameplate, plate)
     PixelPoint(plate.priority, "BOTTOMRIGHT", plate.health, "BOTTOMRIGHT", priorityPadding, -priorityPadding)
 
     plate.healthShell:ClearAllPoints()
-    local frameX = math.max(-4, math.min(4, tonumber(TinyThreatPlusDB.healthFrameOffsetX) or 1))
-    local frameY = math.max(-4, math.min(4, tonumber(TinyThreatPlusDB.healthFrameOffsetY) or -1))
+    local frameX = math.max(-4, math.min(4, tonumber(TinyThreatPlusDB.healthFrameOffsetX) or 2))
+    local frameY = math.max(-4, math.min(4, tonumber(TinyThreatPlusDB.healthFrameOffsetY) or -2))
     PixelPoint(plate.healthShell, "CENTER", plate.health, "CENTER", frameX, frameY)
-    PixelSize(plate.healthShell, BASE_WIDTH + 8, height + 9)
+    PixelSize(plate.healthShell, (BASE_WIDTH * healthScale) + 8, (height * healthScale) + 9)
 
     plate.textLayer:ClearAllPoints()
     plate.textLayer:SetAllPoints(plate.health)
@@ -246,11 +248,11 @@ local function LayoutPlate(nameplate, plate)
     -- This atlas is a dark deselected overlay, not the visible frame chrome.
     -- Keep it centered on the fill; healthShell owns the visible frame.
     PixelPoint(plate.healthBorder, "CENTER", plate.health, "CENTER", 0, 0)
-    PixelSize(plate.healthBorder, BASE_WIDTH, height + 2)
+    PixelSize(plate.healthBorder, BASE_WIDTH * healthScale, (height * healthScale) + 2)
 
     plate.targetHighlight:ClearAllPoints()
     PixelPoint(plate.targetHighlight, "CENTER", plate.health, "CENTER", 0, 0)
-    PixelSize(plate.targetHighlight, BASE_WIDTH + 11, height + 9)
+    PixelSize(plate.targetHighlight, (BASE_WIDTH * healthScale) + 11, (height * healthScale) + 9)
 
     plate.name:ClearAllPoints()
     PixelPoint(plate.name, "BOTTOMLEFT", plate.health, "TOPLEFT", 0, 2)
@@ -291,10 +293,14 @@ local function LayoutPlate(nameplate, plate)
         ""
     )
     plate.level:ClearAllPoints()
-    PixelPoint(plate.level, "CENTER", plate.health, "TOPLEFT", -4, 0)
+    local levelX = math.max(-20, math.min(20, tonumber(TinyThreatPlusDB.customLevelOffsetX) or -4))
+    local levelY = math.max(-20, math.min(20, tonumber(TinyThreatPlusDB.customLevelOffsetY) or 0))
+    PixelPoint(plate.level, "CENTER", plate.health, "TOPLEFT", levelX, levelY)
 
     plate.threat:ClearAllPoints()
     PixelPoint(plate.threat, "LEFT", plate.health, "RIGHT", BAR_GAP, 0)
+    plate.threat:SetScale(math.max(0.50, math.min(1.50,
+        (tonumber(TinyThreatPlusDB.nameplateThreatScale) or 100) / 100)))
 
     plate.cast:ClearAllPoints()
     PixelPoint(plate.cast, "TOPLEFT", plate.health, "BOTTOMLEFT", 0, -3)
@@ -544,7 +550,8 @@ local function UpdatePlate(nameplate, plate, unit, nativeHealth)
             color[1] or 1,
             color[2] or 1,
             color[3] or 1,
-            1
+            math.max(0.10, math.min(1.00,
+                (tonumber(TinyThreatPlusDB.targetHighlightOpacity) or 70) / 100))
         )
         plate.targetHighlight:Show()
     else
