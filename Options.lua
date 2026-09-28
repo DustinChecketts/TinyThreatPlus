@@ -340,12 +340,10 @@ MakeSlider("Inactive Opacity", "customNameplateInactiveOpacity", 20, 100, 5, -27
     "Controls opacity for distant or inactive custom nameplates. Your current target and enemies with active threat remain fully opaque.")
 
 Section("Target Auras", -327)
-MakeToggle("Show Target Debuffs", "showNameplateAuras", -369,
-    "Shows debuffs you or your pet applied to the current target above its custom nameplate.")
-MakeSlider("Aura Size", "nameplateAuraSize", 14, 40, 1, -411, " px",
-    "Sets the size of target debuff icons.")
-MakeSlider("Maximum Auras", "nameplateAuraMax", 1, 10, 1, -453, "",
-    "Sets the maximum number of target debuffs shown.")
+SectionDescription(
+    "Forever protects nameplate aura collections in combat. Aura controls are reserved here while we identify a safe Blizzard-owned data source.",
+    -369
+)
 
 Section("Mob Name", -285)
 MakeSlider("Font Size", "customNameFontSize", 8, 18, 1, -327, " px",
