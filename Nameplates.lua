@@ -390,37 +390,41 @@ local function UpdateLevel(plate, unit)
 
     plate.level.text:SetText(level < 0 and "??" or tostring(level))
 
-    -- Forever's target frame is authoritative for creature difficulty. Its
-    -- green/grey breakpoint follows the classic XP rules rather than the
-    -- quest-difficulty helper exposed by this client, so reproduce that small
-    -- level-difference table here. At level 20, for example, level 14 is green
-    -- while level 11 is grey.
+    -- Forever's target frame is authoritative for creature difficulty. Use
+    -- the same dynamic Classic XP thresholds previously validated in MobXP;
+    -- the grey cutoff changes as the player levels.
     local playerLevel = UnitEffectiveLevel and UnitEffectiveLevel("player") or UnitLevel("player")
     if level < 0 then
         plate.level.text:SetTextColor(1, 0.1, 0.1)
     elseif IsAccessible(playerLevel) and type(playerLevel) == "number" then
         local difference = level - playerLevel
-        local greyDifference
+
+        -- Classic/Turtle MobXP grey cutoff is dynamic with player level.
+        -- Calculate the actual lowest XP-bearing mob level, rather than using
+        -- a fixed level difference.
+        local greyLevel
         if playerLevel <= 5 then
-            greyDifference = 0
-        elseif playerLevel <= 39 then
-            greyDifference = -math.floor(playerLevel / 10) - 5
+            greyLevel = playerLevel - 5
+        elseif playerLevel <= 49 then
+            greyLevel = playerLevel - math.floor(playerLevel / 10) - 5
+        elseif playerLevel == 50 then
+            greyLevel = playerLevel - 10
         elseif playerLevel <= 59 then
-            greyDifference = -1 - math.floor(playerLevel / 5)
+            greyLevel = playerLevel - math.floor(playerLevel / 5) - 1
         else
-            greyDifference = -9
+            greyLevel = playerLevel - 9
         end
 
-        if difference <= greyDifference then
+        if level <= greyLevel then
             plate.level.text:SetTextColor(0.5, 0.5, 0.5)
-        elseif difference <= -3 then
-            plate.level.text:SetTextColor(0.25, 0.75, 0.25)
-        elseif difference <= 2 then
-            plate.level.text:SetTextColor(1, 1, 0)
-        elseif difference <= 4 then
-            plate.level.text:SetTextColor(1, 0.5, 0)
-        else
+        elseif difference >= 5 then
             plate.level.text:SetTextColor(1, 0.1, 0.1)
+        elseif difference >= 3 then
+            plate.level.text:SetTextColor(1, 0.5, 0)
+        elseif difference >= -2 then
+            plate.level.text:SetTextColor(1, 1, 0)
+        else
+            plate.level.text:SetTextColor(0.25, 0.75, 0.25)
         end
     else
         plate.level.text:SetTextColor(1, 1, 1)
