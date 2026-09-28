@@ -243,7 +243,9 @@ local function LayoutPlate(nameplate, plate)
     plate.healthBorder:ClearAllPoints()
     -- The deselected-overlay atlas has asymmetric internal padding. Align its
     -- visible chrome to the StatusBar fill rather than its texture bounds.
-    PixelPoint(plate.healthBorder, "CENTER", plate.health, "CENTER", 1, -1)
+    local borderX = math.max(-4, math.min(4, tonumber(TinyThreatPlusDB.healthBorderOffsetX) or 1))
+    local borderY = math.max(-4, math.min(4, tonumber(TinyThreatPlusDB.healthBorderOffsetY) or -1))
+    PixelPoint(plate.healthBorder, "CENTER", plate.health, "CENTER", borderX, borderY)
     PixelSize(plate.healthBorder, BASE_WIDTH, height + 2)
 
     plate.targetHighlight:ClearAllPoints()
