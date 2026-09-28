@@ -380,7 +380,7 @@ local function UpdateLevel(plate, unit)
         return
     end
 
-    local level = UnitLevel(unit)
+    local level = UnitEffectiveLevel and UnitEffectiveLevel(unit) or UnitLevel(unit)
     if not IsAccessible(level) or type(level) ~= "number" or level == 0 then
         plate.level:Hide()
         return
@@ -388,11 +388,12 @@ local function UpdateLevel(plate, unit)
 
     plate.level.text:SetText(level < 0 and "??" or tostring(level))
 
-    -- Match Blizzard's standard level-difficulty colors relative to the player.
-    -- GetQuestDifficultyColor owns the grey/green/yellow/orange/red thresholds
-    -- (including expansion/client-specific rules), so we do not duplicate them.
-    if level > 0 and GetQuestDifficultyColor then
-        local color = GetQuestDifficultyColor(level)
+    -- Match Blizzard's unit-frame creature difficulty coloring. Creature
+    -- difficulty uses the player's effective level, while quest difficulty uses
+    -- raw UnitLevel and can therefore disagree with Blizzard's target frame.
+    local difficultyColor = GetCreatureDifficultyColor or GetQuestDifficultyColor
+    if level > 0 and difficultyColor then
+        local color = difficultyColor(level)
         if color then
             plate.level.text:SetTextColor(color.r or 1, color.g or 1, color.b or 1)
         else
