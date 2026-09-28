@@ -391,7 +391,7 @@ MakeSlider("Nameplate Box Width", "nameplateThreatWidth", 28, 60, 1, -1279, " px
     "Sets the nameplate threat-box width without changing its height.")
 MakeSlider("Nameplate Font Size", "nameplateThreatFontSize", 8, 14, 1, -1321, " px",
     "Sets the nameplate threat-value font size.")
-MakeSlider("Nameplate Box Scale", "nameplateThreatScale", 50, 150, 5, -1405, "%",
+MakeSlider("Nameplate Box Scale", "nameplateThreatScale", 50, 150, 5, -1363, "%",
     "Scales the complete nameplate threat box independently.")
 MakeToggle("Show on Target Frame", "showTargetFrame", -1405,
     "Shows the threat indicator above the target frame.")
@@ -399,11 +399,11 @@ MakeSlider("Target Box Width", "targetThreatWidth", 28, 64, 1, -1447, " px",
     "Sets the Forever target-frame threat-box width.")
 MakeSlider("Target Box Height", "targetThreatHeight", 16, 28, 1, -1489, " px",
     "Sets the Forever target-frame threat-box height.")
-MakeSlider("Target Font Size", "targetThreatFontSize", 8, 16, 1, -1489, " px",
+MakeSlider("Target Font Size", "targetThreatFontSize", 8, 16, 1, -1531, " px",
     "Sets the Forever target-frame threat-value font size.")
-MakeSlider("Target Indicator Scale", "targetThreatScale", 50, 150, 5, -1531, "%",
+MakeSlider("Target Indicator Scale", "targetThreatScale", 50, 150, 5, -1573, "%",
     "Scales the complete target-frame threat indicator.")
-MakeToggle("Always Show Indicator", "alwaysShowThreatBoxes", -1573,
+MakeToggle("Always Show Indicator", "alwaysShowThreatBoxes", -1615,
     "Shows an idle indicator even before active threat information exists.")
 MakeChoice(
     "Threat Indicator Mode",
@@ -412,7 +412,7 @@ MakeChoice(
         { label = "Value Difference", value = "VALUE" },
         { label = "Percentage", value = "PERCENT" },
     },
-    -1615,
+    -1657,
     "Choose between exact threat difference and percentage display."
 )
 
