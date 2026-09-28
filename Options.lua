@@ -54,7 +54,7 @@ scrollFrame:SetPoint("TOPLEFT", 8, -8)
 scrollFrame:SetPoint("BOTTOMRIGHT", -28, 8)
 
 local content = CreateFrame("Frame", nil, scrollFrame)
-content:SetSize(620, 2159)
+content:SetSize(620, 2420)
 scrollFrame:SetScrollChild(content)
 
 local title = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
@@ -326,7 +326,7 @@ end
 
 Section("Custom Nameplates", -85)
 SectionDescription(
-    "One TinyThreatPlus-owned nameplate design with focused controls for scale, typography, level badge, and target highlight.",
+    "Overall scale plus independent health-bar presentation controls.",
     -116
 )
 MakeToggle("Enable Custom Nameplates", "enableCustomNameplates", -146,
@@ -334,67 +334,76 @@ MakeToggle("Enable Custom Nameplates", "enableCustomNameplates", -146,
 MakeSlider("Nameplate Scale", "customNameplateScale", 75, 150, 5, -188, "%",
     "Scales the complete TinyThreatPlus custom nameplate.")
 MakeSlider("Health Bar Height", "customNameplateBarHeight", 12, 32, 1, -230, " px",
-    "Sets the custom health-bar height.")
-MakeSlider("Frame X Offset", "healthFrameOffsetX", -4, 4, 1, -272, " px",
-    "Temporary calibration control: moves the visible health-bar frame left or right.")
-MakeSlider("Frame Y Offset", "healthFrameOffsetY", -4, 4, 1, -314, " px",
-    "Temporary calibration control: moves the visible health-bar frame down or up.")
+    "Sets the base custom health-bar height.")
+MakeSlider("Health Bar Scale", "customHealthScale", 75, 150, 5, -272, "%",
+    "Scales the health bar and frame independently of the complete nameplate.")
+MakeSlider("Frame X Offset", "healthFrameOffsetX", -4, 4, 1, -314, " px",
+    "Moves the visible health-bar frame left or right.")
+MakeSlider("Frame Y Offset", "healthFrameOffsetY", -4, 4, 1, -356, " px",
+    "Moves the visible health-bar frame down or up.")
+MakeSlider("Inactive Opacity", "customNameplateInactiveOpacity", 20, 100, 5, -398, "%",
+    "Controls TinyThreatPlus opacity in addition to Blizzard's own nameplate fading.")
 
-MakeSlider("Inactive Opacity", "customNameplateInactiveOpacity", 20, 100, 5, -356, "%",
-    "Controls opacity for distant or inactive custom nameplates. Your current target and enemies with active threat remain fully opaque.")
-
-Section("Mob Name", -411)
-MakeSlider("Font Size", "customNameFontSize", 8, 18, 1, -453, " px",
+Section("Mob Name", -453)
+MakeSlider("Font Size", "customNameFontSize", 8, 18, 1, -495, " px",
     "Sets the mob-name font size.")
-MakeColorPicker("Font Color", "customNameFontColor", -495,
+MakeColorPicker("Font Color", "customNameFontColor", -537,
     "Sets the mob-name text color.")
-MakeToggle("Text Shadow", "customNameFontShadow", -527,
+MakeToggle("Text Shadow", "customNameFontShadow", -569,
     "Adds a black shadow for readability against the world.")
 
-Section("Mob Level", -582)
-MakeToggle("Show Mob Level", "showMobLevel", -624,
+Section("Mob Level", -624)
+MakeToggle("Show Mob Level", "showMobLevel", -666,
     "Shows the mob level in the Blizzard-style circular badge.")
-MakeSlider("Badge Size", "customLevelBadgeSize", 20, 32, 1, -666, " px",
+MakeSlider("Badge Size", "customLevelBadgeSize", 20, 32, 1, -708, " px",
     "Sets the mob-level badge size.")
-MakeSlider("Level Font Size", "customLevelFontSize", 8, 14, 1, -708, " px",
+MakeSlider("Level Font Size", "customLevelFontSize", 8, 14, 1, -750, " px",
     "Sets the level number font size.")
+MakeSlider("Badge X Offset", "customLevelOffsetX", -20, 20, 1, -792, " px",
+    "Moves the level badge left or right relative to the health bar.")
+MakeSlider("Badge Y Offset", "customLevelOffsetY", -20, 20, 1, -834, " px",
+    "Moves the level badge down or up relative to the health bar.")
 
-Section("Current Target", -763)
-MakeToggle("Highlight Current Target", "showTargetHighlight", -805,
+Section("Current Target", -889)
+MakeToggle("Highlight Current Target", "showTargetHighlight", -931,
     "Shows Blizzard's target-highlight artwork around the current target.")
-MakeColorPicker("Highlight Color", "targetHighlightColor", -837,
+MakeColorPicker("Highlight Color", "targetHighlightColor", -963,
     "Tints the desaturated Blizzard target-highlight artwork. White is the default.")
+MakeSlider("Highlight Opacity", "targetHighlightOpacity", 10, 100, 5, -1005, "%",
+    "Controls how strongly the current-target highlight is drawn.")
 
-Section("Health Bar", -892)
+Section("Health Bar", -1060)
 SectionDescription(
     "Uses the custom health bar itself as an immediate threat warning based on your role.",
-    -923
+    -1091
 )
-MakeToggle("Enable Threat Coloring", "roleBasedColors", -953,
+MakeToggle("Enable Threat Coloring", "roleBasedColors", -1121,
     "Colors hostile NPC health bars by threat state. Other assigned tanks holding aggro are treated as safe.")
 
-Section("Threat Indicator", -1008)
+Section("Threat Indicator", -1176)
 SectionDescription(
     "Nameplate and target-frame threat indicators can be sized independently.",
-    -1039
+    -1207
 )
-MakeToggle("Show on Custom Nameplates", "showNameplateThreat", -1069,
+MakeToggle("Show on Custom Nameplates", "showNameplateThreat", -1237,
     "Shows the TinyThreatPlus threat indicator beside custom hostile nameplates.")
-MakeSlider("Nameplate Box Width", "nameplateThreatWidth", 28, 60, 1, -1111, " px",
+MakeSlider("Nameplate Box Width", "nameplateThreatWidth", 28, 60, 1, -1279, " px",
     "Sets the nameplate threat-box width without changing its height.")
-MakeSlider("Nameplate Font Size", "nameplateThreatFontSize", 8, 14, 1, -1153, " px",
+MakeSlider("Nameplate Font Size", "nameplateThreatFontSize", 8, 14, 1, -1321, " px",
     "Sets the nameplate threat-value font size.")
-MakeToggle("Show on Target Frame", "showTargetFrame", -1195,
+MakeSlider("Nameplate Box Scale", "nameplateThreatScale", 50, 150, 5, -1405, "%",
+    "Scales the complete nameplate threat box independently.")
+MakeToggle("Show on Target Frame", "showTargetFrame", -1405,
     "Shows the threat indicator above the target frame.")
-MakeSlider("Target Box Width", "targetThreatWidth", 28, 64, 1, -1237, " px",
+MakeSlider("Target Box Width", "targetThreatWidth", 28, 64, 1, -1447, " px",
     "Sets the Forever target-frame threat-box width.")
-MakeSlider("Target Box Height", "targetThreatHeight", 16, 28, 1, -1279, " px",
+MakeSlider("Target Box Height", "targetThreatHeight", 16, 28, 1, -1489, " px",
     "Sets the Forever target-frame threat-box height.")
-MakeSlider("Target Font Size", "targetThreatFontSize", 8, 16, 1, -1279, " px",
+MakeSlider("Target Font Size", "targetThreatFontSize", 8, 16, 1, -1489, " px",
     "Sets the Forever target-frame threat-value font size.")
-MakeSlider("Target Indicator Scale", "targetThreatScale", 50, 150, 5, -1321, "%",
+MakeSlider("Target Indicator Scale", "targetThreatScale", 50, 150, 5, -1531, "%",
     "Scales the complete target-frame threat indicator.")
-MakeToggle("Always Show Indicator", "alwaysShowThreatBoxes", -1363,
+MakeToggle("Always Show Indicator", "alwaysShowThreatBoxes", -1573,
     "Shows an idle indicator even before active threat information exists.")
 MakeChoice(
     "Threat Indicator Mode",
@@ -403,55 +412,55 @@ MakeChoice(
         { label = "Value Difference", value = "VALUE" },
         { label = "Percentage", value = "PERCENT" },
     },
-    -1405,
+    -1615,
     "Choose between exact threat difference and percentage display."
 )
 
-Section("Threat Leader", -1460)
+Section("Threat Leader", -1670)
 SectionDescription(
     "Identifies who currently has the most threat on an enemy and provides useful player or pet context.",
-    -1491
+    -1701
 )
 MakeToggle(
     "Show Threat Leader",
     "showThreatLeader",
-    -1585,
+    -1795,
     "Shows the unit currently leading threat below the threat indicator."
 )
 MakeToggle(
     "Show Class / Pet Icon",
     "showThreatLeaderClassIcon",
-    -1521,
+    -1731,
     "Shows a player class icon or pet portrait for the current threat leader."
 )
 MakeToggle(
     "Show Role Icon",
     "showThreatLeaderRole",
-    -1553,
+    -1763,
     "Shows the Tank, Healer, or Damage role for player threat leaders when available."
 )
 
-Section("Target Priority", -1645)
+Section("Target Priority", -1855)
 SectionDescription(
     "Highlights one enemy that deserves attention when fighting multiple targets. Tank and Damage roles use different priority logic.",
-    -1676
+    -1886
 )
 MakeToggle(
     "Enable Target Priority",
     "showPriorityMarker",
-    -1750,
+    -1960,
     "Highlights one useful priority target when multiple hostile nameplates are visible. Automatic priority is normally limited to parties and raids."
 )
 MakeToggle(
     "Enable While Solo (Pet Classes)",
     "priorityWhileSolo",
-    -1718,
+    -1928,
     "Allows Target Priority while solo when you have an active pet. Uses real threat when available and combat-log fallback only when real threat data is unavailable."
 )
 MakeColorPicker(
     "Priority Color",
     "priorityMarkerColor",
-    -1792,
+    -2002,
     "Choose the background color used to identify the Target Priority."
 )
 MakeSlider(
@@ -460,7 +469,7 @@ MakeSlider(
     10,
     100,
     5,
-    -1834,
+    -2044,
     "%",
     "Controls the opacity of the Target Priority background."
 )
@@ -470,7 +479,7 @@ MakeSlider(
     1,
     6,
     1,
-    -1876,
+    -2086,
     "",
     "Controls Target Priority background size from 1 to 6. Each step adds 1 pixel of padding: 1 = 5 px through 6 = 10 px."
 )
@@ -480,26 +489,26 @@ MakeSlider(
     0,
     100,
     5,
-    -1918,
+    -2128,
     "%",
     "Threat safety gate for Target Priority. Tanks mark the enemy most at risk of being lost. Damage only considers targets at or below this percentage of the threat leader, then prefers group focus, lower health, and finally lower personal threat. Healers receive no automatic priority target."
 )
 
-Section("Target Counter", -1978)
+Section("Target Counter", -2188)
 SectionDescription(
     "Shows how many party or raid members are currently targeting an enemy.",
-    -2009
+    -2219
 )
 MakeToggle(
     "Show Target Counter on Nameplate",
     "showTargetCounter",
-    -2071,
+    -2281,
     "Shows how many party or raid members are targeting each enemy nameplate."
 )
 MakeToggle(
     "Show Target Counter on Target Frame",
     "showTargetFrameCounter",
-    -2039,
+    -2249,
     "Shows how many party or raid members are targeting your current target."
 )
 
