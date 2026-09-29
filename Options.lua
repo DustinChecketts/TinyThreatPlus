@@ -54,7 +54,7 @@ scrollFrame:SetPoint("TOPLEFT", 8, -8)
 scrollFrame:SetPoint("BOTTOMRIGHT", -28, 8)
 
 local content = CreateFrame("Frame", nil, scrollFrame)
-content:SetSize(620, 2420)
+content:SetSize(620, 2462)
 scrollFrame:SetScrollChild(content)
 
 local title = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
@@ -388,22 +388,24 @@ SectionDescription(
 MakeToggle("Show on Custom Nameplates", "showNameplateThreat", -1237,
     "Shows the TinyThreatPlus threat indicator beside custom hostile nameplates.")
 MakeSlider("Nameplate Box Width", "nameplateThreatWidth", 28, 60, 1, -1279, " px",
-    "Sets the nameplate threat-box width without changing its height.")
-MakeSlider("Nameplate Font Size", "nameplateThreatFontSize", 8, 14, 1, -1321, " px",
+    "Sets the nameplate threat-box width.")
+MakeSlider("Nameplate Box Height", "nameplateThreatHeight", 12, 32, 1, -1321, " px",
+    "Sets the nameplate threat-box height independently of the health bar.")
+MakeSlider("Nameplate Font Size", "nameplateThreatFontSize", 8, 14, 1, -1363, " px",
     "Sets the nameplate threat-value font size.")
-MakeSlider("Nameplate Box Scale", "nameplateThreatScale", 50, 150, 5, -1363, "%",
+MakeSlider("Nameplate Box Scale", "nameplateThreatScale", 50, 150, 5, -1405, "%",
     "Scales the complete nameplate threat box independently.")
-MakeToggle("Show on Target Frame", "showTargetFrame", -1405,
+MakeToggle("Show on Target Frame", "showTargetFrame", -1447,
     "Shows the threat indicator above the target frame.")
-MakeSlider("Target Box Width", "targetThreatWidth", 28, 64, 1, -1447, " px",
+MakeSlider("Target Box Width", "targetThreatWidth", 28, 64, 1, -1489, " px",
     "Sets the Forever target-frame threat-box width.")
-MakeSlider("Target Box Height", "targetThreatHeight", 16, 28, 1, -1489, " px",
+MakeSlider("Target Box Height", "targetThreatHeight", 16, 28, 1, -1531, " px",
     "Sets the Forever target-frame threat-box height.")
-MakeSlider("Target Font Size", "targetThreatFontSize", 8, 16, 1, -1531, " px",
+MakeSlider("Target Font Size", "targetThreatFontSize", 8, 16, 1, -1573, " px",
     "Sets the Forever target-frame threat-value font size.")
-MakeSlider("Target Indicator Scale", "targetThreatScale", 50, 150, 5, -1573, "%",
+MakeSlider("Target Indicator Scale", "targetThreatScale", 50, 150, 5, -1615, "%",
     "Scales the complete target-frame threat indicator.")
-MakeToggle("Always Show Indicator", "alwaysShowThreatBoxes", -1615,
+MakeToggle("Always Show Indicator", "alwaysShowThreatBoxes", -1657,
     "Shows an idle indicator even before active threat information exists.")
 MakeChoice(
     "Threat Indicator Mode",
@@ -412,7 +414,7 @@ MakeChoice(
         { label = "Value Difference", value = "VALUE" },
         { label = "Percentage", value = "PERCENT" },
     },
-    -1657,
+    -1699,
     "Choose between exact threat difference and percentage display."
 )
 
