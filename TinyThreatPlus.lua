@@ -92,7 +92,6 @@ function TTP.ApplyDefaults()
     end
     TinyThreatPlusDB.nameplatePresentation = nil
     TinyThreatPlusDB.showNameplates = nil
-    TinyThreatPlusDB.nameplateThreatScale = nil
 
     TinyThreatPlusDB = TinyThreatPlusDB or {}
 
@@ -1315,11 +1314,21 @@ function TTP.UpdateTargetFrame()
                 2
             )
 
+            local boxWidth = TTP.Compat.IsForever()
+                and math.max(28, math.min(64, tonumber(TinyThreatPlusDB.targetThreatWidth) or 40))
+                or 52
+            local boxHeight = TTP.Compat.IsForever()
+                and math.max(16, math.min(28, tonumber(TinyThreatPlusDB.targetThreatHeight) or 20))
+                or 20
+            local boxFontSize = TTP.Compat.IsForever()
+                and math.max(8, math.min(16, tonumber(TinyThreatPlusDB.targetThreatFontSize) or 12))
+                or 12
+
             TTP.UpdateThreatBox(
                 box,
-                TTP.Compat.IsForever() and 34 or 52,
-                20,
-                12,
+                boxWidth,
+                boxHeight,
+                boxFontSize,
                 text,
                 red,
                 green,
