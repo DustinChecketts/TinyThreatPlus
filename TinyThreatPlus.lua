@@ -30,6 +30,7 @@ TTP.defaults = {
     customLevelOffsetX = -4,
     customLevelOffsetY = 0,
     nameplateThreatWidth = 36,
+    nameplateThreatHeight = 20,
     nameplateThreatFontSize = 9,
     nameplateThreatScale = 100,
     showTargetFrame = true,
