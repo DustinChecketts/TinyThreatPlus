@@ -186,14 +186,24 @@ local function CreatePlate(nameplate)
 
     plate.cast = CreateFrame("StatusBar", nil, plate)
     plate.cast:SetFrameLevel(plate:GetFrameLevel() + 2)
-    SetStatusBarAtlas(plate.cast, "UI-HUD-CoolDownManager-Bar")
-    plate.cast:SetStatusBarColor(1.0, 0.70, 0.15)
+    -- The native target-frame cast bar uses a simple gold fill rather than the
+    -- CoolDownManager atlas. A flat texture also avoids the atlas' pale edge
+    -- treatment that made our copied cast progress appear white.
+    plate.cast:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8")
+    plate.cast:SetStatusBarColor(1.0, 0.72, 0.08)
 
-    plate.castShell = plate:CreateTexture(nil, "BACKGROUND")
+    plate.castBackground = plate.cast:CreateTexture(nil, "BACKGROUND")
+    plate.castBackground:SetAllPoints()
+    plate.castBackground:SetColorTexture(0.08, 0.06, 0.02, 0.90)
+
+    plate.castShell = plate:CreateTexture(nil, "BORDER")
     plate.castShell:SetAtlas("UI-HUD-CoolDownManager-Bar-BG", false)
     plate.castShell:SetIgnoreParentAlpha(true)
 
-    plate.castName = plate:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    plate.castTextLayer = CreateFrame("Frame", nil, plate)
+    plate.castTextLayer:SetFrameLevel(plate.cast:GetFrameLevel() + 4)
+
+    plate.castName = plate.castTextLayer:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     plate.castName:SetJustifyH("LEFT")
     plate.castName:SetTextColor(1, 1, 1)
     plate.castName:SetFont(STANDARD_TEXT_FONT, 8, "OUTLINE")
@@ -339,9 +349,13 @@ local function LayoutPlate(nameplate, plate)
     PixelPoint(plate.castShell, "CENTER", plate.cast, "CENTER", 1, -1)
     PixelSize(plate.castShell, BASE_WIDTH + 8, CAST_HEIGHT + 7)
 
+    plate.castTextLayer:ClearAllPoints()
+    plate.castTextLayer:SetAllPoints(plate.cast)
+
     plate.castName:ClearAllPoints()
-    PixelPoint(plate.castName, "LEFT", plate.cast, "LEFT", 3, 0)
-    plate.castName:SetWidth(BASE_WIDTH - 6)
+    PixelPoint(plate.castName, "CENTER", plate.castTextLayer, "CENTER", 0, 0)
+    plate.castName:SetWidth(BASE_WIDTH - 8)
+    plate.castName:SetJustifyH("CENTER")
 
     local auraSize = math.max(14, math.min(40,
         tonumber(TinyThreatPlusDB.nameplateAuraSize) or 20))
@@ -496,8 +510,9 @@ local function UpdateCast(nameplate, plate)
 
     CopyStatus(nativeCast, plate.cast)
 
-    local r, g, b = nativeCast:GetStatusBarColor()
-    if r and g and b then plate.cast:SetStatusBarColor(r, g, b) end
+    -- Match Blizzard's target-frame cast presentation rather than inheriting
+    -- the nameplate cast bar's pale/white status color.
+    plate.cast:SetStatusBarColor(1.0, 0.72, 0.08)
 
     local text = nativeCast.Text or nativeCast.text or nativeCast.SpellName
     plate.castName:SetText(text and text.GetText and text:GetText() or "")
