@@ -205,6 +205,10 @@ local function CreatePlate(nameplate)
     plate.castShell:Hide()
     plate.castName:Hide()
 
+    plate:SetScript("OnUpdate", function(self)
+        UpdateCastFrame(self)
+    end)
+
     nameplate.TinyThreatPlusPlate = plate
     return plate
 end
@@ -366,6 +370,7 @@ local function SetNativePresentation(nameplate, visible)
     if not unitFrame then return end
 
     if visible then
+        unitFrame.TinyThreatPlusSuppressNative = false
         if unitFrame.TinyThreatPlusOriginalAlpha ~= nil then
             unitFrame:SetAlpha(unitFrame.TinyThreatPlusOriginalAlpha)
             unitFrame.TinyThreatPlusOriginalAlpha = nil
@@ -379,6 +384,19 @@ local function SetNativePresentation(nameplate, visible)
         unitFrame.TinyThreatPlusOriginalAlpha = unitFrame:GetAlpha()
     end
     unitFrame:SetAlpha(0)
+
+    -- Blizzard can refresh/recycle UnitFrame presentation independently of our
+    -- 80 ms state pass. Keep its visual layer suppressed while our custom plate
+    -- owns presentation, preventing one-frame native flashes.
+    if not unitFrame.TinyThreatPlusAlphaHooked and hooksecurefunc then
+        unitFrame.TinyThreatPlusAlphaHooked = true
+        hooksecurefunc(unitFrame, "SetAlpha", function(self, alpha)
+            if self.TinyThreatPlusSuppressNative and alpha ~= 0 then
+                self:SetAlpha(0)
+            end
+        end)
+    end
+    unitFrame.TinyThreatPlusSuppressNative = true
 end
 
 local function CopyStatus(nativeBar, customBar)
@@ -466,6 +484,7 @@ end
 
 local function UpdateCast(nameplate, plate)
     local nativeCast = GetNativeCastBar(nameplate)
+    plate.TinyThreatPlusNativeCast = nativeCast
     if not nativeCast or not nativeCast:IsShown() then
         plate.cast:Hide()
         plate.castShell:Hide()
@@ -483,6 +502,18 @@ local function UpdateCast(nameplate, plate)
     plate.cast:Show()
     plate.castShell:Show()
     plate.castName:Show()
+end
+
+local function UpdateCastFrame(plate)
+    if not plate or not plate:IsShown() then return end
+    local nativeCast = plate.TinyThreatPlusNativeCast
+    if not nativeCast or not nativeCast:IsShown() then return end
+
+    -- Cast progress is animation, not game-state polling. Mirror Blizzard's
+    -- StatusBar every rendered frame so our bar moves as smoothly as theirs.
+    -- Secret values are passed directly StatusBar-to-StatusBar; Lua never
+    -- compares or performs arithmetic on them.
+    CopyStatus(nativeCast, plate.cast)
 end
 
 local function UpdateThreat(plate, unit, data)
