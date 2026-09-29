@@ -540,6 +540,8 @@ local function UpdateThreat(plate, unit, data)
     end
 
     local height = GetBarHeight()
+    local boxScale = math.max(0.50, math.min(1.50,
+        (tonumber(TinyThreatPlusDB.nameplateThreatScale) or 100) / 100))
     local width = math.max(28, math.min(60,
         tonumber(TinyThreatPlusDB.nameplateThreatWidth) or 36))
     local fontSize = math.max(8, math.min(14,
@@ -550,7 +552,7 @@ local function UpdateThreat(plate, unit, data)
     TTP.UpdateThreatBox(
         plate.threat,
         width,
-        height,
+        height / boxScale,
         fontSize,
         text,
         r, g, b,
