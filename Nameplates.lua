@@ -120,6 +120,8 @@ local function CreateAuraButton(parent)
     return button
 end
 
+local UpdateCastFrame
+
 local function CreatePlate(nameplate)
     if nameplate.TinyThreatPlusPlate then
         return nameplate.TinyThreatPlusPlate
@@ -504,7 +506,7 @@ local function UpdateCast(nameplate, plate)
     plate.castName:Show()
 end
 
-local function UpdateCastFrame(plate)
+UpdateCastFrame = function(plate)
     if not plate or not plate:IsShown() then return end
     local nativeCast = plate.TinyThreatPlusNativeCast
     if not nativeCast or not nativeCast:IsShown() then return end
