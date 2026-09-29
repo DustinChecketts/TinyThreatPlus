@@ -218,6 +218,29 @@ local function LayoutPlate(nameplate, plate)
     local healthScale = math.max(0.75, math.min(1.50,
         (tonumber(TinyThreatPlusDB.customHealthScale) or 100) / 100))
 
+    -- Layout is static until a presentation setting changes. Re-clearing and
+    -- re-anchoring every 80 ms can make thin atlas edges jump between pixel
+    -- rounding positions while Blizzard is smoothly moving a distant plate.
+    local layoutKey = table.concat({
+        tostring(height),
+        tostring(scale),
+        tostring(healthScale),
+        tostring(TinyThreatPlusDB.healthFrameOffsetX),
+        tostring(TinyThreatPlusDB.healthFrameOffsetY),
+        tostring(TinyThreatPlusDB.customNameFontSize),
+        tostring(TinyThreatPlusDB.customLevelBadgeSize),
+        tostring(TinyThreatPlusDB.customLevelFontSize),
+        tostring(TinyThreatPlusDB.customLevelOffsetX),
+        tostring(TinyThreatPlusDB.customLevelOffsetY),
+        tostring(TinyThreatPlusDB.nameplateThreatWidth),
+        tostring(TinyThreatPlusDB.nameplateThreatScale),
+        tostring(TinyThreatPlusDB.nameplateAuraSize),
+    }, ":")
+    if plate.TinyThreatPlusLayoutKey == layoutKey then
+        return
+    end
+    plate.TinyThreatPlusLayoutKey = layoutKey
+
     plate:SetScale(scale)
     plate:ClearAllPoints()
     PixelPoint(plate, "BOTTOM", unitFrame, "BOTTOM", 0, 4)
@@ -573,7 +596,10 @@ local function UpdatePlate(nameplate, plate, unit, nativeHealth)
         opacity = math.max(0.20, math.min(1.00,
             (tonumber(TinyThreatPlusDB.customNameplateInactiveOpacity) or 70) / 100))
     end
-    plate:SetAlpha(opacity)
+    if plate.TinyThreatPlusAlpha ~= opacity then
+        plate.TinyThreatPlusAlpha = opacity
+        plate:SetAlpha(opacity)
+    end
     plate:Show()
 end
 
@@ -581,6 +607,8 @@ local function ResetPlate(nameplate)
     if not nameplate then return end
     local plate = nameplate.TinyThreatPlusPlate
     if plate then
+        plate.TinyThreatPlusLayoutKey = nil
+        plate.TinyThreatPlusAlpha = nil
         plate:Hide()
         plate.threat:Hide()
         plate.level:Hide()
