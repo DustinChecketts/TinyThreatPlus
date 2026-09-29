@@ -249,6 +249,7 @@ local function LayoutPlate(nameplate, plate)
         tostring(TinyThreatPlusDB.customLevelOffsetX),
         tostring(TinyThreatPlusDB.customLevelOffsetY),
         tostring(TinyThreatPlusDB.nameplateThreatWidth),
+        tostring(TinyThreatPlusDB.nameplateThreatHeight),
         tostring(TinyThreatPlusDB.nameplateThreatScale),
         tostring(TinyThreatPlusDB.nameplateAuraSize),
     }, ":")
@@ -544,6 +545,8 @@ local function UpdateThreat(plate, unit, data)
         (tonumber(TinyThreatPlusDB.nameplateThreatScale) or 100) / 100))
     local width = math.max(28, math.min(60,
         tonumber(TinyThreatPlusDB.nameplateThreatWidth) or 36))
+    local boxHeight = math.max(12, math.min(32,
+        tonumber(TinyThreatPlusDB.nameplateThreatHeight) or 20))
     local fontSize = math.max(8, math.min(14,
         tonumber(TinyThreatPlusDB.nameplateThreatFontSize) or 9))
     local text = TTP.GetThreatDisplayText(data)
@@ -552,7 +555,7 @@ local function UpdateThreat(plate, unit, data)
     TTP.UpdateThreatBox(
         plate.threat,
         width,
-        height / boxScale,
+        boxHeight,
         fontSize,
         text,
         r, g, b,
