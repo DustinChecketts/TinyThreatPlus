@@ -656,6 +656,18 @@ local function CreateNativeEnhancement(nameplate)
     overlay.threat:SetJustifyH("CENTER")
     overlay.threat:SetJustifyV("MIDDLE")
     overlay.threat:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
+
+    overlay.counterRing = overlay:CreateTexture(nil, "OVERLAY")
+    overlay.counterRing:SetSize(18, 18)
+    overlay.counterRing:SetAtlas("PetJournal-LevelBubble")
+    overlay.counterRing:Hide()
+    overlay.counterText = overlay:CreateFontString(nil, "OVERLAY", "GameNormalNumberFont")
+    overlay.counterText:SetSize(18, 18)
+    overlay.counterText:SetJustifyH("CENTER")
+    overlay.counterText:SetJustifyV("MIDDLE")
+    overlay.counterText:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+    overlay.counterText:SetTextColor(1, 1, 1)
+    overlay.counterText:Hide()
     overlay:Hide()
 
     nameplate.TinyThreatPlusNativeEnhancement = overlay
@@ -669,6 +681,8 @@ ResetNativeEnhancement = function(nameplate)
     overlay.level:Hide()
     overlay.threatBadge:Hide()
     overlay.threat:SetText("")
+    overlay.counterRing:Hide()
+    overlay.counterText:Hide()
     if overlay.TinyThreatPlusHiddenNativeLevel
         and overlay.TinyThreatPlusHiddenNativeLevel.Show
     then
@@ -833,10 +847,28 @@ local function UpdateNativeEnhancement(unit, nameplate)
         overlay.threat:SetTextColor(r, g, b)
         overlay.threatBadge:Show()
         overlay.threat:Show()
+
+        local count = TTP.GetTargetCounter(unit)
+        if count then
+            overlay.counterRing:ClearAllPoints()
+            PixelPoint(overlay.counterRing, "CENTER", overlay.threatBadge, "RIGHT", 5, 0)
+            overlay.counterText:ClearAllPoints()
+            local counterX = count < 10 and -0.5 or 0
+            PixelPoint(overlay.counterText, "CENTER", overlay.counterRing, "CENTER", counterX, 0)
+            overlay.counterText:SetFont(STANDARD_TEXT_FONT, count < 10 and 10 or 9, "OUTLINE")
+            overlay.counterText:SetText(count)
+            overlay.counterRing:Show()
+            overlay.counterText:Show()
+        else
+            overlay.counterRing:Hide()
+            overlay.counterText:Hide()
+        end
     else
         overlay.threat:SetText("")
         overlay.threat:Hide()
         overlay.threatBadge:Hide()
+        overlay.counterRing:Hide()
+        overlay.counterText:Hide()
     end
 
     overlay:Show()
