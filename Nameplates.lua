@@ -421,6 +421,15 @@ local function UpdateNativeEnhancement(unit, nameplate)
 
     local data = TTP.GetThreatData(unit)
 
+    -- Role-based threat state colors the native Blizzard health bar. The
+    -- threshold uses the existing threat-safety slider: tanks are green while
+    -- securely ahead, yellow inside the caution band, red after losing aggro;
+    -- DPS/healers use the inverse semantics.
+    if TinyThreatPlusDB.roleBasedColors and data then
+        local r, g, b = TTP.GetThreatColor(unit, data)
+        if healthBar.SetStatusBarColor then healthBar:SetStatusBarColor(r, g, b) end
+    end
+
     local leader = overlay.leader
     if leader then
         leader:Hide()
