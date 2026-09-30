@@ -8,6 +8,68 @@ TinyThreatPlusDB = TinyThreatPlusDB or {}
 -- Defaults and persistent settings
 -- ---------------------------------------------------------------------------
 TTP.defaults = {
+    -- Native + TinyThreatPlus is the only Forever presentation.
+    showNameplateThreat = true,
+    showTargetHighlight = true,
+    targetHighlightColor = { 1, 1, 1 },
+    targetHighlightOpacity = 85,
+
+    nativeNameFontSize = 14,
+    nativeNameFont = "FRIZQT",
+    nativeNameOutline = "OUTLINE",
+    nativeNameOutlineColor = { 0, 0, 0 },
+    nativeHealthFontSize = 12,
+    nativeHealthFont = "FRIZQT",
+    nativeHealthOutline = "OUTLINE",
+    nativeHealthOutlineColor = { 0, 0, 0 },
+    nativeLevelBadgeSize = 28,
+    nativeLevelFontSize = 12,
+    nativeLevelOffsetX = -10,
+    nativeLevelOffsetY = 0,
+    nativeThreatFontSize = 12,
+    nativeThreatWidth = 36,
+    nativeThreatHeight = 20,
+    nativeThreatOffsetX = 5,
+    nativeThreatOffsetY = 0,
+
+    showTargetFrame = true,
+    alwaysShowThreatBoxes = true,
+    roleBasedColors = true,
+    showTargetCounter = true,
+    showTargetFrameCounter = true,
+    previewGroupThreatSolo = false,
+
+    showPriorityMarker = true,
+    priorityWhileSolo = false,
+    priorityThreatThreshold = 80,
+    priorityMarkerColor = { 0, 0.0627451, 0.3960784 },
+    priorityMarkerOpacity = 100,
+
+    showThreatLeader = true,
+    showThreatLeaderClassIcon = true,
+    showThreatLeaderRole = true,
+    showMobLevel = true,
+    displayMode = "VALUE",
+
+    targetThreatScale = 100,
+    targetThreatWidth = 36,
+    targetThreatHeight = 20,
+    targetThreatFontSize = 12,
+    targetThreatOffsetX = 0,
+    targetThreatOffsetY = 0,
+    targetCounterSize = 18,
+    targetCounterOffsetX = -2,
+    targetCounterOffsetY = -2,
+}ocal ADDON_NAME, addonTable = ...
+
+local TTP = _G.TinyThreatPlus or addonTable or {}
+_G.TinyThreatPlus = TTP
+TinyThreatPlusDB = TinyThreatPlusDB or {}
+
+-- ---------------------------------------------------------------------------
+-- Defaults and persistent settings
+-- ---------------------------------------------------------------------------
+TTP.defaults = {
     enableCustomNameplates = true,
     showNameplateThreat = true,
     showTargetHighlight = false,
@@ -100,96 +162,43 @@ TTP.applyingHealthColor = false
 -- Saved-variable migrations and defaults
 -- ---------------------------------------------------------------------------
 function TTP.ApplyDefaults()
-    -- 2.0 custom-nameplate migration. The old presentation switch tried to
-    -- mirror Blizzard's visual settings. Custom nameplates are now completely
-    -- addon-owned; Blizzard settings only determine which plates exist.
-    if TinyThreatPlusDB.nameplateMode == nil then
-        if TinyThreatPlusDB.enableCustomNameplates == false
-            or TinyThreatPlusDB.nameplatePresentation == "BLIZZARD"
-        then
-            TinyThreatPlusDB.nameplateMode = "NATIVE"
-        elseif TTP.Compat.IsForever() then
-            -- Native + TinyThreatPlus is the shipping Forever presentation.
-            -- Explicit legacy choices above are still honored during migration.
-            TinyThreatPlusDB.nameplateMode = "NATIVE"
-        else
-            TinyThreatPlusDB.nameplateMode = "CUSTOM"
-        end
-    end
-    -- Retained as a migration alias for older SavedVariables. Runtime
-    -- presentation now routes exclusively through nameplateMode.
-    TinyThreatPlusDB.enableCustomNameplates =
-        TinyThreatPlusDB.nameplateMode == "CUSTOM"
-    if TinyThreatPlusDB.showNameplateThreat == nil then
-        TinyThreatPlusDB.showNameplateThreat =
-            TinyThreatPlusDB.showNameplates ~= false
-    end
-    TinyThreatPlusDB.nameplatePresentation = nil
-    TinyThreatPlusDB.showNameplates = nil
-
     TinyThreatPlusDB = TinyThreatPlusDB or {}
 
-    if TinyThreatPlusDB.priorityMarkerSizeRating == nil
-        and TinyThreatPlusDB.priorityMarkerSize ~= nil
-    then
-        local oldPixels =
-            tonumber(TinyThreatPlusDB.priorityMarkerSize) or 5
-
-        oldPixels =
-            math.max(
-                5,
-                math.min(10, oldPixels)
-            )
-
-        TinyThreatPlusDB.priorityMarkerSizeRating =
-            math.max(
-                1,
-                math.min(
-                    6,
-                    math.floor(oldPixels - 4)
-                )
-            )
-    end
+    -- RC migration: Forever now has one presentation. Remove retired
+    -- presentation selectors so an older SavedVariables file cannot route
+    -- back into the deleted custom renderer.
+    TinyThreatPlusDB.nameplateMode = nil
+    TinyThreatPlusDB.enableCustomNameplates = nil
+    TinyThreatPlusDB.nameplatePresentation = nil
+    TinyThreatPlusDB.showNameplates = nil
+    TinyThreatPlusDB.priorityMarkerSizeRating = nil
 
     if TinyThreatPlusDB.priorityThreatThreshold == nil
         and TinyThreatPlusDB.threatSafetyBuffer ~= nil
     then
         TinyThreatPlusDB.priorityThreatThreshold =
-            math.max(
-                0,
-                math.min(
-                    100,
-                    100 - TinyThreatPlusDB.threatSafetyBuffer
-                )
-            )
+            math.max(0, math.min(100, 100 - TinyThreatPlusDB.threatSafetyBuffer))
     end
 
     if TinyThreatPlusDB.showPriorityMarker == nil
         and TinyThreatPlusDB.highlightWeakestThreatLead ~= nil
     then
-        TinyThreatPlusDB.showPriorityMarker =
-            TinyThreatPlusDB.highlightWeakestThreatLead
+        TinyThreatPlusDB.showPriorityMarker = TinyThreatPlusDB.highlightWeakestThreatLead
     end
-
     if TinyThreatPlusDB.showThreatLeader == nil
         and TinyThreatPlusDB.showTargetOfTarget ~= nil
     then
-        TinyThreatPlusDB.showThreatLeader =
-            TinyThreatPlusDB.showTargetOfTarget
+        TinyThreatPlusDB.showThreatLeader = TinyThreatPlusDB.showTargetOfTarget
     end
-
     if TinyThreatPlusDB.showThreatLeaderClassIcon == nil
         and TinyThreatPlusDB.showToTClassIcon ~= nil
     then
-        TinyThreatPlusDB.showThreatLeaderClassIcon =
-            TinyThreatPlusDB.showToTClassIcon
+        TinyThreatPlusDB.showThreatLeaderClassIcon = TinyThreatPlusDB.showToTClassIcon
     end
-
     if TinyThreatPlusDB.showThreatLeaderRole == nil
         and TinyThreatPlusDB.showToTRole ~= nil
     then
-        TinyThreatPlusDB.showThreatLeaderRole =
-            TinyThreatPlusDB.showToTRole
+        TinyThreatPlusDB.showThreatLeaderRole = TinyThreatPlusDB.showToTRole
     end
 
     for key, value in pairs(TTP.defaults) do
