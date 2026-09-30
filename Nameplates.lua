@@ -669,6 +669,52 @@ ResetNativeEnhancement = function(nameplate)
     end
 end
 
+local function LayoutNativeText(healthBar)
+    if not healthBar then return end
+
+    local name = healthBar.unitNameFontString
+    if name then
+        name:ClearAllPoints()
+        PixelPoint(name, "BOTTOMLEFT", healthBar, "TOPLEFT", 0, 2)
+        name:SetPoint("BOTTOMRIGHT", healthBar, "TOPRIGHT", 0, 2)
+        name:SetJustifyH("LEFT")
+        name:SetJustifyV("BOTTOM")
+        name:SetFont(
+            STANDARD_TEXT_FONT,
+            math.max(8, math.min(16, tonumber(TinyThreatPlusDB.nativeNameFontSize) or 10)),
+            "OUTLINE"
+        )
+    end
+
+    -- Forever's native StatusBar exposes dedicated left/right text fields.
+    -- Re-anchor those fields without reading their contents: Blizzard remains
+    -- responsible for populating secret health values and percentages.
+    local healthFontSize = math.max(8, math.min(14,
+        tonumber(TinyThreatPlusDB.nativeHealthFontSize) or 9))
+
+    if healthBar.LeftText then
+        healthBar.LeftText:ClearAllPoints()
+        PixelPoint(healthBar.LeftText, "LEFT", healthBar, "LEFT", 4, 0)
+        healthBar.LeftText:SetJustifyH("LEFT")
+        healthBar.LeftText:SetFont(STANDARD_TEXT_FONT, healthFontSize, "OUTLINE")
+        healthBar.LeftText:Show()
+    end
+
+    if healthBar.RightText then
+        healthBar.RightText:ClearAllPoints()
+        PixelPoint(healthBar.RightText, "RIGHT", healthBar, "RIGHT", -4, 0)
+        healthBar.RightText:SetJustifyH("RIGHT")
+        healthBar.RightText:SetFont(STANDARD_TEXT_FONT, healthFontSize, "OUTLINE")
+        healthBar.RightText:Show()
+    end
+
+    -- TextString is Blizzard's combined/centered health presentation. Native
+    -- TinyThreatPlus uses the dedicated edge fields instead to match Custom.
+    if healthBar.TextString then
+        healthBar.TextString:Hide()
+    end
+end
+
 local function UpdateNativeEnhancement(unit, nameplate)
     if not TTP.IsHostileNPC(unit) then
         ResetNativeEnhancement(nameplate)
@@ -686,6 +732,8 @@ local function UpdateNativeEnhancement(unit, nameplate)
         ResetNativeEnhancement(nameplate)
         return
     end
+
+    LayoutNativeText(healthBar)
 
     local overlay = CreateNativeEnhancement(nameplate)
     overlay:ClearAllPoints()
