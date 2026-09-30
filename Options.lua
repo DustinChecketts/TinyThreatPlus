@@ -289,7 +289,7 @@ MakeToggle("GENERAL", "Enable Target Priority", "showPriorityMarker", "Enables a
 MakeToggle("GENERAL", "Enable While Solo (Pet Classes)", "priorityWhileSolo", "Allows priority logic while solo with an active pet.")
 MakeColorPicker("GENERAL", "Priority Color", "priorityMarkerColor", "Sets the priority highlight color.")
 MakeSlider("GENERAL", "Priority Opacity", "priorityMarkerOpacity", 10, 100, 5, "%", "Sets priority highlight opacity.")
-MakeSlider("GENERAL", "Priority Size", "priorityMarkerSizeRating", 1, 6, 1, "", "Sets priority highlight padding.")
+MakeSlider("GENERAL", "Custom Priority Size", "priorityMarkerSizeRating", 1, 6, 1, "", "Sets priority-highlight padding for the Custom renderer. Native + TinyThreatPlus uses Blizzard's fixed native border geometry.")
 MakeSlider("GENERAL", "Threat Threshold", "priorityThreatThreshold", 0, 100, 5, "%", "Sets the threat safety gate used by Target Priority.")
 
 Section("GENERAL", "Target Counter", "Shows how many party or raid members are targeting an enemy.")
