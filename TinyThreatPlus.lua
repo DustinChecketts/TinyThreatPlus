@@ -611,9 +611,8 @@ function TTP.GetGroupTargetCount(unit)
         return 0
     end
 
-    -- Forever can mark nameplate GUIDs secret while grouped/in instances.
-    -- Never compare those GUID strings. UnitIsUnit performs the identity check
-    -- inside Blizzard's API and returns a usable boolean instead.
+    -- Forever can protect both GUID equality and UnitIsUnit results while
+    -- grouped/in instances. Scrub the API result before Lua branches on it.
     if not unit or not UnitExists(unit) then
         return 0
     end
@@ -623,10 +622,11 @@ function TTP.GetGroupTargetCount(unit)
     for _, groupUnit in ipairs(TTP.GetGroupUnits()) do
         local targetUnit = groupUnit .. "target"
 
-        if UnitExists(targetUnit)
-            and UnitIsUnit(targetUnit, unit)
-        then
-            count = count + 1
+        if UnitExists(targetUnit) then
+            local isSameUnit = TTP.Compat.GetAccessibleValue(UnitIsUnit(targetUnit, unit))
+            if isSameUnit then
+                count = count + 1
+            end
         end
     end
 
