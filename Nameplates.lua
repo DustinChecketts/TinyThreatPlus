@@ -692,9 +692,11 @@ ResetNativeEnhancement = function(nameplate)
     local unitFrame = nameplate.UnitFrame
     local healthBar = unitFrame and unitFrame.healthBar
     if unitFrame and unitFrame.selectionHighlight then
+        unitFrame.selectionHighlight:SetDesaturated(false)
         unitFrame.selectionHighlight:SetAlpha(1)
     end
     if healthBar and healthBar.selectedBorder then
+        healthBar.selectedBorder:SetDesaturated(false)
         healthBar.selectedBorder:SetAlpha(1)
     end
     overlay:Hide()
@@ -809,40 +811,28 @@ local function UpdateNativeEnhancement(unit, nameplate)
 
     LayoutNativeText(healthBar)
 
-    -- Native + TTP owns selected-target treatment so its color/opacity controls
-    -- are deterministic instead of stacking over Blizzard's yellow treatment.
+    -- Blizzard already owns perfectly registered target-border geometry for
+    -- every Forever nameplate style. Keep that native geometry and only alter
+    -- its visual treatment; recreating the border with another atlas introduced
+    -- optical asymmetry at tight padding values.
+    local targetHighlightAlpha = TinyThreatPlusDB.showTargetHighlight
+        and math.max(0.10, math.min(1.00,
+            (tonumber(TinyThreatPlusDB.targetHighlightOpacity) or 100) / 100))
+        or 0
+
     if unitFrame.selectionHighlight then
-        unitFrame.selectionHighlight:SetAlpha(0)
+        unitFrame.selectionHighlight:SetDesaturated(true)
+        unitFrame.selectionHighlight:SetAlpha(targetHighlightAlpha)
     end
     if healthBar.selectedBorder then
-        healthBar.selectedBorder:SetAlpha(0)
+        healthBar.selectedBorder:SetDesaturated(true)
+        healthBar.selectedBorder:SetAlpha(targetHighlightAlpha)
     end
 
+    -- Retire the addon-owned replacement highlight. Leave the object in place
+    -- for SavedVariables/code compatibility during the prototype transition.
     local overlay = CreateNativeEnhancement(nameplate)
-    overlay.targetHighlight:ClearAllPoints()
-    -- Expand equally from all four edges. At zero padding this is exactly the
-    -- native health bar's bounds; each padding value adds the same distance to
-    -- both opposing sides. This also follows every Blizzard Forever plate style
-    -- without reading protected width/height values.
-    local highlightPadX = math.max(0, math.min(24,
-        tonumber(TinyThreatPlusDB.targetHighlightPadX) or 6))
-    local highlightPadY = math.max(0, math.min(20,
-        tonumber(TinyThreatPlusDB.targetHighlightPadY) or 6))
-    PixelPoint(overlay.targetHighlight, "TOPLEFT", healthBar, "TOPLEFT",
-        -highlightPadX, highlightPadY)
-    PixelPoint(overlay.targetHighlight, "BOTTOMRIGHT", healthBar, "BOTTOMRIGHT",
-        highlightPadX, -highlightPadY)
-    if TinyThreatPlusDB.showTargetHighlight and UnitIsUnit(unit, "target") then
-        local color = TinyThreatPlusDB.targetHighlightColor or TTP.defaults.targetHighlightColor or { 1, 1, 1 }
-        overlay.targetHighlight:SetVertexColor(
-            color[1] or 1, color[2] or 1, color[3] or 1,
-            math.max(0.10, math.min(1.00,
-                (tonumber(TinyThreatPlusDB.targetHighlightOpacity) or 70) / 100))
-        )
-        overlay.targetHighlight:Show()
-    else
-        overlay.targetHighlight:Hide()
-    end
+    overlay.targetHighlight:Hide()
 
     -- Forever exposes its right-side level presentation as a stable frame.
     -- Hide the frame itself rather than inspecting its potentially-secret text.
