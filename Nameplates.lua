@@ -208,6 +208,7 @@ ResetNativeEnhancement = function(nameplate)
     overlay.threat:SetText("")
     overlay.counterRing:Hide()
     overlay.counterText:Hide()
+    overlay.stableThreatState = nil
     if overlay.TinyThreatPlusHiddenNativeLevel
         and overlay.TinyThreatPlusHiddenNativeLevel.Show
     then
@@ -453,20 +454,20 @@ local function UpdateNativeEnhancement(unit, nameplate)
     -- securely ahead, yellow inside the caution band, red after losing aggro;
     -- DPS/healers use the inverse semantics.
     if TinyThreatPlusDB.roleBasedColors and data then
-        -- Do not let an inaccessible/empty transient read flip the bar between
-        -- states. Keep the last meaningful state until threat data explicitly
-        -- establishes a new one.
+        -- No combat/threat record means Blizzard owns the bar unchanged. This
+        -- prevents untouched mobs from inheriting a green state simply because
+        -- Always Show keeps an empty threat box visible.
         if data.hasThreatData then
             overlay.stableThreatState = GetStableThreatState(unit, data)
+        else
+            overlay.stableThreatState = nil
         end
         if overlay.stableThreatState and healthBar.SetStatusBarColor then
             local r, g, b = GetNativeThreatBarColor(healthBar, overlay.stableThreatState)
             local cr, cg, cb = healthBar:GetStatusBarColor()
             if IsAccessible(cr) and IsAccessible(cg) and IsAccessible(cb)
                 and (math.abs(cr-r) > 0.01 or math.abs(cg-g) > 0.01 or math.abs(cb-b) > 0.01)
-            then
-                healthBar:SetStatusBarColor(r, g, b)
-            end
+            then healthBar:SetStatusBarColor(r, g, b) end
         end
     end
 
