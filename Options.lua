@@ -278,12 +278,6 @@ MakeChoice("GENERAL", "Threat Display", "displayMode", {
 Section("GENERAL", "Target Frame", "Target-frame threat and group targeting are controlled independently.")
 MakeToggle("GENERAL", "Show Threat Indicator", "showTargetFrame", "Shows threat information above the target frame.")
 MakeToggle("GENERAL", "Show Target Counter", "showTargetFrameCounter", "Shows how many party or raid members are targeting your hostile target.")
-if TTP.Compat.IsForever() then
-    MakeSlider("GENERAL", "Threat Box Width", "targetThreatWidth", 28, 64, 1, " px", "Sets the Forever target-frame threat width.")
-    MakeSlider("GENERAL", "Threat Box Height", "targetThreatHeight", 16, 28, 1, " px", "Sets the Forever target-frame threat height.")
-    MakeSlider("GENERAL", "Threat Font Size", "targetThreatFontSize", 8, 16, 1, " px", "Sets the Forever target-frame threat font size.")
-    MakeSlider("GENERAL", "Threat Indicator Scale", "targetThreatScale", 50, 150, 5, "%", "Scales the target-frame threat presentation.")
-end
 
 Section("GENERAL", "Threat Leader", "Identifies the player or pet currently leading threat.")
 MakeToggle("GENERAL", "Show Threat Leader", "showThreatLeader", "Shows the current threat leader below the target threat indicator.")
@@ -371,6 +365,69 @@ if TTP.Compat.IsForever() then
     MakeSlider("NATIVE", "Threat Font Size", "nativeThreatFontSize", 8, 16, 1, " px", "Sets Native threat font size.")
     MakeSlider("NATIVE", "Threat X Offset", "nativeThreatOffsetX", -10, 40, 1, " px", "Moves Native threat horizontally.")
     MakeSlider("NATIVE", "Threat Y Offset", "nativeThreatOffsetY", -20, 20, 1, " px", "Moves Native threat vertically.")
+
+    Section("NATIVE", "Target Frame", "Tunes the TinyThreatPlus threat readout and group target counter added to Blizzard's target frame.")
+    MakeSlider("NATIVE", "Target Threat Width", "targetThreatWidth", 28, 64, 2, " px", "Sets the target-frame threat box width.")
+    MakeSlider("NATIVE", "Target Threat Height", "targetThreatHeight", 16, 28, 2, " px", "Sets the target-frame threat box height.")
+    MakeSlider("NATIVE", "Target Threat Font Size", "targetThreatFontSize", 8, 16, 1, " px", "Sets the target-frame threat font size.")
+    MakeSlider("NATIVE", "Target Threat X Offset", "targetThreatOffsetX", -40, 40, 1, " px", "Moves the target-frame threat box horizontally.")
+    MakeSlider("NATIVE", "Target Threat Y Offset", "targetThreatOffsetY", -30, 40, 1, " px", "Moves the target-frame threat box vertically.")
+    MakeSlider("NATIVE", "Target Threat Scale", "targetThreatScale", 50, 150, 5, "%", "Scales the target-frame TinyThreatPlus presentation.")
+    MakeSlider("NATIVE", "Target Counter Size", "targetCounterSize", 14, 32, 2, " px", "Sets the target-frame group target-counter size.")
+    MakeSlider("NATIVE", "Target Counter X Offset", "targetCounterOffsetX", -40, 40, 1, " px", "Moves the target counter horizontally from Blizzard's target portrait.")
+    MakeSlider("NATIVE", "Target Counter Y Offset", "targetCounterOffsetY", -40, 40, 1, " px", "Moves the target counter vertically from Blizzard's target portrait.")
+end
+
+local PAGE_DEFAULT_KEYS = {
+    GENERAL = {
+        "nameplateMode", "showNameplateThreat", "roleBasedColors",
+        "alwaysShowThreatBoxes", "displayMode", "showTargetFrame",
+        "showTargetFrameCounter", "showThreatLeader",
+        "showThreatLeaderClassIcon", "showThreatLeaderRole",
+        "showPriorityMarker", "priorityWhileSolo", "priorityMarkerColor",
+        "priorityMarkerOpacity", "priorityMarkerSizeRating",
+        "priorityThreatThreshold", "showTargetCounter",
+    },
+    CUSTOM = {
+        "customNameplateScale", "customNameplateBarHeight", "customHealthScale",
+        "healthFrameOffsetX", "healthFrameOffsetY",
+        "customNameplateInactiveOpacity", "customNameFontSize",
+        "customNameFontColor", "customNameFontShadow", "showMobLevel",
+        "customLevelBadgeSize", "customLevelFontSize",
+        "customLevelOffsetX", "customLevelOffsetY", "showTargetHighlight",
+        "targetHighlightColor", "targetHighlightOpacity",
+        "nameplateThreatWidth", "nameplateThreatHeight",
+        "nameplateThreatFontSize", "nameplateThreatScale",
+    },
+    NATIVE = {
+        "nativeNameFont", "nativeNameFontSize", "nativeNameOutline",
+        "nativeNameOutlineColor", "nativeHealthFont", "nativeHealthFontSize",
+        "nativeHealthOutline", "nativeHealthOutlineColor", "showMobLevel",
+        "nativeLevelBadgeSize", "nativeLevelFontSize", "nativeLevelOffsetX",
+        "nativeLevelOffsetY", "nativeThreatWidth", "nativeThreatHeight",
+        "nativeThreatFontSize", "nativeThreatOffsetX", "nativeThreatOffsetY",
+        "targetThreatWidth", "targetThreatHeight", "targetThreatFontSize",
+        "targetThreatOffsetX", "targetThreatOffsetY", "targetThreatScale",
+        "targetCounterSize", "targetCounterOffsetX", "targetCounterOffsetY",
+    },
+}
+
+local function CopyDefault(key)
+    local value = TTP.defaults[key]
+    if type(value) == "table" then
+        TinyThreatPlusDB[key] = {}
+        for index, item in pairs(value) do TinyThreatPlusDB[key][index] = item end
+    else
+        TinyThreatPlusDB[key] = value
+    end
+end
+
+local function ResetActivePage()
+    EnsureCore()
+    for _, key in ipairs(PAGE_DEFAULT_KEYS[activePage] or {}) do
+        CopyDefault(key)
+    end
+    RefreshAddon()
 end
 
 local function RefreshControls()
@@ -383,7 +440,7 @@ local function RefreshControls()
 end
 
 reset:SetScript("OnClick", function()
-    if type(TTP.ResetDefaults) == "function" then TTP.ResetDefaults() end
+    ResetActivePage()
     RefreshControls()
 end)
 
