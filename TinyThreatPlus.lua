@@ -611,9 +611,10 @@ function TTP.GetGroupTargetCount(unit)
         return 0
     end
 
-    local targetGUID = UnitGUID(unit)
-
-    if not targetGUID then
+    -- Forever can mark nameplate GUIDs secret while grouped/in instances.
+    -- Never compare those GUID strings. UnitIsUnit performs the identity check
+    -- inside Blizzard's API and returns a usable boolean instead.
+    if not unit or not UnitExists(unit) then
         return 0
     end
 
@@ -623,7 +624,7 @@ function TTP.GetGroupTargetCount(unit)
         local targetUnit = groupUnit .. "target"
 
         if UnitExists(targetUnit)
-            and UnitGUID(targetUnit) == targetGUID
+            and UnitIsUnit(targetUnit, unit)
         then
             count = count + 1
         end
