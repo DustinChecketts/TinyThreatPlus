@@ -359,7 +359,19 @@ if TTP.Compat.IsForever() then
     MakeSlider("NATIVE", "Level X Offset", "nativeLevelOffsetX", -30, 10, 1, " px", "Moves the Native level badge horizontally.")
     MakeSlider("NATIVE", "Level Y Offset", "nativeLevelOffsetY", -20, 20, 1, " px", "Moves the Native level badge vertically.")
 
-    Section("NATIVE", "Threat Readout", "Positions TinyThreatPlus threat over Blizzard's right-side native indicator area.")
+    Section("NATIVE", "Current Target", "Controls TinyThreatPlus' selected-target highlight around Blizzard's native health bar.")
+    MakeToggle("NATIVE", "Highlight Current Target", "showTargetHighlight", "Shows a Blizzard-style highlight around the current target.")
+    MakeColorPicker("NATIVE", "Highlight Color", "targetHighlightColor", "Tints the Native current-target highlight.")
+    MakeSlider("NATIVE", "Highlight Opacity", "targetHighlightOpacity", 10, 100, 5, "%", "Sets the Native current-target highlight opacity.")
+
+    Section("NATIVE", "Group Threat Information", "Controls the additional group targeting and threat-leader information used by Native + TinyThreatPlus.")
+    MakeToggle("NATIVE", "Show Nameplate Target Counter", "showTargetCounter", "Shows how many party or raid members are targeting each hostile nameplate.")
+    MakeToggle("NATIVE", "Show Target-Frame Counter", "showTargetFrameCounter", "Shows how many party or raid members are targeting your current hostile target.")
+    MakeToggle("NATIVE", "Show Highest Threat Target", "showThreatLeader", "Shows the player or pet currently leading threat on your target.")
+    MakeToggle("NATIVE", "Show Highest Threat Class / Pet Icon", "showThreatLeaderClassIcon", "Shows the threat leader's class icon or pet portrait when available.")
+    MakeToggle("NATIVE", "Show Highest Threat Role", "showThreatLeaderRole", "Shows the threat leader's assigned Tank, Healer, or Damage role when available.")
+
+        Section("NATIVE", "Threat Readout", "Positions TinyThreatPlus threat over Blizzard's right-side native indicator area.")
     MakeSlider("NATIVE", "Threat Box Width", "nativeThreatWidth", 20, 60, 2, " px", "Sets the width of the Native threat readout artwork.")
     MakeSlider("NATIVE", "Threat Box Height", "nativeThreatHeight", 14, 40, 2, " px", "Sets the height of the Native threat readout artwork.")
     MakeSlider("NATIVE", "Threat Font Size", "nativeThreatFontSize", 8, 16, 1, " px", "Sets Native threat font size.")
@@ -404,7 +416,10 @@ local PAGE_DEFAULT_KEYS = {
         "nativeNameOutlineColor", "nativeHealthFont", "nativeHealthFontSize",
         "nativeHealthOutline", "nativeHealthOutlineColor", "showMobLevel",
         "nativeLevelBadgeSize", "nativeLevelFontSize", "nativeLevelOffsetX",
-        "nativeLevelOffsetY", "nativeThreatWidth", "nativeThreatHeight",
+        "nativeLevelOffsetY", "showTargetHighlight", "targetHighlightColor",
+        "targetHighlightOpacity", "showTargetCounter", "showTargetFrameCounter",
+        "showThreatLeader", "showThreatLeaderClassIcon", "showThreatLeaderRole",
+        "nativeThreatWidth", "nativeThreatHeight",
         "nativeThreatFontSize", "nativeThreatOffsetX", "nativeThreatOffsetY",
         "targetThreatWidth", "targetThreatHeight", "targetThreatFontSize",
         "targetThreatOffsetX", "targetThreatOffsetY", "targetThreatScale",
