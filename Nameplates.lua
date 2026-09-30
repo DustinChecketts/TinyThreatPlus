@@ -483,6 +483,29 @@ local function UpdateNativeEnhancement(unit, nameplate)
 
     local data = TTP.GetThreatData(unit)
 
+    -- Forever places important debuffs immediately to the right of the native
+    -- health bar. Our threat badge occupies that same lane, so move Blizzard's
+    -- aura container just beyond the complete TinyThreatPlus right-side stack.
+    -- Keep Blizzard as the owner of the aura buttons and their filtering.
+    local auraFrame = unitFrame.AurasFrame
+        or unitFrame.aurasFrame
+        or unitFrame.DebuffFrame
+        or unitFrame.debuffFrame
+        or unitFrame.BuffFrame
+        or unitFrame.buffFrame
+    if auraFrame and auraFrame.ClearAllPoints and auraFrame.SetPoint then
+        if not auraFrame.TinyThreatPlusOriginalPoints then
+            auraFrame.TinyThreatPlusOriginalPoints = {}
+            for pointIndex = 1, auraFrame:GetNumPoints() do
+                auraFrame.TinyThreatPlusOriginalPoints[pointIndex] =
+                    { auraFrame:GetPoint(pointIndex) }
+            end
+        end
+        auraFrame:ClearAllPoints()
+        local auraGap = TinyThreatPlusDB.showTargetCounter and 16 or 4
+        PixelPoint(auraFrame, "LEFT", overlay.threatBadge, "RIGHT", auraGap, 0)
+    end
+
     -- Role-based threat state colors the native Blizzard health bar. The
     -- threshold uses the existing threat-safety slider: tanks are green while
     -- securely ahead, yellow inside the caution band, red after losing aggro;
@@ -553,13 +576,12 @@ local function UpdateNativeEnhancement(unit, nameplate)
                 leader.name:SetTextColor(color.r, color.g, color.b)
             else leader.name:SetTextColor(1, 1, 1) end
             leader:ClearAllPoints()
-            -- Keep Threat Leader with our right-side threat presentation. The
-            -- native cast bar occupies the full strip beneath the health bar,
-            -- so anchoring leader text there causes it to be covered while a
-            -- mob casts.
-            PixelPoint(leader, "TOPRIGHT", overlay.threatBadge, "BOTTOMRIGHT", 0, -2)
+            -- The native cast bar owns the entire strip beneath the health
+            -- bar. Stack Threat Leader above our right-side threat badge
+            -- instead, left-aligned to the badge and expanding to the right.
+            PixelPoint(leader, "BOTTOMLEFT", overlay.threatBadge, "TOPLEFT", 0, 2)
             leader:SetWidth(150)
-            leader.name:SetJustifyH("RIGHT")
+            leader.name:SetJustifyH("LEFT")
             leader:Show()
         end
     end
