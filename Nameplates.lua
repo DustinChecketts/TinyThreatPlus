@@ -645,6 +645,12 @@ local function CreateNativeEnhancement(nameplate)
     -- the native right-side level box into the TinyThreatPlus threat box.
     overlay.level = CreateLevelBadge(overlay)
 
+    -- Addon-owned target highlight lets Native mode retain Blizzard's plate
+    -- while giving TinyThreatPlus deterministic tint/opacity control.
+    overlay.targetHighlight = overlay:CreateTexture(nil, "OVERLAY")
+    overlay.targetHighlight:SetAtlas("UI-HUD-Nameplates-TargetedByEnemy", false)
+    overlay.targetHighlight:Hide()
+
     overlay.threatBadge = CreateFrame("Frame", nil, overlay)
     overlay.threatBadge:SetFrameLevel(overlay:GetFrameLevel() + 5)
     overlay.threatBadge.art = overlay.threatBadge:CreateTexture(nil, "ARTWORK")
@@ -679,6 +685,7 @@ ResetNativeEnhancement = function(nameplate)
     if not overlay then return end
     overlay:Hide()
     overlay.level:Hide()
+    overlay.targetHighlight:Hide()
     overlay.threatBadge:Hide()
     overlay.threat:SetText("")
     overlay.counterRing:Hide()
@@ -788,6 +795,28 @@ local function UpdateNativeEnhancement(unit, nameplate)
 
     LayoutNativeText(healthBar)
 
+    overlay = CreateNativeEnhancement(nameplate)
+    overlay.targetHighlight:ClearAllPoints()
+    PixelPoint(overlay.targetHighlight, "CENTER", healthBar, "CENTER", 0, 0)
+    local hbWidth = healthBar:GetWidth()
+    local hbHeight = healthBar:GetHeight()
+    if type(hbWidth) == "number" and type(hbHeight) == "number" then
+        PixelSize(overlay.targetHighlight, hbWidth + 11, hbHeight + 9)
+    else
+        overlay.targetHighlight:SetAllPoints(healthBar)
+    end
+    if TinyThreatPlusDB.showTargetHighlight and UnitIsUnit(unit, "target") then
+        local color = TinyThreatPlusDB.targetHighlightColor or TTP.defaults.targetHighlightColor or { 1, 1, 1 }
+        overlay.targetHighlight:SetVertexColor(
+            color[1] or 1, color[2] or 1, color[3] or 1,
+            math.max(0.10, math.min(1.00,
+                (tonumber(TinyThreatPlusDB.targetHighlightOpacity) or 70) / 100))
+        )
+        overlay.targetHighlight:Show()
+    else
+        overlay.targetHighlight:Hide()
+    end
+
     -- Forever exposes its right-side level presentation as a stable frame.
     -- Hide the frame itself rather than inspecting its potentially-secret text.
     -- Our HD badge on the left is the authoritative level presentation.
@@ -796,7 +825,6 @@ local function UpdateNativeEnhancement(unit, nameplate)
         nativeLevelFrame:Hide()
     end
 
-    local overlay = CreateNativeEnhancement(nameplate)
     overlay:ClearAllPoints()
     PixelPoint(overlay, "BOTTOM", unitFrame, "BOTTOM", 0, 4)
     PixelSize(overlay, 40, 40)
