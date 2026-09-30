@@ -693,10 +693,12 @@ ResetNativeEnhancement = function(nameplate)
     local healthBar = unitFrame and unitFrame.healthBar
     if unitFrame and unitFrame.selectionHighlight then
         unitFrame.selectionHighlight:SetDesaturated(false)
+        unitFrame.selectionHighlight:SetVertexColor(1, 1, 1, 1)
         unitFrame.selectionHighlight:SetAlpha(1)
     end
     if healthBar and healthBar.selectedBorder then
         healthBar.selectedBorder:SetDesaturated(false)
+        healthBar.selectedBorder:SetVertexColor(1, 1, 1, 1)
         healthBar.selectedBorder:SetAlpha(1)
     end
     overlay:Hide()
@@ -811,26 +813,56 @@ local function UpdateNativeEnhancement(unit, nameplate)
 
     LayoutNativeText(healthBar)
 
-    -- Blizzard already owns perfectly registered target-border geometry for
-    -- every Forever nameplate style. Keep that native geometry and only alter
-    -- its visual treatment; recreating the border with another atlas introduced
-    -- optical asymmetry at tight padding values.
-    local targetHighlightAlpha = TinyThreatPlusDB.showTargetHighlight
-        and math.max(0.10, math.min(1.00,
-            (tonumber(TinyThreatPlusDB.targetHighlightOpacity) or 100) / 100))
-        or 0
+    -- Blizzard owns the registered border geometry for every Forever plate
+    -- style. TinyThreatPlus only desaturates/tints those native textures.
+    -- Priority uses the same geometry, deliberately stronger and navy by
+    -- default, rather than introducing another independently scaled atlas.
+    local isCurrentTarget = UnitIsUnit(unit, "target")
+    local isPriority = TinyThreatPlusDB.showPriorityMarker
+        and TTP.priorityUnit
+        and UnitIsUnit(unit, TTP.priorityUnit)
+
+    local highlightColor = TinyThreatPlusDB.targetHighlightColor
+        or TTP.defaults.targetHighlightColor
+        or { 1, 1, 1 }
+    local highlightAlpha = math.max(0.10, math.min(1.00,
+        (tonumber(TinyThreatPlusDB.targetHighlightOpacity) or 100) / 100))
+    local priorityColor = TinyThreatPlusDB.priorityMarkerColor
+        or TTP.defaults.priorityMarkerColor
+        or { 0, 0.0627451, 0.3960784 }
+    local priorityAlpha = math.max(0.10, math.min(1.00,
+        (tonumber(TinyThreatPlusDB.priorityMarkerOpacity) or 100) / 100))
+
+    local borderR, borderG, borderB, borderA = 1, 1, 1, 0
+    if isPriority then
+        borderR, borderG, borderB, borderA =
+            priorityColor[1] or 0,
+            priorityColor[2] or 0.0627451,
+            priorityColor[3] or 0.3960784,
+            priorityAlpha
+    elseif isCurrentTarget and TinyThreatPlusDB.showTargetHighlight then
+        borderR, borderG, borderB, borderA =
+            highlightColor[1] or 1,
+            highlightColor[2] or 1,
+            highlightColor[3] or 1,
+            highlightAlpha
+    end
 
     if unitFrame.selectionHighlight then
         unitFrame.selectionHighlight:SetDesaturated(true)
-        unitFrame.selectionHighlight:SetAlpha(targetHighlightAlpha)
+        unitFrame.selectionHighlight:SetVertexColor(borderR, borderG, borderB, 1)
+        unitFrame.selectionHighlight:SetAlpha(borderA)
+        if isPriority then unitFrame.selectionHighlight:Show() end
     end
     if healthBar.selectedBorder then
         healthBar.selectedBorder:SetDesaturated(true)
-        healthBar.selectedBorder:SetAlpha(targetHighlightAlpha)
+        healthBar.selectedBorder:SetVertexColor(borderR, borderG, borderB, 1)
+        healthBar.selectedBorder:SetAlpha(borderA)
+        if isPriority then healthBar.selectedBorder:Show() end
     end
 
-    -- Retire the addon-owned replacement highlight. Leave the object in place
-    -- for SavedVariables/code compatibility during the prototype transition.
+    -- Retired replacement texture remains hidden for compatibility while the
+    -- prototype is cleaned up; it can be removed entirely before release.
     local overlay = CreateNativeEnhancement(nameplate)
     overlay.targetHighlight:Hide()
 
