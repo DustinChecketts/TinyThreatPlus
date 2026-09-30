@@ -1846,6 +1846,68 @@ end
 
 TinyThreatPlus_UpdateAll = TTP.UpdateAll
 
+-- ---------------------------------------------------------------------------
+-- Temporary Forever grouped-combat diagnostic
+-- ---------------------------------------------------------------------------
+local function DiagValueState(value)
+    if value == nil then return "nil" end
+    if TTP.Compat.IsSecretValue(value) then return "secret" end
+    if not TTP.Compat.CanAccessValue(value) then return "inaccessible" end
+    return "ordinary:" .. type(value)
+end
+
+local function DiagAppend(event, unit)
+    local diag = TinyThreatPlusDB and TinyThreatPlusDB.diagnostic
+    if not diag or not diag.active or not TTP.Compat.IsForever() then return end
+    diag.samples = diag.samples or {}
+    if #diag.samples >= 800 then return end
+
+    local row = { t = GetTime(), event = event, unit = unit, groupSize = GetNumGroupMembers() or 0,
+        inCombat = InCombatLockdown() and true or false, tokens = {} }
+    local tokens = { "target", "player", "pet" }
+    for i = 1, 4 do
+        tokens[#tokens+1] = "party"..i
+        tokens[#tokens+1] = "party"..i.."target"
+        tokens[#tokens+1] = "partypet"..i
+    end
+    for plateUnit in pairs(TTP.activeNameplates) do tokens[#tokens+1] = plateUnit end
+
+    for _, token in ipairs(tokens) do
+        if UnitExists(token) then
+            local d = { token = token }
+            local guid = UnitGUID(token)
+            local name = UnitName(token)
+            d.guid = DiagValueState(guid)
+            d.name = DiagValueState(name)
+            d.attack = DiagValueState(UnitCanAttack("player", token))
+            d.friend = DiagValueState(UnitIsFriend("player", token))
+            d.raidTarget = DiagValueState(GetRaidTargetIndex and GetRaidTargetIndex(token) or nil)
+            local tank, status, scaled, raw, threat = UnitDetailedThreatSituation("player", token)
+            d.playerThreat = { DiagValueState(tank), DiagValueState(status), DiagValueState(scaled), DiagValueState(raw), DiagValueState(threat) }
+            if token ~= "player" and token ~= "pet" then
+                d.sameAsTarget = DiagValueState(UnitIsUnit(token, "target"))
+            end
+            row.tokens[#row.tokens+1] = d
+        end
+    end
+    diag.samples[#diag.samples+1] = row
+end
+
+function TTP.StartDiagnostic()
+    TinyThreatPlusDB.diagnostic = { active = true, started = date("%Y-%m-%d %H:%M:%S"), samples = {} }
+    DiagAppend("DIAG_START")
+    print("TinyThreatPlus diagnostic started. Fight normally, switch targets, then use /ttp diag stop.")
+end
+
+function TTP.StopDiagnostic()
+    local diag = TinyThreatPlusDB.diagnostic
+    if not diag then print("TinyThreatPlus: no diagnostic session exists."); return end
+    DiagAppend("DIAG_STOP")
+    diag.active = false
+    diag.stopped = date("%Y-%m-%d %H:%M:%S")
+    print("TinyThreatPlus diagnostic stopped with", #(diag.samples or {}), "samples. /reload, then send TinyThreatPlus.lua from SavedVariables.")
+end
+
 local eventFrame = CreateFrame("Frame")
 local updateElapsed = 0
 
@@ -1938,7 +2000,17 @@ SLASH_TINYTHREATPLUS3 = "/tinythreatplus"
 SlashCmdList.TINYTHREATPLUS = function(message)
     local command = string.lower(message or "")
 
-    if command == "colors" then
+    if command == "diag" or command == "diag start" then
+        TTP.StartDiagnostic()
+        return
+    elseif command == "diag stop" then
+        TTP.StopDiagnostic()
+        return
+    elseif command == "diag clear" then
+        TinyThreatPlusDB.diagnostic = nil
+        print("TinyThreatPlus diagnostic data cleared.")
+        return
+    elseif command == "colors" then
         TinyThreatPlusDB.roleBasedColors =
             not TinyThreatPlusDB.roleBasedColors
 
@@ -1986,6 +2058,7 @@ SlashCmdList.TINYTHREATPLUS = function(message)
         return
     else
         print("TinyThreatPlus commands:")
+        print("/ttp diag start | stop | clear")
         print("/ttp colors")
         print("/ttp levels")
         print("/ttp counter")
