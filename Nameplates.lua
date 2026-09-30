@@ -321,6 +321,38 @@ local function GetStableThreatState(unit, data)
     return "bad"
 end
 
+local function ApplyForeverThreatColor(healthBar, unit, data)
+    if not healthBar or not healthBar.SetStatusBarColor then return end
+    if not TinyThreatPlusDB.roleBasedColors or not data or not data.hasThreatData then return end
+
+    local state = GetStableThreatState(unit, data)
+    local r, g, b = GetNativeThreatBarColor(healthBar, state)
+    TTP.applyingHealthColor = true
+    healthBar:SetStatusBarColor(r, g, b)
+    TTP.applyingHealthColor = false
+end
+
+local function HookForeverHealthBarColor(healthBar)
+    if not healthBar or healthBar.TinyThreatPlusForeverColorHooked then return end
+    healthBar.TinyThreatPlusForeverColorHooked = true
+
+    -- Mirror the mature Anniversary implementation: whenever Blizzard
+    -- restores/recolors its native bar, immediately reapply the current threat
+    -- state instead of racing it from our update loop.
+    hooksecurefunc(healthBar, "SetStatusBarColor", function(bar)
+        if TTP.applyingHealthColor or not TinyThreatPlusDB.roleBasedColors then return end
+        local unit = bar.TinyThreatPlusUnit
+        if not unit or not UnitExists(unit) then return end
+        local plate = C_NamePlate.GetNamePlateForUnit(unit)
+        if not plate or TTP.GetNameplateHealthBar(plate) ~= bar then
+            bar.TinyThreatPlusUnit = nil
+            return
+        end
+        local data = TTP.GetThreatData(unit)
+        if data and data.hasThreatData then ApplyForeverThreatColor(bar, unit, data) end
+    end)
+end
+
 local function UpdateNativeEnhancement(unit, nameplate)
     if not TTP.IsHostileNPC(unit) then
         ResetNativeEnhancement(nameplate)
@@ -453,22 +485,14 @@ local function UpdateNativeEnhancement(unit, nameplate)
     -- threshold uses the existing threat-safety slider: tanks are green while
     -- securely ahead, yellow inside the caution band, red after losing aggro;
     -- DPS/healers use the inverse semantics.
-    if TinyThreatPlusDB.roleBasedColors and data then
-        -- No combat/threat record means Blizzard owns the bar unchanged. This
-        -- prevents untouched mobs from inheriting a green state simply because
-        -- Always Show keeps an empty threat box visible.
-        if data.hasThreatData then
-            overlay.stableThreatState = GetStableThreatState(unit, data)
-        else
-            overlay.stableThreatState = nil
-        end
-        if overlay.stableThreatState and healthBar.SetStatusBarColor then
-            local r, g, b = GetNativeThreatBarColor(healthBar, overlay.stableThreatState)
-            local cr, cg, cb = healthBar:GetStatusBarColor()
-            if IsAccessible(cr) and IsAccessible(cg) and IsAccessible(cb)
-                and (math.abs(cr-r) > 0.01 or math.abs(cg-g) > 0.01 or math.abs(cb-b) > 0.01)
-            then healthBar:SetStatusBarColor(r, g, b) end
-        end
+    -- Match Anniversary's ownership model. Blizzard still owns the native
+    -- bar/texture; TinyThreatPlus only overrides its color while this visible
+    -- enemy has meaningful threat data. The secure post-hook above prevents
+    -- Blizzard health updates from flashing the bar back to its base color.
+    healthBar.TinyThreatPlusUnit = unit
+    HookForeverHealthBarColor(healthBar)
+    if TinyThreatPlusDB.roleBasedColors and data and data.hasThreatData then
+        ApplyForeverThreatColor(healthBar, unit, data)
     end
 
     local leader = overlay.leader
