@@ -673,6 +673,15 @@ end
 
 function TTP.GetGroupTargetCount(unit)
     if not IsInGroup() and not IsInRaid() then
+        if TTP.Compat.IsForever()
+            and TinyThreatPlusDB.previewGroupThreatSolo
+            and unit
+            and UnitExists(unit)
+            and UnitCanAttack("player", unit)
+            and not UnitIsFriend("player", unit)
+        then
+            return 1
+        end
         return 0
     end
 
