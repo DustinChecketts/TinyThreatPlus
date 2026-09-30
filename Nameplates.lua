@@ -649,7 +649,7 @@ local function CreateNativeEnhancement(nameplate)
     overlay.threatBadge:SetFrameLevel(overlay:GetFrameLevel() + 5)
     overlay.threatBadge.art = overlay.threatBadge:CreateTexture(nil, "ARTWORK")
     overlay.threatBadge.art:SetAllPoints()
-    overlay.threatBadge.art:SetAtlas("UI-HUD-UnitFrame-SmallCircle", false)
+    overlay.threatBadge.art:SetAtlas("UI-HUD-Nameplates-LevelIndicator", false)
     overlay.threatBadge.art:SetIgnoreParentAlpha(true)
 
     overlay.threat = overlay.threatBadge:CreateFontString(nil, "OVERLAY", "GameNormalNumberFont")
@@ -677,7 +677,18 @@ ResetNativeEnhancement = function(nameplate)
     end
 end
 
-local function ApplyNativeTextTreatment(fontString, size, treatment, color)
+local NATIVE_FONTS = {
+    STANDARD = STANDARD_TEXT_FONT,
+    FRIZQT = "Fonts\\FRIZQT__.TTF",
+    ARIALN = "Fonts\\ARIALN.TTF",
+    MORPHEUS = "Fonts\\MORPHEUS.TTF",
+}
+
+local function GetNativeFont(key)
+    return NATIVE_FONTS[key] or STANDARD_TEXT_FONT
+end
+
+local function ApplyNativeTextTreatment(fontString, fontPath, size, treatment, color)
     if not fontString then return end
     local flag = ""
     if treatment == "OUTLINE" then
@@ -685,7 +696,7 @@ local function ApplyNativeTextTreatment(fontString, size, treatment, color)
     elseif treatment == "THICKOUTLINE" then
         flag = "THICKOUTLINE"
     end
-    fontString:SetFont(STANDARD_TEXT_FONT, size, flag)
+    fontString:SetFont(fontPath or STANDARD_TEXT_FONT, size, flag)
 
     local c = color or { 0, 0, 0 }
     if treatment == "SHADOW" then
@@ -705,6 +716,7 @@ local function LayoutNativeText(healthBar)
     local nameSize = math.max(8, math.min(16,
         tonumber(TinyThreatPlusDB.nativeNameFontSize) or 10))
     local nameTreatment = TinyThreatPlusDB.nativeNameOutline or "SHADOW"
+    local nameFont = GetNativeFont(TinyThreatPlusDB.nativeNameFont)
     local nameColor = TinyThreatPlusDB.nativeNameOutlineColor or { 0, 0, 0 }
 
     local name = healthBar.unitNameFontString
@@ -714,19 +726,20 @@ local function LayoutNativeText(healthBar)
         name:SetPoint("BOTTOMRIGHT", healthBar, "TOPRIGHT", 0, 2)
         name:SetJustifyH("LEFT")
         name:SetJustifyV("BOTTOM")
-        ApplyNativeTextTreatment(name, nameSize, nameTreatment, nameColor)
+        ApplyNativeTextTreatment(name, nameFont, nameSize, nameTreatment, nameColor)
     end
 
     local healthFontSize = math.max(8, math.min(14,
         tonumber(TinyThreatPlusDB.nativeHealthFontSize) or 9))
     local healthTreatment = TinyThreatPlusDB.nativeHealthOutline or "SHADOW"
+    local healthFont = GetNativeFont(TinyThreatPlusDB.nativeHealthFont)
     local healthColor = TinyThreatPlusDB.nativeHealthOutlineColor or { 0, 0, 0 }
 
     if healthBar.LeftText then
         healthBar.LeftText:ClearAllPoints()
         PixelPoint(healthBar.LeftText, "LEFT", healthBar, "LEFT", 4, 0)
         healthBar.LeftText:SetJustifyH("LEFT")
-        ApplyNativeTextTreatment(healthBar.LeftText, healthFontSize, healthTreatment, healthColor)
+        ApplyNativeTextTreatment(healthBar.LeftText, healthFont, healthFontSize, healthTreatment, healthColor)
         healthBar.LeftText:Show()
     end
 
@@ -734,7 +747,7 @@ local function LayoutNativeText(healthBar)
         healthBar.RightText:ClearAllPoints()
         PixelPoint(healthBar.RightText, "RIGHT", healthBar, "RIGHT", -4, 0)
         healthBar.RightText:SetJustifyH("RIGHT")
-        ApplyNativeTextTreatment(healthBar.RightText, healthFontSize, healthTreatment, healthColor)
+        ApplyNativeTextTreatment(healthBar.RightText, healthFont, healthFontSize, healthTreatment, healthColor)
         healthBar.RightText:Show()
     end
 
