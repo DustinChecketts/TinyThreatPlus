@@ -645,7 +645,14 @@ local function CreateNativeEnhancement(nameplate)
     -- the native right-side level box into the TinyThreatPlus threat box.
     overlay.level = CreateLevelBadge(overlay)
 
-    overlay.threat = overlay:CreateFontString(nil, "OVERLAY", "GameNormalNumberFont")
+    overlay.threatBadge = CreateFrame("Frame", nil, overlay)
+    overlay.threatBadge:SetFrameLevel(overlay:GetFrameLevel() + 5)
+    overlay.threatBadge.art = overlay.threatBadge:CreateTexture(nil, "ARTWORK")
+    overlay.threatBadge.art:SetAllPoints()
+    overlay.threatBadge.art:SetAtlas("UI-HUD-UnitFrame-SmallCircle", false)
+    overlay.threatBadge.art:SetIgnoreParentAlpha(true)
+
+    overlay.threat = overlay.threatBadge:CreateFontString(nil, "OVERLAY", "GameNormalNumberFont")
     overlay.threat:SetJustifyH("CENTER")
     overlay.threat:SetJustifyV("MIDDLE")
     overlay.threat:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
@@ -660,6 +667,7 @@ ResetNativeEnhancement = function(nameplate)
     if not overlay then return end
     overlay:Hide()
     overlay.level:Hide()
+    overlay.threatBadge:Hide()
     overlay.threat:SetText("")
     if overlay.TinyThreatPlusHiddenNativeLevel
         and overlay.TinyThreatPlusHiddenNativeLevel.Show
@@ -669,8 +677,35 @@ ResetNativeEnhancement = function(nameplate)
     end
 end
 
+local function ApplyNativeTextTreatment(fontString, size, treatment, color)
+    if not fontString then return end
+    local flag = ""
+    if treatment == "OUTLINE" then
+        flag = "OUTLINE"
+    elseif treatment == "THICKOUTLINE" then
+        flag = "THICKOUTLINE"
+    end
+    fontString:SetFont(STANDARD_TEXT_FONT, size, flag)
+
+    local c = color or { 0, 0, 0 }
+    if treatment == "SHADOW" then
+        fontString:SetShadowColor(c[1] or 0, c[2] or 0, c[3] or 0, 1)
+        fontString:SetShadowOffset(1, -1)
+    else
+        -- WoW's native OUTLINE flags have a fixed outline color. Clear our
+        -- custom shadow so the selected treatment is visually unambiguous.
+        fontString:SetShadowColor(0, 0, 0, 0)
+        fontString:SetShadowOffset(0, 0)
+    end
+end
+
 local function LayoutNativeText(healthBar)
     if not healthBar then return end
+
+    local nameSize = math.max(8, math.min(16,
+        tonumber(TinyThreatPlusDB.nativeNameFontSize) or 10))
+    local nameTreatment = TinyThreatPlusDB.nativeNameOutline or "SHADOW"
+    local nameColor = TinyThreatPlusDB.nativeNameOutlineColor or { 0, 0, 0 }
 
     local name = healthBar.unitNameFontString
     if name then
@@ -679,28 +714,19 @@ local function LayoutNativeText(healthBar)
         name:SetPoint("BOTTOMRIGHT", healthBar, "TOPRIGHT", 0, 2)
         name:SetJustifyH("LEFT")
         name:SetJustifyV("BOTTOM")
-        name:SetFont(
-            STANDARD_TEXT_FONT,
-            math.max(8, math.min(16, tonumber(TinyThreatPlusDB.nativeNameFontSize) or 10)),
-            ""
-        )
-        name:SetShadowColor(0, 0, 0, 0.9)
-        name:SetShadowOffset(1, -1)
+        ApplyNativeTextTreatment(name, nameSize, nameTreatment, nameColor)
     end
 
-    -- Forever's native StatusBar exposes dedicated left/right text fields.
-    -- Re-anchor those fields without reading their contents: Blizzard remains
-    -- responsible for populating secret health values and percentages.
     local healthFontSize = math.max(8, math.min(14,
         tonumber(TinyThreatPlusDB.nativeHealthFontSize) or 9))
+    local healthTreatment = TinyThreatPlusDB.nativeHealthOutline or "SHADOW"
+    local healthColor = TinyThreatPlusDB.nativeHealthOutlineColor or { 0, 0, 0 }
 
     if healthBar.LeftText then
         healthBar.LeftText:ClearAllPoints()
         PixelPoint(healthBar.LeftText, "LEFT", healthBar, "LEFT", 4, 0)
         healthBar.LeftText:SetJustifyH("LEFT")
-        healthBar.LeftText:SetFont(STANDARD_TEXT_FONT, healthFontSize, "")
-        healthBar.LeftText:SetShadowColor(0, 0, 0, 1)
-        healthBar.LeftText:SetShadowOffset(1, -1)
+        ApplyNativeTextTreatment(healthBar.LeftText, healthFontSize, healthTreatment, healthColor)
         healthBar.LeftText:Show()
     end
 
@@ -708,14 +734,10 @@ local function LayoutNativeText(healthBar)
         healthBar.RightText:ClearAllPoints()
         PixelPoint(healthBar.RightText, "RIGHT", healthBar, "RIGHT", -4, 0)
         healthBar.RightText:SetJustifyH("RIGHT")
-        healthBar.RightText:SetFont(STANDARD_TEXT_FONT, healthFontSize, "")
-        healthBar.RightText:SetShadowColor(0, 0, 0, 1)
-        healthBar.RightText:SetShadowOffset(1, -1)
+        ApplyNativeTextTreatment(healthBar.RightText, healthFontSize, healthTreatment, healthColor)
         healthBar.RightText:Show()
     end
 
-    -- TextString is Blizzard's combined/centered health presentation. Native
-    -- TinyThreatPlus uses the dedicated edge fields instead to match Custom.
     if healthBar.TextString then
         healthBar.TextString:Hide()
     end
@@ -775,10 +797,15 @@ local function UpdateNativeEnhancement(unit, nameplate)
     -- level is suppressed through PlayerLevelDiffFrame above; our readout
     -- remains additive and never reads Blizzard's protected text.
 
-    overlay.threat:ClearAllPoints()
+    local threatBadgeSize = math.max(24, math.min(48,
+        tonumber(TinyThreatPlusDB.nativeLevelBadgeSize) or 34))
+    PixelSize(overlay.threatBadge, threatBadgeSize, threatBadgeSize)
+    overlay.threatBadge:ClearAllPoints()
     local threatX = math.max(-10, math.min(40, tonumber(TinyThreatPlusDB.nativeThreatOffsetX) or 22))
     local threatY = math.max(-20, math.min(20, tonumber(TinyThreatPlusDB.nativeThreatOffsetY) or 0))
-    overlay.threat:SetPoint("LEFT", healthBar, "RIGHT", threatX, threatY)
+    overlay.threatBadge:SetPoint("LEFT", healthBar, "RIGHT", threatX, threatY)
+    overlay.threat:ClearAllPoints()
+    overlay.threat:SetAllPoints(overlay.threatBadge)
     overlay.threat:SetFont(
         STANDARD_TEXT_FONT,
         math.max(8, math.min(16, tonumber(TinyThreatPlusDB.nativeThreatFontSize) or 12)),
@@ -791,10 +818,12 @@ local function UpdateNativeEnhancement(unit, nameplate)
         local r, g, b = TTP.GetThreatColor(unit, data)
         overlay.threat:SetText(text)
         overlay.threat:SetTextColor(r, g, b)
+        overlay.threatBadge:Show()
         overlay.threat:Show()
     else
         overlay.threat:SetText("")
         overlay.threat:Hide()
+        overlay.threatBadge:Hide()
     end
 
     overlay:Show()
