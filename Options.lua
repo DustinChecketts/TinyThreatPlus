@@ -335,9 +335,11 @@ MakeSlider("CUSTOM", "Box Scale", "nameplateThreatScale", 50, 150, 5, "%", "Scal
 if TTP.Compat.IsForever() then
     Section("NATIVE", "Native Forever Plates", "Blizzard keeps ownership of the plate; TinyThreatPlus normalizes its text layout and adds independently tunable level and threat information.")
     MakeChoice("NATIVE", "Enemy Name Font", "nativeNameFont", {
-        { label="Blizzard Standard", value="STANDARD" },
         { label="Friz Quadrata", value="FRIZQT" },
         { label="Arial Narrow", value="ARIALN" },
+        { label="Arial", value="ARIAL" },
+        { label="Skurri", value="SKURRI" },
+        { label="2002", value="F2002" },
         { label="Morpheus", value="MORPHEUS" },
     }, "Selects the font used by Blizzard's native enemy-name FontString.")
     MakeSlider("NATIVE", "Enemy Name Font Size", "nativeNameFontSize", 8, 16, 1, " px", "Sets the Blizzard native enemy-name font size above the health bar.")
@@ -350,9 +352,11 @@ if TTP.Compat.IsForever() then
     MakeColorPicker("NATIVE", "Enemy Name Shadow Color", "nativeNameOutlineColor", "Sets the custom shadow color when Enemy Name Edge is Shadow.")
 
     MakeChoice("NATIVE", "Health Text Font", "nativeHealthFont", {
-        { label="Blizzard Standard", value="STANDARD" },
         { label="Friz Quadrata", value="FRIZQT" },
         { label="Arial Narrow", value="ARIALN" },
+        { label="Arial", value="ARIAL" },
+        { label="Skurri", value="SKURRI" },
+        { label="2002", value="F2002" },
         { label="Morpheus", value="MORPHEUS" },
     }, "Selects the font used by Blizzard's native health value and percentage FontStrings. Arial Narrow is the cleanest sans-serif option at small sizes.")
     MakeSlider("NATIVE", "Health Text Font Size", "nativeHealthFontSize", 8, 14, 1, " px", "Sets Blizzard's native health value and percentage font size inside the bar.")
@@ -370,6 +374,8 @@ if TTP.Compat.IsForever() then
     MakeSlider("NATIVE", "Level Y Offset", "nativeLevelOffsetY", -20, 20, 1, " px", "Moves the Native level badge vertically.")
 
     Section("NATIVE", "Threat Readout", "Positions TinyThreatPlus threat over Blizzard's right-side native indicator area.")
+    MakeSlider("NATIVE", "Threat Box Width", "nativeThreatWidth", 20, 60, 1, " px", "Sets the width of the Native threat readout artwork.")
+    MakeSlider("NATIVE", "Threat Box Height", "nativeThreatHeight", 14, 40, 1, " px", "Sets the height of the Native threat readout artwork.")
     MakeSlider("NATIVE", "Threat Font Size", "nativeThreatFontSize", 8, 16, 1, " px", "Sets Native threat font size.")
     MakeSlider("NATIVE", "Threat X Offset", "nativeThreatOffsetX", -10, 40, 1, " px", "Moves Native threat horizontally.")
     MakeSlider("NATIVE", "Threat Y Offset", "nativeThreatOffsetY", -20, 20, 1, " px", "Moves Native threat vertically.")
