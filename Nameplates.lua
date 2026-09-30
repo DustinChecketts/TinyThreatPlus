@@ -323,6 +323,55 @@ local function GetStableThreatState(unit, data)
     return "bad"
 end
 
+local function ApplyForeverProtectedThreatColor(healthBar, unit)
+    -- Modern Blizzard clients may protect UnitThreatSituation for off-target
+    -- nameplates. Do not discard that state: the protected comparison/color
+    -- pipeline can consume it without exposing the result to Lua.
+    if not TTP.Compat.IsForever()
+        or not C_Secrets or not C_Secrets.IsEqual
+        or not C_CurveUtil or not C_CurveUtil.EvaluateColorValueFromBoolean
+    then return false end
+
+    local status = UnitThreatSituation("player", unit)
+    if status == nil or not TTP.Compat.IsSecretValue(status) then return false end
+
+    local native = healthBar.TinyThreatPlusNativeColor
+    if not native then
+        local nr, ng, nb = healthBar:GetStatusBarColor()
+        if not IsAccessible(nr) or not IsAccessible(ng) or not IsAccessible(nb) then return false end
+        native = { nr, ng, nb }
+        healthBar.TinyThreatPlusNativeColor = native
+    end
+
+    local hi = math.max(native[1], native[2], native[3])
+    local lo = math.min(native[1], native[2], native[3])
+    local goodR, goodG, goodB = lo, hi, lo
+    local warnR, warnG, warnB = hi, hi * 0.78, lo
+    local badR, badG, badB = native[1], native[2], native[3]
+
+    local isThree = C_Secrets.IsEqual(status, 3)
+    local isOne = C_Secrets.IsEqual(status, 1)
+    local isTwo = C_Secrets.IsEqual(status, 2)
+    local isWarn = C_Secrets.Select and C_Secrets.Select(isOne, true, isTwo) or nil
+    if isWarn == nil then return false end
+
+    local tank = TTP.PlayerIsTank()
+    local terminalR = C_CurveUtil.EvaluateColorValueFromBoolean(isThree,
+        tank and goodR or badR, tank and badR or goodR)
+    local terminalG = C_CurveUtil.EvaluateColorValueFromBoolean(isThree,
+        tank and goodG or badG, tank and badG or goodG)
+    local terminalB = C_CurveUtil.EvaluateColorValueFromBoolean(isThree,
+        tank and goodB or badB, tank and badB or goodB)
+    local r = C_CurveUtil.EvaluateColorValueFromBoolean(isWarn, warnR, terminalR)
+    local g = C_CurveUtil.EvaluateColorValueFromBoolean(isWarn, warnG, terminalG)
+    local b = C_CurveUtil.EvaluateColorValueFromBoolean(isWarn, warnB, terminalB)
+
+    TTP.applyingHealthColor = true
+    healthBar:SetStatusBarColor(r, g, b)
+    TTP.applyingHealthColor = false
+    return true
+end
+
 local function ApplyForeverThreatColor(healthBar, unit, data)
     if not healthBar or not healthBar.SetStatusBarColor then return end
     if not TinyThreatPlusDB.roleBasedColors or not data or not data.hasThreatData then return end
@@ -351,6 +400,7 @@ local function HookForeverHealthBarColor(healthBar)
             return
         end
         local data = TTP.GetThreatData(unit)
+        if ApplyForeverProtectedThreatColor(bar, unit) then return end
         if data and data.hasThreatData then ApplyForeverThreatColor(bar, unit, data) end
     end)
 end
@@ -516,7 +566,9 @@ local function UpdateNativeEnhancement(unit, nameplate)
     -- Blizzard health updates from flashing the bar back to its base color.
     healthBar.TinyThreatPlusUnit = unit
     HookForeverHealthBarColor(healthBar)
-    if TinyThreatPlusDB.roleBasedColors and data and data.hasThreatData then
+    if TinyThreatPlusDB.roleBasedColors and ApplyForeverProtectedThreatColor(healthBar, unit) then
+        -- Protected off-target threat was applied without inspecting it in Lua.
+    elseif TinyThreatPlusDB.roleBasedColors and data and data.hasThreatData then
         ApplyForeverThreatColor(healthBar, unit, data)
     elseif healthBar.TinyThreatPlusNativeColor then
         -- Leaving the threat table returns the exact Blizzard color captured
