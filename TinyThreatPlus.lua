@@ -83,10 +83,19 @@ function TTP.ApplyDefaults()
     -- 2.0 custom-nameplate migration. The old presentation switch tried to
     -- mirror Blizzard's visual settings. Custom nameplates are now completely
     -- addon-owned; Blizzard settings only determine which plates exist.
-    if TinyThreatPlusDB.enableCustomNameplates == nil then
-        TinyThreatPlusDB.enableCustomNameplates =
-            TinyThreatPlusDB.nameplatePresentation ~= "BLIZZARD"
+    if TinyThreatPlusDB.nameplateMode == nil then
+        if TinyThreatPlusDB.enableCustomNameplates == false
+            or TinyThreatPlusDB.nameplatePresentation == "BLIZZARD"
+        then
+            TinyThreatPlusDB.nameplateMode = "NATIVE"
+        else
+            TinyThreatPlusDB.nameplateMode = "CUSTOM"
+        end
     end
+    -- Retained as a migration alias for older SavedVariables. Runtime
+    -- presentation now routes exclusively through nameplateMode.
+    TinyThreatPlusDB.enableCustomNameplates =
+        TinyThreatPlusDB.nameplateMode == "CUSTOM"
     if TinyThreatPlusDB.showNameplateThreat == nil then
         TinyThreatPlusDB.showNameplateThreat =
             TinyThreatPlusDB.showNameplates ~= false
