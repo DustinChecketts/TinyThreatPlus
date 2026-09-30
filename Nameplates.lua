@@ -167,6 +167,20 @@ local function CreateNativeEnhancement(nameplate)
     overlay.counterText:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
     overlay.counterText:SetTextColor(1, 1, 1)
     overlay.counterText:Hide()
+
+    -- Group threat leader belongs with the mob it describes, not the target
+    -- frame. Keep this deliberately compact beneath the native health bar.
+    overlay.leader = CreateFrame("Frame", nil, overlay)
+    overlay.leader:SetSize(150, 16)
+    overlay.leader.icon = overlay.leader:CreateTexture(nil, "ARTWORK")
+    overlay.leader.icon:SetSize(14, 14)
+    overlay.leader.icon:SetPoint("LEFT", overlay.leader, "LEFT", 0, 0)
+    overlay.leader.roleIcon = overlay.leader:CreateTexture(nil, "ARTWORK")
+    overlay.leader.roleIcon:SetSize(14, 14)
+    overlay.leader.name = overlay.leader:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    overlay.leader.name:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+    overlay.leader.name:SetJustifyH("LEFT")
+    overlay.leader:Hide()
     overlay:Hide()
 
     nameplate.TinyThreatPlusNativeEnhancement = overlay
@@ -406,6 +420,61 @@ local function UpdateNativeEnhancement(unit, nameplate)
     )
 
     local data = TTP.GetThreatData(unit)
+
+    local leader = overlay.leader
+    if leader then
+        leader:Hide()
+        if TinyThreatPlusDB.showThreatLeader and data and data.leaderName then
+            local leaderUnit = data.leaderUnit
+            local _, class = leaderUnit and UnitExists(leaderUnit) and UnitClass(leaderUnit) or nil, nil
+            if leaderUnit and UnitExists(leaderUnit) then
+                _, class = UnitClass(leaderUnit)
+            end
+            local classAtlases = {
+                WARRIOR="groupfinder-icon-class-warrior", MAGE="groupfinder-icon-class-mage",
+                ROGUE="groupfinder-icon-class-rogue", DRUID="groupfinder-icon-class-druid",
+                HUNTER="groupfinder-icon-class-hunter", SHAMAN="groupfinder-icon-class-shaman",
+                PRIEST="groupfinder-icon-class-priest", WARLOCK="groupfinder-icon-class-warlock",
+                PALADIN="groupfinder-icon-class-paladin", DEATHKNIGHT="groupfinder-icon-class-deathknight",
+            }
+            leader.icon:Hide()
+            leader.roleIcon:Hide()
+            if TinyThreatPlusDB.showThreatLeaderClassIcon and class and classAtlases[class] then
+                leader.icon:SetAtlas(classAtlases[class])
+                leader.icon:Show()
+            elseif TinyThreatPlusDB.showThreatLeaderClassIcon and leaderUnit
+                and (leaderUnit == "pet" or string.match(leaderUnit, "^partypet%d+$") or string.match(leaderUnit, "^raidpet%d+$")) then
+                SetPortraitTexture(leader.icon, leaderUnit)
+                leader.icon:Show()
+            end
+            local role = leaderUnit and UnitExists(leaderUnit) and TTP.GetUnitRole(leaderUnit) or nil
+            local roleAtlas = role == "TANK" and "roleicon-tiny-tank"
+                or role == "HEALER" and "roleicon-tiny-healer"
+                or role == "DAMAGER" and "roleicon-tiny-dps" or nil
+            if TinyThreatPlusDB.showThreatLeaderRole and roleAtlas then
+                leader.roleIcon:SetAtlas(roleAtlas)
+                leader.roleIcon:Show()
+            end
+            leader.icon:ClearAllPoints()
+            leader.roleIcon:ClearAllPoints()
+            leader.name:ClearAllPoints()
+            leader.icon:SetPoint("LEFT", leader, "LEFT", 0, 0)
+            if leader.icon:IsShown() then leader.roleIcon:SetPoint("LEFT", leader.icon, "RIGHT", 2, 0)
+            else leader.roleIcon:SetPoint("LEFT", leader, "LEFT", 0, 0) end
+            if leader.roleIcon:IsShown() then leader.name:SetPoint("LEFT", leader.roleIcon, "RIGHT", 3, 0)
+            elseif leader.icon:IsShown() then leader.name:SetPoint("LEFT", leader.icon, "RIGHT", 3, 0)
+            else leader.name:SetPoint("LEFT", leader, "LEFT", 0, 0) end
+            leader.name:SetText(data.leaderName)
+            if class and RAID_CLASS_COLORS and RAID_CLASS_COLORS[class] then
+                local color = RAID_CLASS_COLORS[class]
+                leader.name:SetTextColor(color.r, color.g, color.b)
+            else leader.name:SetTextColor(1, 1, 1) end
+            leader:ClearAllPoints()
+            PixelPoint(leader, "TOPLEFT", healthBar, "BOTTOMLEFT", 0, -1)
+            leader:Show()
+        end
+    end
+
     if TinyThreatPlusDB.showNameplateThreat and data then
         local text = TTP.GetThreatDisplayText(data)
         local r, g, b = TTP.GetThreatColor(unit, data)
