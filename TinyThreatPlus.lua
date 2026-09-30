@@ -335,12 +335,14 @@ local function RefreshAffiliatedGUIDs()
     wipe(TTP.affiliatedGUIDs)
     for _, unit in ipairs(TTP.GetThreatUnits()) do
         local guid = UnitGUID(unit)
-        if guid then TTP.affiliatedGUIDs[guid] = unit end
+        if guid and TTP.Compat.CanAccessValue(guid) and not TTP.Compat.IsSecretValue(guid) then
+            TTP.affiliatedGUIDs[guid] = unit
+        end
     end
 end
 
 local function FindThreatUnitByGUID(guid)
-    if not guid then return nil end
+    if not guid or not TTP.Compat.CanAccessValue(guid) or TTP.Compat.IsSecretValue(guid) then return nil end
     local cached = TTP.affiliatedGUIDs[guid]
     if cached and UnitExists(cached) and UnitGUID(cached) == guid then return cached end
     for _, unit in ipairs(TTP.GetThreatUnits()) do
@@ -350,7 +352,10 @@ local function FindThreatUnitByGUID(guid)
 end
 
 local function GetDamageFallback(destGUID)
-    local targetData = destGUID and TTP.damageFallback[destGUID]
+    if not destGUID or not TTP.Compat.CanAccessValue(destGUID) or TTP.Compat.IsSecretValue(destGUID) then
+        return nil
+    end
+    local targetData = TTP.damageFallback[destGUID]
 
     if not targetData then
         return nil
@@ -389,10 +394,16 @@ local function RecordDamageEvent()
     local info = { TTP.Compat.GetCombatLogEventInfo() }
     local subevent, sourceGUID, sourceName, destGUID = info[2], info[4], info[5], info[8]
     if subevent == "UNIT_DIED" or subevent == "UNIT_DESTROYED" then
-        if destGUID then TTP.damageFallback[destGUID] = nil end
+        if destGUID and TTP.Compat.CanAccessValue(destGUID) and not TTP.Compat.IsSecretValue(destGUID) then
+            TTP.damageFallback[destGUID] = nil
+        end
         return
     end
-    if not sourceGUID or not destGUID or not TTP.affiliatedGUIDs[sourceGUID] then return end
+    if not sourceGUID or not destGUID
+        or not TTP.Compat.CanAccessValue(sourceGUID) or TTP.Compat.IsSecretValue(sourceGUID)
+        or not TTP.Compat.CanAccessValue(destGUID) or TTP.Compat.IsSecretValue(destGUID)
+        or not TTP.affiliatedGUIDs[sourceGUID]
+    then return end
     local amount
     if subevent == "SWING_DAMAGE" then amount = info[12]
     elseif subevent == "ENVIRONMENTAL_DAMAGE" then amount = info[13]
