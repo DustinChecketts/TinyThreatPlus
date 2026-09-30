@@ -359,12 +359,9 @@ if TTP.Compat.IsForever() then
     MakeSlider("NATIVE", "Level X Offset", "nativeLevelOffsetX", -30, 10, 1, " px", "Moves the Native level badge horizontally.")
     MakeSlider("NATIVE", "Level Y Offset", "nativeLevelOffsetY", -20, 20, 1, " px", "Moves the Native level badge vertically.")
 
-    Section("NATIVE", "Current Target", "Controls TinyThreatPlus' selected-target highlight around Blizzard's native health bar.")
-    MakeToggle("NATIVE", "Highlight Current Target", "showTargetHighlight", "Shows a Blizzard-style highlight around the current target.")
-    MakeColorPicker("NATIVE", "Highlight Color", "targetHighlightColor", "Tints the Native current-target highlight.")
-    MakeSlider("NATIVE", "Highlight Opacity", "targetHighlightOpacity", 10, 100, 5, "%", "Sets the Native current-target highlight opacity.")
-    MakeSlider("NATIVE", "Highlight Width Padding", "targetHighlightPadX", 0, 24, 1, " px", "Expands the selected-target artwork horizontally beyond Blizzard's health bar.")
-    MakeSlider("NATIVE", "Highlight Height Padding", "targetHighlightPadY", 0, 20, 1, " px", "Expands the selected-target artwork vertically beyond Blizzard's health bar.")
+    Section("NATIVE", "Current Target", "Uses Blizzard's native selected-target border geometry with a neutral TinyThreatPlus treatment.")
+    MakeToggle("NATIVE", "Highlight Current Target", "showTargetHighlight", "Shows Blizzard's native selected-target border, desaturated to a neutral highlight.")
+    MakeSlider("NATIVE", "Highlight Opacity", "targetHighlightOpacity", 10, 100, 5, "%", "Sets the opacity of Blizzard's native selected-target border.")
 
     Section("NATIVE", "Group Threat Information", "Controls the additional group targeting and threat-leader information used by Native + TinyThreatPlus.")
     MakeToggle("NATIVE", "Show Nameplate Target Counter", "showTargetCounter", "Shows how many party or raid members are targeting each hostile nameplate.")
@@ -419,8 +416,7 @@ local PAGE_DEFAULT_KEYS = {
         "nativeNameOutlineColor", "nativeHealthFont", "nativeHealthFontSize",
         "nativeHealthOutline", "nativeHealthOutlineColor", "showMobLevel",
         "nativeLevelBadgeSize", "nativeLevelFontSize", "nativeLevelOffsetX",
-        "nativeLevelOffsetY", "showTargetHighlight", "targetHighlightColor",
-        "targetHighlightOpacity", "targetHighlightPadX", "targetHighlightPadY",
+        "nativeLevelOffsetY", "showTargetHighlight", "targetHighlightOpacity",
         "showTargetCounter", "showTargetFrameCounter",
         "showThreatLeader", "showThreatLeaderClassIcon", "showThreatLeaderRole",
         "previewGroupThreatSolo",
