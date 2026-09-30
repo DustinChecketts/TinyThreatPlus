@@ -337,10 +337,6 @@ if TTP.Compat.IsForever() then
     MakeChoice("NATIVE", "Enemy Name Font", "nativeNameFont", {
         { label="Friz Quadrata", value="FRIZQT" },
         { label="Arial Narrow", value="ARIALN" },
-        { label="Arial", value="ARIAL" },
-        { label="Skurri", value="SKURRI" },
-        { label="2002", value="F2002" },
-        { label="Morpheus", value="MORPHEUS" },
     }, "Selects the font used by Blizzard's native enemy-name FontString.")
     MakeSlider("NATIVE", "Enemy Name Font Size", "nativeNameFontSize", 8, 16, 1, " px", "Sets the Blizzard native enemy-name font size above the health bar.")
     MakeChoice("NATIVE", "Enemy Name Edge", "nativeNameOutline", {
@@ -354,10 +350,6 @@ if TTP.Compat.IsForever() then
     MakeChoice("NATIVE", "Health Text Font", "nativeHealthFont", {
         { label="Friz Quadrata", value="FRIZQT" },
         { label="Arial Narrow", value="ARIALN" },
-        { label="Arial", value="ARIAL" },
-        { label="Skurri", value="SKURRI" },
-        { label="2002", value="F2002" },
-        { label="Morpheus", value="MORPHEUS" },
     }, "Selects the font used by Blizzard's native health value and percentage FontStrings. Arial Narrow is the cleanest sans-serif option at small sizes.")
     MakeSlider("NATIVE", "Health Text Font Size", "nativeHealthFontSize", 8, 14, 1, " px", "Sets Blizzard's native health value and percentage font size inside the bar.")
     MakeChoice("NATIVE", "Health Text Edge", "nativeHealthOutline", {
