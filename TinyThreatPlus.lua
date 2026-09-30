@@ -518,6 +518,20 @@ local function GetForeverSnapshotSource(targetUnit, sourceUnit)
     return snapshot and snapshot.sources[sourceUnit] or nil
 end
 
+local function ForeverThreatIsEngaged(unit)
+    if not TTP.Compat.IsForever() then return true end
+    local status = TTP.Compat.GetThreatSituation("player", unit)
+    if status ~= nil then return true end
+    local playerSnapshot = GetForeverSnapshotSource(unit, "player")
+    if playerSnapshot and (playerSnapshot.status ~= nil or playerSnapshot.isTanking ~= nil
+        or (playerSnapshot.threatValue or 0) > 0) then return true end
+    for _, threatUnit in ipairs(TTP.GetThreatUnits()) do
+        local s = GetForeverSnapshotSource(unit, threatUnit)
+        if s and (s.status ~= nil or s.isTanking ~= nil or (s.threatValue or 0) > 0) then return true end
+    end
+    return false
+end
+
 function TTP.GetThreatData(unit)
     if not unit or not UnitExists(unit) or UnitIsDead(unit) or UnitIsPlayer(unit)
         or not UnitCanAttack("player", unit) then return nil end
@@ -596,6 +610,20 @@ function TTP.GetThreatData(unit)
         elseif data.highestOtherUnit then
             data.aggroUnit = data.highestOtherUnit
         end
+    end
+
+    -- Forever can expose a non-zero threatValue merely from selecting an
+    -- untouched hostile. Do not present that as combat threat. Until the mob
+    -- has a real threat status/snapshot, the readout is neutral zero.
+    if TTP.Compat.IsForever() and not ForeverThreatIsEngaged(unit) then
+        data.hasThreatData = false
+        data.hasNumericThreat = false
+        data.playerThreat = 0
+        data.highestOtherThreat = 0
+        data.leaderUnit = nil
+        data.leaderThreat = 0
+        data.leaderName = nil
+        data.aggroUnit = nil
     end
 
     if data.hasNumericThreat then
