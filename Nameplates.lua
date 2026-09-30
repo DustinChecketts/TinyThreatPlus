@@ -682,8 +682,10 @@ local function LayoutNativeText(healthBar)
         name:SetFont(
             STANDARD_TEXT_FONT,
             math.max(8, math.min(16, tonumber(TinyThreatPlusDB.nativeNameFontSize) or 10)),
-            "OUTLINE"
+            ""
         )
+        name:SetShadowColor(0, 0, 0, 0.9)
+        name:SetShadowOffset(1, -1)
     end
 
     -- Forever's native StatusBar exposes dedicated left/right text fields.
@@ -696,7 +698,9 @@ local function LayoutNativeText(healthBar)
         healthBar.LeftText:ClearAllPoints()
         PixelPoint(healthBar.LeftText, "LEFT", healthBar, "LEFT", 4, 0)
         healthBar.LeftText:SetJustifyH("LEFT")
-        healthBar.LeftText:SetFont(STANDARD_TEXT_FONT, healthFontSize, "OUTLINE")
+        healthBar.LeftText:SetFont(STANDARD_TEXT_FONT, healthFontSize, "")
+        healthBar.LeftText:SetShadowColor(0, 0, 0, 1)
+        healthBar.LeftText:SetShadowOffset(1, -1)
         healthBar.LeftText:Show()
     end
 
@@ -704,7 +708,9 @@ local function LayoutNativeText(healthBar)
         healthBar.RightText:ClearAllPoints()
         PixelPoint(healthBar.RightText, "RIGHT", healthBar, "RIGHT", -4, 0)
         healthBar.RightText:SetJustifyH("RIGHT")
-        healthBar.RightText:SetFont(STANDARD_TEXT_FONT, healthFontSize, "OUTLINE")
+        healthBar.RightText:SetFont(STANDARD_TEXT_FONT, healthFontSize, "")
+        healthBar.RightText:SetShadowColor(0, 0, 0, 1)
+        healthBar.RightText:SetShadowOffset(1, -1)
         healthBar.RightText:Show()
     end
 
@@ -764,11 +770,10 @@ local function UpdateNativeEnhancement(unit, nameplate)
     -- Reuse the exact custom difficulty calculation and HD badge.
     UpdateLevel(overlay, unit)
 
-    -- Do not inspect Blizzard-rendered FontString text on Forever. Instance
-    -- nameplates can mark those strings secret even out of combat, making
-    -- comparisons from addon execution illegal. Native mode therefore leaves
-    -- Blizzard's level text untouched until we have a stable frame reference.
-    -- Our threat readout remains purely additive and never reads native text.
+    -- Never inspect Blizzard-rendered FontString text on Forever. Instance
+    -- nameplates can mark those strings secret even out of combat. The native
+    -- level is suppressed through PlayerLevelDiffFrame above; our readout
+    -- remains additive and never reads Blizzard's protected text.
 
     overlay.threat:ClearAllPoints()
     local threatX = math.max(-10, math.min(40, tonumber(TinyThreatPlusDB.nativeThreatOffsetX) or 22))
