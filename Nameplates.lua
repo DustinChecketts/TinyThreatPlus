@@ -678,9 +678,11 @@ ResetNativeEnhancement = function(nameplate)
 end
 
 local NATIVE_FONTS = {
-    STANDARD = STANDARD_TEXT_FONT,
     FRIZQT = "Fonts\\FRIZQT__.TTF",
     ARIALN = "Fonts\\ARIALN.TTF",
+    ARIAL = "Fonts\\ARIAL.TTF",
+    SKURRI = "Fonts\\SKURRI.TTF",
+    F2002 = "Fonts\\2002.TTF",
     MORPHEUS = "Fonts\\MORPHEUS.TTF",
 }
 
@@ -810,9 +812,11 @@ local function UpdateNativeEnhancement(unit, nameplate)
     -- level is suppressed through PlayerLevelDiffFrame above; our readout
     -- remains additive and never reads Blizzard's protected text.
 
-    local threatBadgeSize = math.max(24, math.min(48,
-        tonumber(TinyThreatPlusDB.nativeLevelBadgeSize) or 34))
-    PixelSize(overlay.threatBadge, threatBadgeSize, threatBadgeSize)
+    local threatBadgeWidth = math.max(20, math.min(60,
+        tonumber(TinyThreatPlusDB.nativeThreatWidth) or 34))
+    local threatBadgeHeight = math.max(14, math.min(40,
+        tonumber(TinyThreatPlusDB.nativeThreatHeight) or 24))
+    PixelSize(overlay.threatBadge, threatBadgeWidth, threatBadgeHeight)
     overlay.threatBadge:ClearAllPoints()
     local threatX = math.max(-10, math.min(40, tonumber(TinyThreatPlusDB.nativeThreatOffsetX) or 22))
     local threatY = math.max(-20, math.min(20, tonumber(TinyThreatPlusDB.nativeThreatOffsetY) or 0))
