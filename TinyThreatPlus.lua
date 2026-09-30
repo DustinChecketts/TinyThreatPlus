@@ -60,88 +60,6 @@ TTP.defaults = {
     targetCounterSize = 18,
     targetCounterOffsetX = -2,
     targetCounterOffsetY = -2,
-}ocal ADDON_NAME, addonTable = ...
-
-local TTP = _G.TinyThreatPlus or addonTable or {}
-_G.TinyThreatPlus = TTP
-TinyThreatPlusDB = TinyThreatPlusDB or {}
-
--- ---------------------------------------------------------------------------
--- Defaults and persistent settings
--- ---------------------------------------------------------------------------
-TTP.defaults = {
-    enableCustomNameplates = true,
-    showNameplateThreat = true,
-    showTargetHighlight = false,
-    targetHighlightColor = { 1, 1, 1 },
-    targetHighlightOpacity = 70,
-    customNameplateScale = 100,
-    customNameplateBarHeight = 20,
-    healthFrameOffsetX = 2,
-    healthFrameOffsetY = -2,
-    customNameplateInactiveOpacity = 100,
-    customHealthScale = 100,
-    customNameFontSize = 10,
-    customNameFontColor = { 1, 1, 1 },
-    customNameFontShadow = true,
-    customLevelBadgeSize = 26,
-    customLevelFontSize = 9,
-    customLevelOffsetX = -4,
-    customLevelOffsetY = 0,
-    nativeNameFontSize = 14,
-    nativeNameFont = "FRIZQT",
-    nativeNameOutline = "NONE",
-    nativeNameOutlineColor = { 0, 0, 0 },
-    nativeHealthFontSize = 12,
-    nativeHealthFont = "ARIALN",
-    nativeHealthOutline = "OUTLINE",
-    nativeHealthOutlineColor = { 0, 0, 0 },
-    nativeLevelBadgeSize = 28,
-    nativeLevelFontSize = 12,
-    nativeLevelOffsetX = -10,
-    nativeLevelOffsetY = 0,
-    nativeThreatFontSize = 12,
-    nativeThreatWidth = 34,
-    nativeThreatHeight = 20,
-    nativeThreatOffsetX = 6,
-    nativeThreatOffsetY = 0,
-    nameplateThreatWidth = 36,
-    nameplateThreatHeight = 20,
-    nameplateThreatFontSize = 9,
-    nameplateThreatScale = 100,
-    showTargetFrame = true,
-    alwaysShowThreatBoxes = true,
-    roleBasedColors = true,
-    showTargetCounter = true,
-    showTargetFrameCounter = true,
-    previewGroupThreatSolo = false,
-
-    showPriorityMarker = true,
-    priorityWhileSolo = false,
-    priorityThreatThreshold = 80,
-    priorityMarkerColor = { 0, 0.0627451, 0.3960784 },
-    priorityMarkerOpacity = 100,
-    priorityMarkerSizeRating = 3,
-
-    showThreatLeader = true,
-    showThreatLeaderClassIcon = true,
-    showThreatLeaderRole = true,
-
-    showMobLevel = true,
-
-    displayMode = "VALUE",
-
-    targetThreatScale = 100,
-    targetThreatWidth = 40,
-    targetThreatHeight = 20,
-    targetThreatFontSize = 12,
-    targetThreatOffsetX = 0,
-    targetThreatOffsetY = 2,
-    targetCounterSize = 18,
-    targetCounterOffsetX = -2,
-    targetCounterOffsetY = -2,
-}
-
 TTP.colors = {
     good = { 0.10, 0.85, 0.10 },
     warn = { 1.00, 0.82, 0.00 },
@@ -171,7 +89,6 @@ function TTP.ApplyDefaults()
     TinyThreatPlusDB.enableCustomNameplates = nil
     TinyThreatPlusDB.nameplatePresentation = nil
     TinyThreatPlusDB.showNameplates = nil
-    TinyThreatPlusDB.priorityMarkerSizeRating = nil
 
     if TinyThreatPlusDB.priorityThreatThreshold == nil
         and TinyThreatPlusDB.threatSafetyBuffer ~= nil
