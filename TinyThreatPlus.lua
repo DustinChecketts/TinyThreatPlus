@@ -496,6 +496,13 @@ local function GetForeverSnapshotSource(targetUnit, sourceUnit)
     if not TTP.Compat.IsForever() then return nil end
     local targetGUID, sourceGUID = UnitGUID(targetUnit), UnitGUID(sourceUnit)
     if not targetGUID or not sourceGUID then return nil end
+    if TTP.Compat.IsSecretValue(targetGUID)
+        or TTP.Compat.IsSecretValue(sourceGUID)
+        or not TTP.Compat.CanAccessValue(targetGUID)
+        or not TTP.Compat.CanAccessValue(sourceGUID)
+    then
+        return nil
+    end
     local snapshot = TTP.foreverThreatSnapshots[targetGUID]
     return snapshot and snapshot.sources[sourceGUID] or nil
 end
