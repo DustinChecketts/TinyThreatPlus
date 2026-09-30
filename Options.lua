@@ -363,6 +363,8 @@ if TTP.Compat.IsForever() then
     MakeToggle("NATIVE", "Highlight Current Target", "showTargetHighlight", "Shows a Blizzard-style highlight around the current target.")
     MakeColorPicker("NATIVE", "Highlight Color", "targetHighlightColor", "Tints the Native current-target highlight.")
     MakeSlider("NATIVE", "Highlight Opacity", "targetHighlightOpacity", 10, 100, 5, "%", "Sets the Native current-target highlight opacity.")
+    MakeSlider("NATIVE", "Highlight Width Padding", "targetHighlightPadX", 0, 24, 1, " px", "Expands the selected-target artwork horizontally beyond Blizzard's health bar.")
+    MakeSlider("NATIVE", "Highlight Height Padding", "targetHighlightPadY", 0, 20, 1, " px", "Expands the selected-target artwork vertically beyond Blizzard's health bar.")
 
     Section("NATIVE", "Group Threat Information", "Controls the additional group targeting and threat-leader information used by Native + TinyThreatPlus.")
     MakeToggle("NATIVE", "Show Nameplate Target Counter", "showTargetCounter", "Shows how many party or raid members are targeting each hostile nameplate.")
@@ -370,6 +372,7 @@ if TTP.Compat.IsForever() then
     MakeToggle("NATIVE", "Show Highest Threat Target", "showThreatLeader", "Shows the player or pet currently leading threat on your target.")
     MakeToggle("NATIVE", "Show Highest Threat Class / Pet Icon", "showThreatLeaderClassIcon", "Shows the threat leader's class icon or pet portrait when available.")
     MakeToggle("NATIVE", "Show Highest Threat Role", "showThreatLeaderRole", "Shows the threat leader's assigned Tank, Healer, or Damage role when available.")
+    MakeToggle("NATIVE", "Preview Group Threat While Solo", "previewGroupThreatSolo", "Testing aid: while solo, shows a target count of 1 and uses your character as the highest-threat target so these elements can be positioned. Intended to remain off by default.")
 
         Section("NATIVE", "Threat Readout", "Positions TinyThreatPlus threat over Blizzard's right-side native indicator area.")
     MakeSlider("NATIVE", "Threat Box Width", "nativeThreatWidth", 20, 60, 2, " px", "Sets the width of the Native threat readout artwork.")
@@ -417,8 +420,10 @@ local PAGE_DEFAULT_KEYS = {
         "nativeHealthOutline", "nativeHealthOutlineColor", "showMobLevel",
         "nativeLevelBadgeSize", "nativeLevelFontSize", "nativeLevelOffsetX",
         "nativeLevelOffsetY", "showTargetHighlight", "targetHighlightColor",
-        "targetHighlightOpacity", "showTargetCounter", "showTargetFrameCounter",
+        "targetHighlightOpacity", "targetHighlightPadX", "targetHighlightPadY",
+        "showTargetCounter", "showTargetFrameCounter",
         "showThreatLeader", "showThreatLeaderClassIcon", "showThreatLeaderRole",
+        "previewGroupThreatSolo",
         "nativeThreatWidth", "nativeThreatHeight",
         "nativeThreatFontSize", "nativeThreatOffsetX", "nativeThreatOffsetY",
         "targetThreatWidth", "targetThreatHeight", "targetThreatFontSize",
