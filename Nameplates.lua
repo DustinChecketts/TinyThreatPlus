@@ -293,6 +293,30 @@ local function LayoutNativeText(healthBar)
     end
 end
 
+local function GetNativeThreatBarColor(healthBar, state)
+    -- Match Blizzard's own enemy-health saturation instead of the brighter
+    -- addon text colors. Cache the native red before TinyThreatPlus recolors it.
+    if not healthBar.TinyThreatPlusNativeColor then
+        local r, g, b = healthBar:GetStatusBarColor()
+        if IsAccessible(r) and IsAccessible(g) and IsAccessible(b) then
+            healthBar.TinyThreatPlusNativeColor = { r, g, b }
+        else
+            healthBar.TinyThreatPlusNativeColor = { 0.72, 0.10, 0.10 }
+        end
+    end
+    if state == "good" then return 0.10, 0.72, 0.10 end
+    if state == "warn" then return 0.82, 0.62, 0.08 end
+    local n = healthBar.TinyThreatPlusNativeColor
+    return n[1], n[2], n[3]
+end
+
+local function GetStableThreatState(unit, data)
+    local r, g, b = TTP.GetThreatColor(unit, data)
+    if g > r and g > b then return "good" end
+    if r > 0.7 and g > 0.45 then return "warn" end
+    return "bad"
+end
+
 local function UpdateNativeEnhancement(unit, nameplate)
     if not TTP.IsHostileNPC(unit) then
         ResetNativeEnhancement(nameplate)
@@ -426,8 +450,16 @@ local function UpdateNativeEnhancement(unit, nameplate)
     -- securely ahead, yellow inside the caution band, red after losing aggro;
     -- DPS/healers use the inverse semantics.
     if TinyThreatPlusDB.roleBasedColors and data then
-        local r, g, b = TTP.GetThreatColor(unit, data)
-        if healthBar.SetStatusBarColor then healthBar:SetStatusBarColor(r, g, b) end
+        -- Do not let an inaccessible/empty transient read flip the bar between
+        -- states. Keep the last meaningful state until threat data explicitly
+        -- establishes a new one.
+        if data.hasThreatData then
+            overlay.stableThreatState = GetStableThreatState(unit, data)
+        end
+        if overlay.stableThreatState and healthBar.SetStatusBarColor then
+            local r, g, b = GetNativeThreatBarColor(healthBar, overlay.stableThreatState)
+            healthBar:SetStatusBarColor(r, g, b)
+        end
     end
 
     local leader = overlay.leader
