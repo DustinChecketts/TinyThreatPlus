@@ -617,32 +617,43 @@ function TTP.GetGroupTargetCount(unit)
         return 0
     end
 
-    -- Forever can protect both GUID equality and UnitIsUnit results while
-    -- grouped/in instances. Scrub the API result before Lua branches on it.
     if not unit or not UnitExists(unit) then
         return 0
     end
 
     local count = 0
-    local targetPlate = TTP.Compat.HasNamePlateAPI()
-        and C_NamePlate.GetNamePlateForUnit(unit)
-        or nil
+
+    -- Forever protects GUID equality and UnitIsUnit() results in grouped
+    -- combat, and C_NamePlate.GetNamePlateForUnit() rejects compound tokens
+    -- such as "party1target". There is therefore no safe direct identity
+    -- comparison for arbitrary group-member targets. We can still count the
+    -- player's own target without protected data: when rendering a nameplate,
+    -- C_NamePlate.GetNamePlateForUnit("target") returns that same plate.
+    if TTP.Compat.IsForever() then
+        local unitPlate = TTP.Compat.HasNamePlateAPI()
+            and C_NamePlate.GetNamePlateForUnit(unit)
+            or nil
+        local playerTargetPlate = UnitExists("target")
+            and TTP.Compat.HasNamePlateAPI()
+            and C_NamePlate.GetNamePlateForUnit("target")
+            or nil
+
+        if unitPlate and playerTargetPlate == unitPlate then
+            count = 1
+        elseif unit == "target" and UnitExists("target") then
+            count = 1
+        end
+
+        return count
+    end
+
+    local targetGUID = UnitGUID(unit)
+    if not targetGUID then return 0 end
 
     for _, groupUnit in ipairs(TTP.GetGroupUnits()) do
         local targetUnit = groupUnit .. "target"
-
-        if UnitExists(targetUnit) then
-            -- Forever protects both GUID equality and UnitIsUnit() in grouped
-            -- combat. Nameplate frame references are ordinary Lua objects, so
-            -- matching the frame returned for each unit token is secret-safe.
-            local groupTargetPlate = TTP.Compat.HasNamePlateAPI()
-                and C_NamePlate.GetNamePlateForUnit(targetUnit)
-                or nil
-            if targetPlate and groupTargetPlate == targetPlate then
-                count = count + 1
-            elseif not TTP.Compat.IsForever() and UnitIsUnit(targetUnit, unit) then
-                count = count + 1
-            end
+        if UnitExists(targetUnit) and UnitGUID(targetUnit) == targetGUID then
+            count = count + 1
         end
     end
 
