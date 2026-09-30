@@ -209,6 +209,8 @@ ResetNativeEnhancement = function(nameplate)
     overlay.counterRing:Hide()
     overlay.counterText:Hide()
     overlay.stableThreatState = nil
+    local resetHealth = TTP.GetNameplateHealthBar(nameplate)
+    if resetHealth then resetHealth.TinyThreatPlusUnit = nil end
     if overlay.TinyThreatPlusHiddenNativeLevel
         and overlay.TinyThreatPlusHiddenNativeLevel.Show
     then
@@ -493,6 +495,13 @@ local function UpdateNativeEnhancement(unit, nameplate)
     HookForeverHealthBarColor(healthBar)
     if TinyThreatPlusDB.roleBasedColors and data and data.hasThreatData then
         ApplyForeverThreatColor(healthBar, unit, data)
+    elseif healthBar.TinyThreatPlusNativeColor then
+        -- Leaving the threat table returns the exact Blizzard color captured
+        -- for this bar rather than leaving the last combat state behind.
+        local n = healthBar.TinyThreatPlusNativeColor
+        TTP.applyingHealthColor = true
+        healthBar:SetStatusBarColor(n[1], n[2], n[3])
+        TTP.applyingHealthColor = false
     end
 
     local leader = overlay.leader
