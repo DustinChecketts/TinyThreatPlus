@@ -648,7 +648,13 @@ local function CreateNativeEnhancement(nameplate)
     -- Addon-owned target highlight lets Native mode retain Blizzard's plate
     -- while giving TinyThreatPlus deterministic tint/opacity control.
     overlay.targetHighlight = overlay:CreateTexture(nil, "OVERLAY")
-    overlay.targetHighlight:SetAtlas("UI-HUD-Nameplates-TargetedByEnemy", false)
+    -- Use the same confirmed border artwork as the Custom renderer. The
+    -- Nameplates-TargetedByEnemy atlas contains baked warm/red pixels and
+    -- asymmetric transparent padding, so tinting it white cannot produce a
+    -- truly white, optically centered border.
+    overlay.targetHighlight:SetAtlas("UI-HUD-CoolDownManager-Selected-yellow", false)
+    overlay.targetHighlight:SetDesaturated(true)
+    overlay.targetHighlight:SetIgnoreParentAlpha(true)
     overlay.targetHighlight:Hide()
 
     overlay.threatBadge = CreateFrame("Frame", nil, overlay)
@@ -814,16 +820,19 @@ local function UpdateNativeEnhancement(unit, nameplate)
 
     local overlay = CreateNativeEnhancement(nameplate)
     overlay.targetHighlight:ClearAllPoints()
-    -- Anchor the artwork around Blizzard's bar instead of reading its width
-    -- or height. Forever can make native geometry secret in combat.
+    -- Center the artwork on the health bar, matching the Custom renderer.
+    -- Avoid opposing-corner anchors here: the atlas has transparent margins,
+    -- and center + explicit dimensions keeps its optical expansion balanced.
+    -- Native bar dimensions can become secret, so derive the highlight from
+    -- the known Forever presentation width/height rather than reading them.
     local highlightPadX = math.max(0, math.min(24,
-        tonumber(TinyThreatPlusDB.targetHighlightPadX) or 10))
+        tonumber(TinyThreatPlusDB.targetHighlightPadX) or 6))
     local highlightPadY = math.max(0, math.min(20,
-        tonumber(TinyThreatPlusDB.targetHighlightPadY) or 8))
-    PixelPoint(overlay.targetHighlight, "TOPLEFT", healthBar, "TOPLEFT",
-        -highlightPadX, highlightPadY)
-    PixelPoint(overlay.targetHighlight, "BOTTOMRIGHT", healthBar, "BOTTOMRIGHT",
-        highlightPadX, -highlightPadY)
+        tonumber(TinyThreatPlusDB.targetHighlightPadY) or 6))
+    PixelPoint(overlay.targetHighlight, "CENTER", healthBar, "CENTER", 0, 0)
+    PixelSize(overlay.targetHighlight,
+        BASE_WIDTH + (highlightPadX * 2),
+        BASE_BAR_HEIGHT + (highlightPadY * 2))
     if TinyThreatPlusDB.showTargetHighlight and UnitIsUnit(unit, "target") then
         local color = TinyThreatPlusDB.targetHighlightColor or TTP.defaults.targetHighlightColor or { 1, 1, 1 }
         overlay.targetHighlight:SetVertexColor(
