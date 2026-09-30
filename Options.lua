@@ -85,8 +85,7 @@ local function MakeTab(key, label, x)
 end
 
 MakeTab("GENERAL", "General", 0)
-MakeTab("CUSTOM", "Custom Plates", 150)
-if TTP.Compat.IsForever() then MakeTab("NATIVE", "Native Plates", 300) end
+MakeTab("STYLING", "Styling", 150)
 
 local function Section(page, text, description)
     local p = pages[page]
@@ -257,172 +256,112 @@ local function MakeColorPicker(page, label, key, tooltip)
 end
 
 CreatePage("GENERAL")
-CreatePage("CUSTOM")
-if TTP.Compat.IsForever() then CreatePage("NATIVE") end
+CreatePage("STYLING")
 
-Section("GENERAL", "Presentation", "Shared behavior for TinyThreatPlus threat information.")
-if TTP.Compat.IsForever() then
-    MakeChoice("GENERAL", "Nameplate Mode", "nameplateMode", {
-        { label="TinyThreatPlus Custom", value="CUSTOM" },
-        { label="Blizzard + TinyThreatPlus", value="NATIVE" },
-    }, "Switches between the full custom renderer and Blizzard's native Forever plate with TinyThreatPlus additions.")
-end
-MakeToggle("GENERAL", "Show Nameplate Threat", "showNameplateThreat", "Shows threat information on hostile nameplates.")
-MakeToggle("GENERAL", "Enable Role-Based Colors", "roleBasedColors", "Colors threat state according to your assigned role.")
-MakeToggle("GENERAL", "Always Show Threat Indicator", "alwaysShowThreatBoxes", "Shows an idle indicator before active threat information exists.")
+Section("GENERAL", "Nameplates", "Turns TinyThreatPlus features on or off while Blizzard retains ownership of the native nameplate.")
+MakeToggle("GENERAL", "Show Threat Readout", "showNameplateThreat", "Shows TinyThreatPlus threat information on hostile nameplates.")
+MakeToggle("GENERAL", "Always Show Threat Readout", "alwaysShowThreatBoxes", "Shows an idle threat readout before active threat information exists.")
+MakeToggle("GENERAL", "Use Role-Based Threat Colors", "roleBasedColors", "Colors threat state according to your assigned role.")
 MakeChoice("GENERAL", "Threat Display", "displayMode", {
     { label="Value Difference", value="VALUE" },
     { label="Percentage", value="PERCENT" },
-}, "Choose exact threat difference or percentage display.")
+}, "Chooses exact threat difference or percentage display.")
+MakeToggle("GENERAL", "Show Mob Level", "showMobLevel", "Shows the difficulty-colored mob-level badge.")
+MakeToggle("GENERAL", "Highlight Current Target", "showTargetHighlight", "Uses Blizzard's native selected-target border for the current target.")
 
-Section("GENERAL", "Target Frame", "Target-frame threat and group targeting are controlled independently.")
-MakeToggle("GENERAL", "Show Threat Indicator", "showTargetFrame", "Shows threat information above the target frame.")
-MakeToggle("GENERAL", "Show Target Counter", "showTargetFrameCounter", "Shows how many party or raid members are targeting your hostile target.")
+Section("GENERAL", "Group Threat Information", "Group and raid information. The solo preview is a positioning aid and remains off by default.")
+MakeToggle("GENERAL", "Show Nameplate Target Counter", "showTargetCounter", "Shows how many party or raid members are targeting each hostile nameplate.")
+MakeToggle("GENERAL", "Show Target Frame Target Counter", "showTargetFrameCounter", "Shows how many party or raid members are targeting your current hostile target.")
+MakeToggle("GENERAL", "Show Threat Leader", "showThreatLeader", "Shows the player or pet currently leading threat on your target.")
+MakeToggle("GENERAL", "Show Threat Leader Class / Pet Icon", "showThreatLeaderClassIcon", "Shows the threat leader's class icon or pet portrait when available.")
+MakeToggle("GENERAL", "Show Threat Leader Role", "showThreatLeaderRole", "Shows the threat leader's assigned Tank, Healer, or Damage role when available.")
+MakeToggle("GENERAL", "Preview Group Threat While Solo", "previewGroupThreatSolo", "Testing aid: shows solo placeholder group-threat information for positioning.")
 
-Section("GENERAL", "Threat Leader", "Identifies the player or pet currently leading threat.")
-MakeToggle("GENERAL", "Show Threat Leader", "showThreatLeader", "Shows the current threat leader below the target threat indicator.")
-MakeToggle("GENERAL", "Show Class / Pet Icon", "showThreatLeaderClassIcon", "Shows a class icon or pet portrait.")
-MakeToggle("GENERAL", "Show Role Icon", "showThreatLeaderRole", "Shows the assigned role when available.")
+Section("GENERAL", "Target Frame", "Controls TinyThreatPlus information added to Blizzard's target frame.")
+MakeToggle("GENERAL", "Show Target Frame Threat Readout", "showTargetFrame", "Shows the TinyThreatPlus threat readout on the target frame.")
 
-Section("GENERAL", "Target Priority", "Highlights one enemy that deserves attention when fighting multiple targets.")
+Section("GENERAL", "Target Priority", "Marks one enemy that deserves attention when fighting multiple targets.")
 MakeToggle("GENERAL", "Enable Target Priority", "showPriorityMarker", "Enables automatic target-priority highlighting.")
-MakeToggle("GENERAL", "Enable While Solo (Pet Classes)", "priorityWhileSolo", "Allows priority logic while solo with an active pet.")
-MakeColorPicker("GENERAL", "Priority Color", "priorityMarkerColor", "Sets the priority highlight color.")
-MakeSlider("GENERAL", "Priority Opacity", "priorityMarkerOpacity", 10, 100, 5, "%", "Sets priority highlight opacity.")
-MakeSlider("GENERAL", "Custom Priority Size", "priorityMarkerSizeRating", 1, 6, 1, "", "Sets priority-highlight padding for the Custom renderer. Native + TinyThreatPlus uses Blizzard's fixed native border geometry.")
-MakeSlider("GENERAL", "Threat Threshold", "priorityThreatThreshold", 0, 100, 5, "%", "Sets the threat safety gate used by Target Priority.")
-
-Section("GENERAL", "Target Counter", "Shows how many party or raid members are targeting an enemy.")
-MakeToggle("GENERAL", "Show on Nameplates", "showTargetCounter", "Shows group target count on hostile nameplates.")
-
-Section("CUSTOM", "Custom Nameplates", "Styling for the full TinyThreatPlus Forever renderer.")
-MakeSlider("CUSTOM", "Nameplate Scale", "customNameplateScale", 75, 150, 5, "%", "Scales the complete custom nameplate.")
-MakeSlider("CUSTOM", "Health Bar Height", "customNameplateBarHeight", 12, 32, 1, " px", "Sets custom health-bar height.")
-MakeSlider("CUSTOM", "Health Bar Scale", "customHealthScale", 75, 150, 5, "%", "Scales the custom health bar independently.")
-MakeSlider("CUSTOM", "Frame X Offset", "healthFrameOffsetX", -4, 4, 1, " px", "Moves health-bar artwork horizontally.")
-MakeSlider("CUSTOM", "Frame Y Offset", "healthFrameOffsetY", -4, 4, 1, " px", "Moves health-bar artwork vertically.")
-MakeSlider("CUSTOM", "Inactive Opacity", "customNameplateInactiveOpacity", 20, 100, 5, "%", "Sets opacity for inactive custom plates.")
-
-Section("CUSTOM", "Mob Name")
-MakeSlider("CUSTOM", "Font Size", "customNameFontSize", 8, 18, 1, " px", "Sets mob-name font size.")
-MakeColorPicker("CUSTOM", "Font Color", "customNameFontColor", "Sets mob-name text color.")
-MakeToggle("CUSTOM", "Text Shadow", "customNameFontShadow", "Adds a black text shadow.")
-
-Section("CUSTOM", "Mob Level")
-MakeToggle("CUSTOM", "Show Mob Level", "showMobLevel", "Shows the difficulty-colored level badge.")
-MakeSlider("CUSTOM", "Badge Size", "customLevelBadgeSize", 20, 32, 1, " px", "Sets custom level-badge size.")
-MakeSlider("CUSTOM", "Level Font Size", "customLevelFontSize", 8, 14, 1, " px", "Sets custom level font size.")
-MakeSlider("CUSTOM", "Badge X Offset", "customLevelOffsetX", -20, 20, 1, " px", "Moves the badge horizontally.")
-MakeSlider("CUSTOM", "Badge Y Offset", "customLevelOffsetY", -20, 20, 1, " px", "Moves the badge vertically.")
-
-Section("CUSTOM", "Current Target")
-MakeToggle("CUSTOM", "Highlight Current Target", "showTargetHighlight", "Shows Blizzard-style selected-target artwork.")
-MakeColorPicker("CUSTOM", "Highlight Color", "targetHighlightColor", "Tints the selected-target artwork.")
-MakeSlider("CUSTOM", "Highlight Opacity", "targetHighlightOpacity", 10, 100, 5, "%", "Sets target-highlight opacity.")
-
-Section("CUSTOM", "Threat Indicator")
-MakeSlider("CUSTOM", "Box Width", "nameplateThreatWidth", 28, 60, 1, " px", "Sets custom nameplate threat width.")
-MakeSlider("CUSTOM", "Box Height", "nameplateThreatHeight", 12, 32, 1, " px", "Sets custom nameplate threat height.")
-MakeSlider("CUSTOM", "Font Size", "nameplateThreatFontSize", 8, 14, 1, " px", "Sets custom nameplate threat font size.")
-MakeSlider("CUSTOM", "Box Scale", "nameplateThreatScale", 50, 150, 5, "%", "Scales the complete custom threat indicator.")
+MakeToggle("GENERAL", "Enable Target Priority While Solo", "priorityWhileSolo", "Allows priority logic while solo with an active pet.")
+MakeSlider("GENERAL", "Target Priority Threat Threshold", "priorityThreatThreshold", 0, 100, 5, "%", "Sets the threat safety gate used by Target Priority.")
 
 if TTP.Compat.IsForever() then
-    Section("NATIVE", "Native Forever Plates", "Blizzard keeps ownership of the plate; TinyThreatPlus normalizes its text layout and adds independently tunable level and threat information.")
-    MakeChoice("NATIVE", "Enemy Name Font", "nativeNameFont", {
+    Section("STYLING", "Nameplate Text", "Adjusts Blizzard's native enemy-name and health text without replacing the underlying plate.")
+    MakeChoice("STYLING", "Enemy Name Font", "nativeNameFont", {
         { label="Friz Quadrata", value="FRIZQT" },
         { label="Arial Narrow", value="ARIALN" },
     }, "Selects the font used by Blizzard's native enemy-name FontString.")
-    MakeSlider("NATIVE", "Enemy Name Font Size", "nativeNameFontSize", 8, 16, 1, " px", "Sets the Blizzard native enemy-name font size above the health bar.")
-    MakeChoice("NATIVE", "Enemy Name Edge", "nativeNameOutline", {
-        { label="Off", value="NONE" },
-        { label="Shadow", value="SHADOW" },
-        { label="Thin Outline", value="OUTLINE" },
-        { label="Thick Outline", value="THICKOUTLINE" },
-    }, "Selects the text edge treatment. WoW supports fixed Thin and Thick outline widths; Shadow supports the custom color below.")
-    MakeColorPicker("NATIVE", "Enemy Name Shadow Color", "nativeNameOutlineColor", "Sets the custom shadow color when Enemy Name Edge is Shadow.")
+    MakeSlider("STYLING", "Enemy Name Font Size", "nativeNameFontSize", 8, 16, 1, " px", "Sets enemy-name font size above the health bar.")
+    MakeChoice("STYLING", "Enemy Name Edge", "nativeNameOutline", {
+        { label="Off", value="NONE" }, { label="Shadow", value="SHADOW" },
+        { label="Thin Outline", value="OUTLINE" }, { label="Thick Outline", value="THICKOUTLINE" },
+    }, "Selects the enemy-name edge treatment.")
+    MakeColorPicker("STYLING", "Enemy Name Shadow Color", "nativeNameOutlineColor", "Sets the shadow color when Enemy Name Edge is Shadow.")
 
-    MakeChoice("NATIVE", "Health Text Font", "nativeHealthFont", {
+    MakeChoice("STYLING", "Health Text Font", "nativeHealthFont", {
         { label="Friz Quadrata", value="FRIZQT" },
         { label="Arial Narrow", value="ARIALN" },
-    }, "Selects the font used by Blizzard's native health value and percentage FontStrings. Arial Narrow is the cleanest sans-serif option at small sizes.")
-    MakeSlider("NATIVE", "Health Text Font Size", "nativeHealthFontSize", 8, 14, 1, " px", "Sets Blizzard's native health value and percentage font size inside the bar.")
-    MakeChoice("NATIVE", "Health Text Edge", "nativeHealthOutline", {
-        { label="Off", value="NONE" },
-        { label="Shadow", value="SHADOW" },
-        { label="Thin Outline", value="OUTLINE" },
-        { label="Thick Outline", value="THICKOUTLINE" },
-    }, "Selects the health-text edge treatment. WoW supports fixed Thin and Thick outline widths; Shadow supports the custom color below.")
-    MakeColorPicker("NATIVE", "Health Text Shadow Color", "nativeHealthOutlineColor", "Sets the custom shadow color when Health Text Edge is Shadow.")
-    MakeToggle("NATIVE", "Show Mob Level", "showMobLevel", "Shows the TinyThreatPlus HD level badge.")
-    MakeSlider("NATIVE", "Level Badge Size", "nativeLevelBadgeSize", 24, 48, 2, " px", "Sets the Native level-badge size.")
-    MakeSlider("NATIVE", "Level Font Size", "nativeLevelFontSize", 8, 16, 1, " px", "Sets the Native level font size.")
-    MakeSlider("NATIVE", "Level X Offset", "nativeLevelOffsetX", -30, 10, 1, " px", "Moves the Native level badge horizontally.")
-    MakeSlider("NATIVE", "Level Y Offset", "nativeLevelOffsetY", -20, 20, 1, " px", "Moves the Native level badge vertically.")
+    }, "Selects the font used by Blizzard's native health value and percentage.")
+    MakeSlider("STYLING", "Health Text Font Size", "nativeHealthFontSize", 8, 14, 1, " px", "Sets health value and percentage font size.")
+    MakeChoice("STYLING", "Health Text Edge", "nativeHealthOutline", {
+        { label="Off", value="NONE" }, { label="Shadow", value="SHADOW" },
+        { label="Thin Outline", value="OUTLINE" }, { label="Thick Outline", value="THICKOUTLINE" },
+    }, "Selects the health-text edge treatment.")
+    MakeColorPicker("STYLING", "Health Text Shadow Color", "nativeHealthOutlineColor", "Sets the shadow color when Health Text Edge is Shadow.")
 
-    Section("NATIVE", "Current Target", "Uses Blizzard's native selected-target border geometry; TinyThreatPlus only desaturates, tints, and adjusts opacity.")
-    MakeToggle("NATIVE", "Highlight Current Target", "showTargetHighlight", "Shows Blizzard's native selected-target border.")
-    MakeColorPicker("NATIVE", "Highlight Color", "targetHighlightColor", "Tints the desaturated Blizzard target border while preserving Blizzard's native geometry.")
-    MakeSlider("NATIVE", "Highlight Opacity", "targetHighlightOpacity", 10, 100, 5, "%", "Sets the opacity of Blizzard's native selected-target border.")
+    Section("STYLING", "Mob Level")
+    MakeSlider("STYLING", "Level Badge Size", "nativeLevelBadgeSize", 24, 48, 2, " px", "Sets mob-level badge size.")
+    MakeSlider("STYLING", "Level Font Size", "nativeLevelFontSize", 8, 16, 1, " px", "Sets mob-level font size.")
+    MakeSlider("STYLING", "Level X Offset", "nativeLevelOffsetX", -30, 10, 1, " px", "Moves the mob-level badge horizontally.")
+    MakeSlider("STYLING", "Level Y Offset", "nativeLevelOffsetY", -20, 20, 1, " px", "Moves the mob-level badge vertically.")
 
-    Section("NATIVE", "Group Threat Information", "Controls the additional group targeting and threat-leader information used by Native + TinyThreatPlus.")
-    MakeToggle("NATIVE", "Show Nameplate Target Counter", "showTargetCounter", "Shows how many party or raid members are targeting each hostile nameplate.")
-    MakeToggle("NATIVE", "Show Target-Frame Counter", "showTargetFrameCounter", "Shows how many party or raid members are targeting your current hostile target.")
-    MakeToggle("NATIVE", "Show Highest Threat Target", "showThreatLeader", "Shows the player or pet currently leading threat on your target.")
-    MakeToggle("NATIVE", "Show Highest Threat Class / Pet Icon", "showThreatLeaderClassIcon", "Shows the threat leader's class icon or pet portrait when available.")
-    MakeToggle("NATIVE", "Show Highest Threat Role", "showThreatLeaderRole", "Shows the threat leader's assigned Tank, Healer, or Damage role when available.")
-    MakeToggle("NATIVE", "Preview Group Threat While Solo", "previewGroupThreatSolo", "Testing aid: while solo, shows a target count of 1 and uses your character as the highest-threat target so these elements can be positioned. Intended to remain off by default.")
+    Section("STYLING", "Current Target")
+    MakeColorPicker("STYLING", "Current Target Highlight Color", "targetHighlightColor", "Tints Blizzard's desaturated selected-target border.")
+    MakeSlider("STYLING", "Current Target Highlight Opacity", "targetHighlightOpacity", 10, 100, 5, "%", "Sets current-target highlight opacity.")
 
-        Section("NATIVE", "Threat Readout", "Positions TinyThreatPlus threat over Blizzard's right-side native indicator area.")
-    MakeSlider("NATIVE", "Threat Box Width", "nativeThreatWidth", 20, 60, 2, " px", "Sets the width of the Native threat readout artwork.")
-    MakeSlider("NATIVE", "Threat Box Height", "nativeThreatHeight", 14, 40, 2, " px", "Sets the height of the Native threat readout artwork.")
-    MakeSlider("NATIVE", "Threat Font Size", "nativeThreatFontSize", 8, 16, 1, " px", "Sets Native threat font size.")
-    MakeSlider("NATIVE", "Threat X Offset", "nativeThreatOffsetX", -10, 40, 1, " px", "Moves Native threat horizontally.")
-    MakeSlider("NATIVE", "Threat Y Offset", "nativeThreatOffsetY", -20, 20, 1, " px", "Moves Native threat vertically.")
+    Section("STYLING", "Target Priority")
+    MakeColorPicker("STYLING", "Target Priority Color", "priorityMarkerColor", "Tints Blizzard's native priority-highlight geometry.")
+    MakeSlider("STYLING", "Target Priority Opacity", "priorityMarkerOpacity", 10, 100, 5, "%", "Sets target-priority highlight opacity.")
 
-    Section("NATIVE", "Target Frame", "Tunes the TinyThreatPlus threat readout and group target counter added to Blizzard's target frame.")
-    MakeSlider("NATIVE", "Target Threat Width", "targetThreatWidth", 28, 64, 2, " px", "Sets the target-frame threat box width.")
-    MakeSlider("NATIVE", "Target Threat Height", "targetThreatHeight", 16, 28, 2, " px", "Sets the target-frame threat box height.")
-    MakeSlider("NATIVE", "Target Threat Font Size", "targetThreatFontSize", 8, 16, 1, " px", "Sets the target-frame threat font size.")
-    MakeSlider("NATIVE", "Target Threat X Offset", "targetThreatOffsetX", -40, 40, 1, " px", "Moves the target-frame threat box horizontally.")
-    MakeSlider("NATIVE", "Target Threat Y Offset", "targetThreatOffsetY", -30, 40, 1, " px", "Moves the target-frame threat box vertically.")
-    MakeSlider("NATIVE", "Target Threat Scale", "targetThreatScale", 50, 150, 5, "%", "Scales the target-frame TinyThreatPlus presentation.")
-    MakeSlider("NATIVE", "Target Counter Size", "targetCounterSize", 14, 32, 2, " px", "Sets the target-frame group target-counter size.")
-    MakeSlider("NATIVE", "Target Counter X Offset", "targetCounterOffsetX", -40, 40, 1, " px", "Moves the target counter horizontally from Blizzard's target portrait.")
-    MakeSlider("NATIVE", "Target Counter Y Offset", "targetCounterOffsetY", -40, 40, 1, " px", "Moves the target counter vertically from Blizzard's target portrait.")
+    Section("STYLING", "Nameplate Threat Readout")
+    MakeSlider("STYLING", "Threat Readout Width", "nativeThreatWidth", 20, 60, 2, " px", "Sets nameplate threat-readout width.")
+    MakeSlider("STYLING", "Threat Readout Height", "nativeThreatHeight", 14, 40, 2, " px", "Sets nameplate threat-readout height.")
+    MakeSlider("STYLING", "Threat Readout Font Size", "nativeThreatFontSize", 8, 16, 1, " px", "Sets nameplate threat font size.")
+    MakeSlider("STYLING", "Threat Readout X Offset", "nativeThreatOffsetX", -10, 40, 1, " px", "Moves the nameplate threat readout horizontally.")
+    MakeSlider("STYLING", "Threat Readout Y Offset", "nativeThreatOffsetY", -20, 20, 1, " px", "Moves the nameplate threat readout vertically.")
+
+    Section("STYLING", "Target Frame Threat Readout")
+    MakeSlider("STYLING", "Target Frame Threat Width", "targetThreatWidth", 28, 64, 2, " px", "Sets target-frame threat-readout width.")
+    MakeSlider("STYLING", "Target Frame Threat Height", "targetThreatHeight", 16, 28, 2, " px", "Sets target-frame threat-readout height.")
+    MakeSlider("STYLING", "Target Frame Threat Font Size", "targetThreatFontSize", 8, 16, 1, " px", "Sets target-frame threat font size.")
+    MakeSlider("STYLING", "Target Frame Threat X Offset", "targetThreatOffsetX", -40, 40, 1, " px", "Moves the target-frame threat readout horizontally.")
+    MakeSlider("STYLING", "Target Frame Threat Y Offset", "targetThreatOffsetY", -30, 40, 1, " px", "Moves the target-frame threat readout vertically.")
+    MakeSlider("STYLING", "Target Frame Threat Scale", "targetThreatScale", 50, 150, 5, "%", "Scales the target-frame TinyThreatPlus threat presentation.")
+
+    Section("STYLING", "Target Frame Target Counter")
+    MakeSlider("STYLING", "Target Counter Size", "targetCounterSize", 14, 32, 2, " px", "Sets target-frame target-counter size.")
+    MakeSlider("STYLING", "Target Counter X Offset", "targetCounterOffsetX", -40, 40, 1, " px", "Moves the target-frame target counter horizontally.")
+    MakeSlider("STYLING", "Target Counter Y Offset", "targetCounterOffsetY", -40, 40, 1, " px", "Moves the target-frame target counter vertically.")
 end
 
 local PAGE_DEFAULT_KEYS = {
     GENERAL = {
-        "nameplateMode", "showNameplateThreat", "roleBasedColors",
-        "alwaysShowThreatBoxes", "displayMode", "showTargetFrame",
-        "showTargetFrameCounter", "showThreatLeader",
+        "showNameplateThreat", "alwaysShowThreatBoxes", "roleBasedColors",
+        "displayMode", "showMobLevel", "showTargetHighlight",
+        "showTargetCounter", "showTargetFrameCounter", "showThreatLeader",
         "showThreatLeaderClassIcon", "showThreatLeaderRole",
-        "showPriorityMarker", "priorityWhileSolo", "priorityMarkerColor",
-        "priorityMarkerOpacity", "priorityMarkerSizeRating",
-        "priorityThreatThreshold", "showTargetCounter",
+        "previewGroupThreatSolo", "showTargetFrame", "showPriorityMarker",
+        "priorityWhileSolo", "priorityThreatThreshold",
     },
-    CUSTOM = {
-        "customNameplateScale", "customNameplateBarHeight", "customHealthScale",
-        "healthFrameOffsetX", "healthFrameOffsetY",
-        "customNameplateInactiveOpacity", "customNameFontSize",
-        "customNameFontColor", "customNameFontShadow", "showMobLevel",
-        "customLevelBadgeSize", "customLevelFontSize",
-        "customLevelOffsetX", "customLevelOffsetY", "showTargetHighlight",
-        "targetHighlightColor", "targetHighlightOpacity",
-        "nameplateThreatWidth", "nameplateThreatHeight",
-        "nameplateThreatFontSize", "nameplateThreatScale",
-    },
-    NATIVE = {
+    STYLING = {
         "nativeNameFont", "nativeNameFontSize", "nativeNameOutline",
         "nativeNameOutlineColor", "nativeHealthFont", "nativeHealthFontSize",
-        "nativeHealthOutline", "nativeHealthOutlineColor", "showMobLevel",
+        "nativeHealthOutline", "nativeHealthOutlineColor",
         "nativeLevelBadgeSize", "nativeLevelFontSize", "nativeLevelOffsetX",
-        "nativeLevelOffsetY", "showTargetHighlight", "targetHighlightColor",
-        "targetHighlightOpacity", "showTargetCounter", "showTargetFrameCounter",
-        "showThreatLeader", "showThreatLeaderClassIcon", "showThreatLeaderRole",
-        "previewGroupThreatSolo",
-        "nativeThreatWidth", "nativeThreatHeight",
-        "nativeThreatFontSize", "nativeThreatOffsetX", "nativeThreatOffsetY",
+        "nativeLevelOffsetY", "targetHighlightColor", "targetHighlightOpacity",
+        "priorityMarkerColor", "priorityMarkerOpacity",
+        "nativeThreatWidth", "nativeThreatHeight", "nativeThreatFontSize",
+        "nativeThreatOffsetX", "nativeThreatOffsetY",
         "targetThreatWidth", "targetThreatHeight", "targetThreatFontSize",
         "targetThreatOffsetX", "targetThreatOffsetY", "targetThreatScale",
         "targetCounterSize", "targetCounterOffsetX", "targetCounterOffsetY",
