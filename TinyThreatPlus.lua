@@ -418,6 +418,13 @@ local function CaptureForeverThreatSnapshot(targetUnit)
     if UnitIsPlayer(targetUnit) or not UnitCanAttack("player", targetUnit) then return end
     local targetGUID = UnitGUID(targetUnit)
     if not targetGUID then return end
+    -- UnitGUID itself becomes secret for some grouped/instance nameplate
+    -- tokens even before combat. Never use a protected string as a Lua key.
+    if TTP.Compat.IsSecretValue(targetGUID)
+        or not TTP.Compat.CanAccessValue(targetGUID)
+    then
+        return
+    end
 
     -- Merge into the existing target snapshot. A later read through a
     -- different unit token (for example nameplate1 after target) may have
@@ -431,7 +438,10 @@ local function CaptureForeverThreatSnapshot(targetUnit)
     for _, sourceUnit in ipairs(TTP.GetThreatUnits()) do
         if UnitExists(sourceUnit) then
             local sourceGUID = UnitGUID(sourceUnit)
-            if sourceGUID then
+            if sourceGUID
+                and not TTP.Compat.IsSecretValue(sourceGUID)
+                and TTP.Compat.CanAccessValue(sourceGUID)
+            then
                 local isTanking, status, scaledPercent, rawPercent, threatValue =
                     TTP.Compat.GetDetailedThreatSituation(sourceUnit, targetUnit)
                 if isTanking ~= nil or status ~= nil or scaledPercent ~= nil
