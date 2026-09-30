@@ -712,6 +712,12 @@ ResetNativeEnhancement = function(nameplate)
     overlay:Hide()
     overlay.level:Hide()
     overlay.threat:SetText("")
+    if overlay.TinyThreatPlusHiddenNativeLevel
+        and overlay.TinyThreatPlusHiddenNativeLevel.Show
+    then
+        overlay.TinyThreatPlusHiddenNativeLevel:Show()
+        overlay.TinyThreatPlusHiddenNativeLevel = nil
+    end
 end
 
 local function UpdateNativeEnhancement(unit, nameplate)
@@ -746,19 +752,26 @@ local function UpdateNativeEnhancement(unit, nameplate)
     -- Reuse the exact custom difficulty calculation and HD badge.
     UpdateLevel(overlay, unit)
 
-    -- Blizzard's native level box is the right-side HD box in Forever. Leave
-    -- its artwork/frame under Blizzard ownership, hide only the numeric level
-    -- FontString, and place our threat text over the same box.
-    local nativeLevel = unitFrame.LevelFrame or unitFrame.levelFrame
-    local nativeLevelText = unitFrame.LevelText or unitFrame.levelText or unitFrame.Level
-    if nativeLevelText and nativeLevelText.Hide then nativeLevelText:Hide() end
-    if nativeLevel and nativeLevel.GetWidth then
-        overlay.threat:ClearAllPoints()
-        overlay.threat:SetPoint("CENTER", nativeLevel, "CENTER", 0, 0)
-    else
-        overlay.threat:ClearAllPoints()
-        overlay.threat:SetPoint("LEFT", healthBar, "RIGHT", 22, 0)
+    -- Forever's right-side native level box is not exposed under a stable
+    -- LevelFrame field in this build. Keep Blizzard's HD artwork in place, but
+    -- suppress the duplicate numeric level by matching the already-rendered
+    -- level FontString among UnitFrame regions. Then anchor our threat readout
+    -- to the right edge of the native health bar, centered in that box.
+    local level = UnitEffectiveLevel and UnitEffectiveLevel(unit) or UnitLevel(unit)
+    local levelText = IsAccessible(level) and tostring(level < 0 and "??" or level) or nil
+    if levelText then
+        for _, region in ipairs({ unitFrame:GetRegions() }) do
+            if region and region.GetObjectType and region:GetObjectType() == "FontString"
+                and region.GetText and region:GetText() == levelText
+            then
+                region:Hide()
+                overlay.TinyThreatPlusHiddenNativeLevel = region
+            end
+        end
     end
+
+    overlay.threat:ClearAllPoints()
+    overlay.threat:SetPoint("LEFT", healthBar, "RIGHT", 22, 0)
 
     local data = TTP.GetThreatData(unit)
     if TinyThreatPlusDB.showNameplateThreat and data then
