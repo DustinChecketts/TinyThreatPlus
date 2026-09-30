@@ -1888,6 +1888,13 @@ local function DiagValueState(value)
     return "ordinary:" .. type(value)
 end
 
+local function DiagSafeValue(value)
+    if value == nil or TTP.Compat.IsSecretValue(value) or not TTP.Compat.CanAccessValue(value) then return nil end
+    local kind = type(value)
+    if kind == "number" or kind == "boolean" then return value end
+    return nil
+end
+
 local function DiagAppend(event, unit)
     local diag = TinyThreatPlusDB and TinyThreatPlusDB.diagnostic
     if not diag or not diag.active or not TTP.Compat.IsForever() then return end
@@ -1915,7 +1922,7 @@ local function DiagAppend(event, unit)
             d.friend = DiagValueState(UnitIsFriend("player", token))
             d.raidTarget = DiagValueState(GetRaidTargetIndex and GetRaidTargetIndex(token) or nil)
             local tank, status, scaled, raw, threat = UnitDetailedThreatSituation("player", token)
-            d.playerThreat = { DiagValueState(tank), DiagValueState(status), DiagValueState(scaled), DiagValueState(raw), DiagValueState(threat) }
+            d.playerThreat = { DiagValueState(tank), DiagValueState(status), DiagValueState(scaled), DiagValueState(raw), DiagValueState(threat) }\n            d.playerThreatValues = { DiagSafeValue(tank), DiagSafeValue(status), DiagSafeValue(scaled), DiagSafeValue(raw), DiagSafeValue(threat) }
             if token ~= "player" and token ~= "pet" then
                 d.sameAsTarget = DiagValueState(UnitIsUnit(token, "target"))
             end
@@ -1969,7 +1976,7 @@ eventFrame:SetScript("OnEvent", function(_, event, arg1)
     then
         CaptureForeverThreatForVisibleTargets(arg1)
     end
-    if event == "ADDON_LOADED" then
+    DiagAppend(event, arg1)\n\n    if event == "ADDON_LOADED" then
         if arg1 ~= ADDON_NAME then
             return
         end
@@ -2031,7 +2038,7 @@ eventFrame:RegisterEvent("NAME_PLATE_UNIT_ADDED")
 eventFrame:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
 eventFrame:RegisterEvent("UNIT_THREAT_LIST_UPDATE")
 eventFrame:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE")
-eventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
+eventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")\neventFrame:RegisterEvent("UNIT_TARGET")\neventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
 eventFrame:RegisterEvent("PLAYER_ROLES_ASSIGNED")
 eventFrame:RegisterEvent("UNIT_CLASSIFICATION_CHANGED")
