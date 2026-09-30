@@ -795,7 +795,7 @@ local function UpdateNativeEnhancement(unit, nameplate)
 
     LayoutNativeText(healthBar)
 
-    overlay = CreateNativeEnhancement(nameplate)
+    local overlay = CreateNativeEnhancement(nameplate)
     overlay.targetHighlight:ClearAllPoints()
     -- Anchor the artwork around Blizzard's bar instead of reading its width
     -- or height. Forever can make native geometry secret in combat.
