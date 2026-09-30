@@ -677,6 +677,86 @@ end
 
 function TTP.ClearNameplate(nameplate)
     ResetPlate(nameplate)
+    ResetNativeEnhancement(nameplate)
+end
+
+local function CreateNativeEnhancement(nameplate)
+    if nameplate.TinyThreatPlusNativeEnhancement then
+        return nameplate.TinyThreatPlusNativeEnhancement
+    end
+
+    local unitFrame = nameplate.UnitFrame
+    local overlay = CreateFrame("Frame", nil, nameplate)
+    overlay:SetFrameStrata(nameplate:GetFrameStrata())
+    overlay:SetFrameLevel((unitFrame and unitFrame:GetFrameLevel() or 1) + 20)
+
+    -- Native mode deliberately leaves Blizzard's plate untouched. We add one
+    -- HD level badge beside it and use that badge as the compact threat readout.
+    overlay.level = CreateLevelBadge(overlay)
+    overlay.threat = overlay.level:CreateFontString(nil, "OVERLAY", "GameNormalNumberFont")
+    overlay.threat:SetJustifyH("CENTER")
+    overlay.threat:SetJustifyV("MIDDLE")
+    overlay.threat:SetFont(STANDARD_TEXT_FONT, 8, "OUTLINE")
+    overlay.threat:SetPoint("TOP", overlay.level, "BOTTOM", 0, 3)
+    overlay:Hide()
+
+    nameplate.TinyThreatPlusNativeEnhancement = overlay
+    return overlay
+end
+
+local function ResetNativeEnhancement(nameplate)
+    local overlay = nameplate and nameplate.TinyThreatPlusNativeEnhancement
+    if not overlay then return end
+    overlay:Hide()
+    overlay.level:Hide()
+    overlay.threat:SetText("")
+end
+
+local function UpdateNativeEnhancement(unit, nameplate)
+    if not TTP.IsHostileNPC(unit) then
+        ResetNativeEnhancement(nameplate)
+        return
+    end
+
+    -- Native mode is additive: Blizzard owns all of its original presentation.
+    SetNativePresentation(nameplate, true)
+    local custom = nameplate.TinyThreatPlusPlate
+    if custom then custom:Hide() end
+
+    local healthBar = TTP.GetNameplateHealthBar(nameplate)
+    local unitFrame = nameplate.UnitFrame
+    if not healthBar or not unitFrame then
+        ResetNativeEnhancement(nameplate)
+        return
+    end
+
+    local overlay = CreateNativeEnhancement(nameplate)
+    overlay:ClearAllPoints()
+    PixelPoint(overlay, "BOTTOM", unitFrame, "BOTTOM", 0, 4)
+    PixelSize(overlay, 40, 40)
+
+    local levelSize = math.max(20, math.min(32,
+        tonumber(TinyThreatPlusDB.customLevelBadgeSize) or 26))
+    PixelSize(overlay.level, levelSize, levelSize)
+    overlay.level:ClearAllPoints()
+    PixelPoint(overlay.level, "CENTER", healthBar, "LEFT", -4, 0)
+
+    -- Reuse the exact custom difficulty calculation and HD badge.
+    UpdateLevel(overlay, unit)
+
+    local data = TTP.GetThreatData(unit)
+    if TinyThreatPlusDB.showNameplateThreat and data then
+        local text = TTP.GetThreatDisplayText(data)
+        local r, g, b = TTP.GetThreatColor(unit, data)
+        overlay.threat:SetText(text)
+        overlay.threat:SetTextColor(r, g, b)
+        overlay.threat:Show()
+    else
+        overlay.threat:SetText("")
+        overlay.threat:Hide()
+    end
+
+    overlay:Show()
 end
 
 local function UpdateForeverNameplate(unit, nameplate)
@@ -686,7 +766,14 @@ local function UpdateForeverNameplate(unit, nameplate)
         return
     end
 
-    if not TinyThreatPlusDB.enableCustomNameplates or not TTP.IsHostileNPC(unit) then
+    if TinyThreatPlusDB.nameplateMode == "NATIVE" then
+        ResetPlate(nameplate)
+        UpdateNativeEnhancement(unit, nameplate)
+        return
+    end
+
+    ResetNativeEnhancement(nameplate)
+    if not TTP.IsHostileNPC(unit) then
         ResetPlate(nameplate)
         return
     end
