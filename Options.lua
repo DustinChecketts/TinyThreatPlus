@@ -334,6 +334,12 @@ MakeSlider("CUSTOM", "Box Scale", "nameplateThreatScale", 50, 150, 5, "%", "Scal
 
 if TTP.Compat.IsForever() then
     Section("NATIVE", "Native Forever Plates", "Blizzard keeps ownership of the plate; TinyThreatPlus normalizes its text layout and adds independently tunable level and threat information.")
+    MakeChoice("NATIVE", "Enemy Name Font", "nativeNameFont", {
+        { label="Blizzard Standard", value="STANDARD" },
+        { label="Friz Quadrata", value="FRIZQT" },
+        { label="Arial Narrow", value="ARIALN" },
+        { label="Morpheus", value="MORPHEUS" },
+    }, "Selects the font used by Blizzard's native enemy-name FontString.")
     MakeSlider("NATIVE", "Enemy Name Font Size", "nativeNameFontSize", 8, 16, 1, " px", "Sets the Blizzard native enemy-name font size above the health bar.")
     MakeChoice("NATIVE", "Enemy Name Edge", "nativeNameOutline", {
         { label="Off", value="NONE" },
@@ -343,6 +349,12 @@ if TTP.Compat.IsForever() then
     }, "Selects the text edge treatment. WoW supports fixed Thin and Thick outline widths; Shadow supports the custom color below.")
     MakeColorPicker("NATIVE", "Enemy Name Shadow Color", "nativeNameOutlineColor", "Sets the custom shadow color when Enemy Name Edge is Shadow.")
 
+    MakeChoice("NATIVE", "Health Text Font", "nativeHealthFont", {
+        { label="Blizzard Standard", value="STANDARD" },
+        { label="Friz Quadrata", value="FRIZQT" },
+        { label="Arial Narrow", value="ARIALN" },
+        { label="Morpheus", value="MORPHEUS" },
+    }, "Selects the font used by Blizzard's native health value and percentage FontStrings. Arial Narrow is the cleanest sans-serif option at small sizes.")
     MakeSlider("NATIVE", "Health Text Font Size", "nativeHealthFontSize", 8, 14, 1, " px", "Sets Blizzard's native health value and percentage font size inside the bar.")
     MakeChoice("NATIVE", "Health Text Edge", "nativeHealthOutline", {
         { label="Off", value="NONE" },
