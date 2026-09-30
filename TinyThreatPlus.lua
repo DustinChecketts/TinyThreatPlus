@@ -413,6 +413,14 @@ local function CaptureForeverThreatSnapshot(targetUnit)
         end
     end
 
+    -- Bind the sanitized snapshot to the actual nameplate frame. Forever can
+    -- protect GUID/name identity, but the frame object remains stable while
+    -- that plate is visible, so target-acquired threat can persist after the
+    -- player switches targets.
+    local plate = string.match(targetUnit or "", "^nameplate%d+$")
+        and C_NamePlate.GetNamePlateForUnit(targetUnit) or nil
+    if plate then TTP.foreverNameplateSnapshots[plate] = snapshot end
+
     for _, sourceUnit in ipairs(TTP.GetThreatUnits()) do
         if UnitExists(sourceUnit) then
             local isTanking, status, scaledPercent, rawPercent, threatValue =
@@ -475,10 +483,21 @@ local function GetForeverSnapshotSource(targetUnit, sourceUnit)
         local same = TTP.Compat.GetAccessibleValue(UnitIsUnit(targetUnit, "target"))
         if same then
             local targetSnapshot = TTP.foreverThreatTokenSnapshots.target
-            if targetSnapshot and targetSnapshot.sources[sourceUnit] then
-                return targetSnapshot.sources[sourceUnit]
+            if targetSnapshot then
+                local targetPlate = C_NamePlate.GetNamePlateForUnit(targetUnit)
+                if targetPlate then TTP.foreverNameplateSnapshots[targetPlate] = targetSnapshot end
+                if targetSnapshot.sources[sourceUnit] then
+                    return targetSnapshot.sources[sourceUnit]
+                end
             end
         end
+    end
+
+    local plate = string.match(targetUnit or "", "^nameplate%d+$")
+        and C_NamePlate.GetNamePlateForUnit(targetUnit) or nil
+    local plateSnapshot = plate and TTP.foreverNameplateSnapshots[plate] or nil
+    if plateSnapshot and plateSnapshot.sources[sourceUnit] then
+        return plateSnapshot.sources[sourceUnit]
     end
 
     local snapshot = TTP.foreverThreatTokenSnapshots[targetUnit]
