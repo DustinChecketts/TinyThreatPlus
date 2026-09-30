@@ -694,11 +694,19 @@ local function CreateNativeEnhancement(nameplate)
     -- Native mode deliberately leaves Blizzard's plate untouched. We add one
     -- HD level badge beside it and use that badge as the compact threat readout.
     overlay.level = CreateLevelBadge(overlay)
+    -- Native mode uses one larger HD badge: mob level at the top, threat
+    -- value at the bottom. This replaces Blizzard's smaller native level
+    -- treatment instead of stacking a second readout below the badge.
+    overlay.level.text:ClearAllPoints()
+    overlay.level.text:SetPoint("TOP", overlay.level, "TOP", 0, -5)
+    overlay.level.text:SetHeight(14)
+
     overlay.threat = overlay.level:CreateFontString(nil, "OVERLAY", "GameNormalNumberFont")
     overlay.threat:SetJustifyH("CENTER")
     overlay.threat:SetJustifyV("MIDDLE")
     overlay.threat:SetFont(STANDARD_TEXT_FONT, 8, "OUTLINE")
-    overlay.threat:SetPoint("TOP", overlay.level, "BOTTOM", 0, 3)
+    overlay.threat:SetPoint("BOTTOM", overlay.level, "BOTTOM", 0, 5)
+    overlay.threat:SetHeight(12)
     overlay:Hide()
 
     nameplate.TinyThreatPlusNativeEnhancement = overlay
@@ -711,6 +719,12 @@ ResetNativeEnhancement = function(nameplate)
     overlay:Hide()
     overlay.level:Hide()
     overlay.threat:SetText("")
+    local nameplate = overlay:GetParent()
+    local unitFrame = nameplate and nameplate.UnitFrame
+    local nativeLevel = unitFrame and (unitFrame.LevelFrame or unitFrame.levelFrame)
+    if nativeLevel and nativeLevel.Show then nativeLevel:Show() end
+    local nativeLevelText = unitFrame and (unitFrame.LevelText or unitFrame.levelText or unitFrame.Level)
+    if nativeLevelText and nativeLevelText.Show then nativeLevelText:Show() end
 end
 
 local function UpdateNativeEnhancement(unit, nameplate)
@@ -736,11 +750,18 @@ local function UpdateNativeEnhancement(unit, nameplate)
     PixelPoint(overlay, "BOTTOM", unitFrame, "BOTTOM", 0, 4)
     PixelSize(overlay, 40, 40)
 
-    local levelSize = math.max(20, math.min(32,
-        tonumber(TinyThreatPlusDB.customLevelBadgeSize) or 26))
+    local levelSize = math.max(30, math.min(40,
+        (tonumber(TinyThreatPlusDB.customLevelBadgeSize) or 26) + 8))
     PixelSize(overlay.level, levelSize, levelSize)
     overlay.level:ClearAllPoints()
-    PixelPoint(overlay.level, "CENTER", healthBar, "LEFT", -4, 0)
+    PixelPoint(overlay.level, "CENTER", healthBar, "LEFT", -6, 0)
+
+    -- Hide only Blizzard's native level presentation while our native-mode
+    -- enhancement is active. Keep the rest of Blizzard's plate untouched.
+    local nativeLevel = unitFrame.LevelFrame or unitFrame.levelFrame
+    if nativeLevel and nativeLevel.Hide then nativeLevel:Hide() end
+    local nativeLevelText = unitFrame.LevelText or unitFrame.levelText or unitFrame.Level
+    if nativeLevelText and nativeLevelText.Hide then nativeLevelText:Hide() end
 
     -- Reuse the exact custom difficulty calculation and HD badge.
     UpdateLevel(overlay, unit)
