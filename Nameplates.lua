@@ -683,6 +683,14 @@ end
 ResetNativeEnhancement = function(nameplate)
     local overlay = nameplate and nameplate.TinyThreatPlusNativeEnhancement
     if not overlay then return end
+    local unitFrame = nameplate.UnitFrame
+    local healthBar = unitFrame and unitFrame.healthBar
+    if unitFrame and unitFrame.selectionHighlight then
+        unitFrame.selectionHighlight:SetAlpha(1)
+    end
+    if healthBar and healthBar.selectedBorder then
+        healthBar.selectedBorder:SetAlpha(1)
+    end
     overlay:Hide()
     overlay.level:Hide()
     overlay.targetHighlight:Hide()
@@ -794,6 +802,15 @@ local function UpdateNativeEnhancement(unit, nameplate)
     end
 
     LayoutNativeText(healthBar)
+
+    -- Native + TTP owns selected-target treatment so its color/opacity controls
+    -- are deterministic instead of stacking over Blizzard's yellow treatment.
+    if unitFrame.selectionHighlight then
+        unitFrame.selectionHighlight:SetAlpha(0)
+    end
+    if healthBar.selectedBorder then
+        healthBar.selectedBorder:SetAlpha(0)
+    end
 
     local overlay = CreateNativeEnhancement(nameplate)
     overlay.targetHighlight:ClearAllPoints()
