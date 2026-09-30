@@ -910,22 +910,15 @@ function TTP.ApplyBoxStyle(frame, height)
 
     frame.TinyThreatPlusStyleKey = styleKey
 
-    frame:SetBackdrop({
-        bgFile = "Interface\\Buttons\\WHITE8X8",
-        edgeFile = edgeFile,
-        edgeSize = edgeSize,
-        insets = {
-            left = inset,
-            right = inset,
-            top = inset,
-            bottom = inset,
-        },
-    })
-
     if forever then
-        -- Backdrop edges are square. The Forever renderer uses our clipped
-        -- one-pixel-corner chrome instead.
-        frame:SetBackdrop(nil)
+        -- Never invoke BackdropTemplate layout on Forever threat boxes.
+        -- In instances Blizzard can mark frame geometry as secret even out
+        -- of combat; SetBackdrop() immediately reads that geometry and does
+        -- arithmetic in SharedXML, which taints and errors.
+        -- Forever uses addon-owned atlas art below and needs no backdrop.
+        if frame.backdropInfo then
+            frame.backdropInfo = nil
+        end
         -- ApplyBoxStyle lives in the core file; the nameplate-local
         -- SetRoundedChromeShown helper is not in scope here. Hide any legacy
         -- core chrome directly before showing Blizzard's confirmed frame art.
@@ -951,6 +944,17 @@ function TTP.ApplyBoxStyle(frame, height)
         art:SetVertexColor(1, 1, 1, 1)
         art:Show()
     else
+        frame:SetBackdrop({
+            bgFile = "Interface\\Buttons\\WHITE8X8",
+            edgeFile = edgeFile,
+            edgeSize = edgeSize,
+            insets = {
+                left = inset,
+                right = inset,
+                top = inset,
+                bottom = inset,
+            },
+        })
         frame:SetBackdropColor(unpack(TTP.colors.background))
         frame:SetBackdropBorderColor(unpack(TTP.colors.border))
     end
