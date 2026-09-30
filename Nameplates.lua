@@ -735,6 +735,14 @@ local function UpdateNativeEnhancement(unit, nameplate)
 
     LayoutNativeText(healthBar)
 
+    -- Forever exposes its right-side level presentation as a stable frame.
+    -- Hide the frame itself rather than inspecting its potentially-secret text.
+    -- Our HD badge on the left is the authoritative level presentation.
+    local nativeLevelFrame = unitFrame.PlayerLevelDiffFrame
+    if nativeLevelFrame and nativeLevelFrame.Hide then
+        nativeLevelFrame:Hide()
+    end
+
     local overlay = CreateNativeEnhancement(nameplate)
     overlay:ClearAllPoints()
     PixelPoint(overlay, "BOTTOM", unitFrame, "BOTTOM", 0, 4)
