@@ -102,6 +102,10 @@ function TTP.ApplyDefaults()
             or TinyThreatPlusDB.nameplatePresentation == "BLIZZARD"
         then
             TinyThreatPlusDB.nameplateMode = "NATIVE"
+        elseif TTP.Compat.IsForever() then
+            -- Native + TinyThreatPlus is the shipping Forever presentation.
+            -- Explicit legacy choices above are still honored during migration.
+            TinyThreatPlusDB.nameplateMode = "NATIVE"
         else
             TinyThreatPlusDB.nameplateMode = "CUSTOM"
         end
@@ -1202,8 +1206,8 @@ local function UpdateStandaloneTargetCounter(
             "CENTER",
             portraitAnchor,
             "TOPRIGHT",
-            -2,
-            -2
+            TTP.Compat.IsForever() and (tonumber(TinyThreatPlusDB.targetCounterOffsetX) or -2) or -2,
+            TTP.Compat.IsForever() and (tonumber(TinyThreatPlusDB.targetCounterOffsetY) or -2) or -2
         )
     else
         counter:SetPoint(
@@ -1261,6 +1265,11 @@ local function GetTargetThreatLeaderFrame()
     frame.icon:SetSize(14, 14)
     frame.icon:SetPoint("LEFT", frame, "LEFT", 0, 0)
 
+    frame.roleIcon = frame:CreateTexture(nil, "ARTWORK")
+    frame.roleIcon:SetSize(14, 14)
+    frame.roleIcon:SetPoint("LEFT", frame, "LEFT", 0, 0)
+    frame.roleIcon:Hide()
+
     frame.name = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     frame.name:SetPoint("LEFT", frame.icon, "RIGHT", 3, 0)
     frame.name:SetJustifyH("LEFT")
@@ -1292,6 +1301,7 @@ local function UpdateTargetThreatLeader(box, data)
     end
 
     frame.icon:Hide()
+    frame.roleIcon:Hide()
     if TinyThreatPlusDB.showThreatLeaderClassIcon and exists then
         if class and TARGET_CLASS_ICON_ATLASES[class] then
             frame.icon:SetTexCoord(0, 1, 0, 1)
@@ -1307,8 +1317,31 @@ local function UpdateTargetThreatLeader(box, data)
         end
     end
 
-    frame.name:ClearAllPoints()
+    local role = exists and TTP.GetUnitRole(unit) or nil
+    if TinyThreatPlusDB.showThreatLeaderRole and role and role ~= "NONE" then
+        local roleAtlas = role == "TANK" and "roleicon-tiny-tank"
+            or role == "HEALER" and "roleicon-tiny-healer"
+            or role == "DAMAGER" and "roleicon-tiny-dps"
+            or nil
+        if roleAtlas then
+            frame.roleIcon:SetAtlas(roleAtlas)
+            frame.roleIcon:Show()
+        end
+    end
+
+    frame.icon:ClearAllPoints()
+    frame.roleIcon:ClearAllPoints()
+    frame.icon:SetPoint("LEFT", frame, "LEFT", 0, 0)
     if frame.icon:IsShown() then
+        frame.roleIcon:SetPoint("LEFT", frame.icon, "RIGHT", 2, 0)
+    else
+        frame.roleIcon:SetPoint("LEFT", frame, "LEFT", 0, 0)
+    end
+
+    frame.name:ClearAllPoints()
+    if frame.roleIcon:IsShown() then
+        frame.name:SetPoint("LEFT", frame.roleIcon, "RIGHT", 3, 0)
+    elseif frame.icon:IsShown() then
         frame.name:SetPoint("LEFT", frame.icon, "RIGHT", 3, 0)
     else
         frame.name:SetPoint("LEFT", frame, "LEFT", 0, 0)
