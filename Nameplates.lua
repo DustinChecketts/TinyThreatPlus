@@ -121,6 +121,7 @@ local function CreateAuraButton(parent)
 end
 
 local UpdateCastFrame
+local ResetNativeEnhancement
 
 local function CreatePlate(nameplate)
     if nameplate.TinyThreatPlusPlate then
@@ -704,7 +705,7 @@ local function CreateNativeEnhancement(nameplate)
     return overlay
 end
 
-local function ResetNativeEnhancement(nameplate)
+ResetNativeEnhancement = function(nameplate)
     local overlay = nameplate and nameplate.TinyThreatPlusNativeEnhancement
     if not overlay then return end
     overlay:Hide()
