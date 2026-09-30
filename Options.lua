@@ -335,7 +335,22 @@ MakeSlider("CUSTOM", "Box Scale", "nameplateThreatScale", 50, 150, 5, "%", "Scal
 if TTP.Compat.IsForever() then
     Section("NATIVE", "Native Forever Plates", "Blizzard keeps ownership of the plate; TinyThreatPlus normalizes its text layout and adds independently tunable level and threat information.")
     MakeSlider("NATIVE", "Enemy Name Font Size", "nativeNameFontSize", 8, 16, 1, " px", "Sets the Blizzard native enemy-name font size above the health bar.")
+    MakeChoice("NATIVE", "Enemy Name Edge", "nativeNameOutline", {
+        { label="Off", value="NONE" },
+        { label="Shadow", value="SHADOW" },
+        { label="Thin Outline", value="OUTLINE" },
+        { label="Thick Outline", value="THICKOUTLINE" },
+    }, "Selects the text edge treatment. WoW supports fixed Thin and Thick outline widths; Shadow supports the custom color below.")
+    MakeColorPicker("NATIVE", "Enemy Name Shadow Color", "nativeNameOutlineColor", "Sets the custom shadow color when Enemy Name Edge is Shadow.")
+
     MakeSlider("NATIVE", "Health Text Font Size", "nativeHealthFontSize", 8, 14, 1, " px", "Sets Blizzard's native health value and percentage font size inside the bar.")
+    MakeChoice("NATIVE", "Health Text Edge", "nativeHealthOutline", {
+        { label="Off", value="NONE" },
+        { label="Shadow", value="SHADOW" },
+        { label="Thin Outline", value="OUTLINE" },
+        { label="Thick Outline", value="THICKOUTLINE" },
+    }, "Selects the health-text edge treatment. WoW supports fixed Thin and Thick outline widths; Shadow supports the custom color below.")
+    MakeColorPicker("NATIVE", "Health Text Shadow Color", "nativeHealthOutlineColor", "Sets the custom shadow color when Health Text Edge is Shadow.")
     MakeToggle("NATIVE", "Show Mob Level", "showMobLevel", "Shows the TinyThreatPlus HD level badge.")
     MakeSlider("NATIVE", "Level Badge Size", "nativeLevelBadgeSize", 24, 48, 1, " px", "Sets the Native level-badge size.")
     MakeSlider("NATIVE", "Level Font Size", "nativeLevelFontSize", 8, 16, 1, " px", "Sets the Native level font size.")
