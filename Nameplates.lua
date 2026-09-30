@@ -519,7 +519,13 @@ local function UpdateNativeEnhancement(unit, nameplate)
                 leader.name:SetTextColor(color.r, color.g, color.b)
             else leader.name:SetTextColor(1, 1, 1) end
             leader:ClearAllPoints()
-            PixelPoint(leader, "TOPLEFT", healthBar, "BOTTOMLEFT", 0, -1)
+            -- Keep Threat Leader with our right-side threat presentation. The
+            -- native cast bar occupies the full strip beneath the health bar,
+            -- so anchoring leader text there causes it to be covered while a
+            -- mob casts.
+            PixelPoint(leader, "TOPRIGHT", overlay.threatBadge, "BOTTOMRIGHT", 0, -2)
+            leader:SetWidth(150)
+            leader.name:SetJustifyH("RIGHT")
             leader:Show()
         end
     end
