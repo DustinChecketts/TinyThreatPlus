@@ -384,6 +384,7 @@ end
 -- Threat collection and fallback data
 -- ---------------------------------------------------------------------------
 TTP.foreverThreatSnapshots = TTP.foreverThreatSnapshots or {}
+TTP.foreverThreatTokenSnapshots = TTP.foreverThreatTokenSnapshots or {}
 
 local function CaptureForeverThreatSnapshot(targetUnit)
     if not TTP.Compat.IsForever() or not targetUnit or not UnitExists(targetUnit) then return end
