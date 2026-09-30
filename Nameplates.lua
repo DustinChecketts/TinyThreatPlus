@@ -294,8 +294,9 @@ local function LayoutNativeText(healthBar)
 end
 
 local function GetNativeThreatBarColor(healthBar, state)
-    -- Match Blizzard's own enemy-health saturation instead of the brighter
-    -- addon text colors. Cache the native red before TinyThreatPlus recolors it.
+    -- Tint Blizzard's existing status-bar texture rather than replacing or
+    -- layering artwork. Use the native hostile red as the saturation/value
+    -- reference, then rotate only its hue for warning/safe states.
     if not healthBar.TinyThreatPlusNativeColor then
         local r, g, b = healthBar:GetStatusBarColor()
         if IsAccessible(r) and IsAccessible(g) and IsAccessible(b) then
@@ -304,9 +305,11 @@ local function GetNativeThreatBarColor(healthBar, state)
             healthBar.TinyThreatPlusNativeColor = { 0.72, 0.10, 0.10 }
         end
     end
-    if state == "good" then return 0.10, 0.72, 0.10 end
-    if state == "warn" then return 0.82, 0.62, 0.08 end
     local n = healthBar.TinyThreatPlusNativeColor
+    local hi = math.max(n[1], n[2], n[3])
+    local lo = math.min(n[1], n[2], n[3])
+    if state == "good" then return lo, hi, lo end
+    if state == "warn" then return hi, hi * 0.78, lo end
     return n[1], n[2], n[3]
 end
 
@@ -458,7 +461,12 @@ local function UpdateNativeEnhancement(unit, nameplate)
         end
         if overlay.stableThreatState and healthBar.SetStatusBarColor then
             local r, g, b = GetNativeThreatBarColor(healthBar, overlay.stableThreatState)
-            healthBar:SetStatusBarColor(r, g, b)
+            local cr, cg, cb = healthBar:GetStatusBarColor()
+            if IsAccessible(cr) and IsAccessible(cg) and IsAccessible(cb)
+                and (math.abs(cr-r) > 0.01 or math.abs(cg-g) > 0.01 or math.abs(cb-b) > 0.01)
+            then
+                healthBar:SetStatusBarColor(r, g, b)
+            end
         end
     end
 
