@@ -470,6 +470,20 @@ local function CaptureForeverThreatForVisibleTargets(eventUnit)
     -- its threat values can be ordinary at this exact point in dispatch.
     CaptureOnce(eventUnit)
     CaptureOnce("target")
+
+    -- "target" is a legal direct token for the nameplate API even though
+    -- compound tokens are not. Bind the richer target snapshot to Blizzard's
+    -- actual plate frame while it is targeted. The frame association survives
+    -- a target switch and becomes Forever's equivalent of Anniversary's
+    -- per-visible-enemy threat record.
+    if UnitExists("target") then
+        local targetPlate = C_NamePlate.GetNamePlateForUnit("target")
+        local targetSnapshot = TTP.foreverThreatTokenSnapshots.target
+        if targetPlate and targetSnapshot then
+            TTP.foreverNameplateSnapshots[targetPlate] = targetSnapshot
+        end
+    end
+
     for unit in pairs(TTP.activeNameplates) do CaptureOnce(unit) end
 end
 
