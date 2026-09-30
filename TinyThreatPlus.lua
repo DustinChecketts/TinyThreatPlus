@@ -60,6 +60,8 @@ TTP.defaults = {
     targetCounterSize = 18,
     targetCounterOffsetX = -2,
     targetCounterOffsetY = -2,
+}
+
 TTP.colors = {
     good = { 0.10, 0.85, 0.10 },
     warn = { 1.00, 0.82, 0.00 },
