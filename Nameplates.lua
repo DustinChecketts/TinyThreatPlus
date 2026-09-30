@@ -820,19 +820,18 @@ local function UpdateNativeEnhancement(unit, nameplate)
 
     local overlay = CreateNativeEnhancement(nameplate)
     overlay.targetHighlight:ClearAllPoints()
-    -- Center the artwork on the health bar, matching the Custom renderer.
-    -- Avoid opposing-corner anchors here: the atlas has transparent margins,
-    -- and center + explicit dimensions keeps its optical expansion balanced.
-    -- Native bar dimensions can become secret, so derive the highlight from
-    -- the known Forever presentation width/height rather than reading them.
+    -- Expand equally from all four edges. At zero padding this is exactly the
+    -- native health bar's bounds; each padding value adds the same distance to
+    -- both opposing sides. This also follows every Blizzard Forever plate style
+    -- without reading protected width/height values.
     local highlightPadX = math.max(0, math.min(24,
         tonumber(TinyThreatPlusDB.targetHighlightPadX) or 6))
     local highlightPadY = math.max(0, math.min(20,
         tonumber(TinyThreatPlusDB.targetHighlightPadY) or 6))
-    PixelPoint(overlay.targetHighlight, "CENTER", healthBar, "CENTER", 0, 0)
-    PixelSize(overlay.targetHighlight,
-        BASE_WIDTH + (highlightPadX * 2),
-        BASE_BAR_HEIGHT + (highlightPadY * 2))
+    PixelPoint(overlay.targetHighlight, "TOPLEFT", healthBar, "TOPLEFT",
+        -highlightPadX, highlightPadY)
+    PixelPoint(overlay.targetHighlight, "BOTTOMRIGHT", healthBar, "BOTTOMRIGHT",
+        highlightPadX, -highlightPadY)
     if TinyThreatPlusDB.showTargetHighlight and UnitIsUnit(unit, "target") then
         local color = TinyThreatPlusDB.targetHighlightColor or TTP.defaults.targetHighlightColor or { 1, 1, 1 }
         overlay.targetHighlight:SetVertexColor(
