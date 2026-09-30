@@ -333,7 +333,9 @@ MakeSlider("CUSTOM", "Font Size", "nameplateThreatFontSize", 8, 14, 1, " px", "S
 MakeSlider("CUSTOM", "Box Scale", "nameplateThreatScale", 50, 150, 5, "%", "Scales the complete custom threat indicator.")
 
 if TTP.Compat.IsForever() then
-    Section("NATIVE", "Native Forever Plates", "Blizzard keeps ownership of the plate; TinyThreatPlus adds independently tunable level and threat information.")
+    Section("NATIVE", "Native Forever Plates", "Blizzard keeps ownership of the plate; TinyThreatPlus normalizes its text layout and adds independently tunable level and threat information.")
+    MakeSlider("NATIVE", "Enemy Name Font Size", "nativeNameFontSize", 8, 16, 1, " px", "Sets the Blizzard native enemy-name font size above the health bar.")
+    MakeSlider("NATIVE", "Health Text Font Size", "nativeHealthFontSize", 8, 14, 1, " px", "Sets Blizzard's native health value and percentage font size inside the bar.")
     MakeToggle("NATIVE", "Show Mob Level", "showMobLevel", "Shows the TinyThreatPlus HD level badge.")
     MakeSlider("NATIVE", "Level Badge Size", "nativeLevelBadgeSize", 24, 48, 1, " px", "Sets the Native level-badge size.")
     MakeSlider("NATIVE", "Level Font Size", "nativeLevelFontSize", 8, 16, 1, " px", "Sets the Native level font size.")
