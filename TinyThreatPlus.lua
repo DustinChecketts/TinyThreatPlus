@@ -13,6 +13,8 @@ TTP.defaults = {
     showTargetHighlight = false,
     targetHighlightColor = { 1, 1, 1 },
     targetHighlightOpacity = 70,
+    targetHighlightPadX = 10,
+    targetHighlightPadY = 8,
     customNameplateScale = 100,
     customNameplateBarHeight = 20,
     healthFrameOffsetX = 2,
@@ -52,6 +54,7 @@ TTP.defaults = {
     roleBasedColors = true,
     showTargetCounter = true,
     showTargetFrameCounter = true,
+    previewGroupThreatSolo = false,
 
     showPriorityMarker = true,
     priorityWhileSolo = false,
@@ -1293,6 +1296,16 @@ end
 
 local function UpdateTargetThreatLeader(box, data)
     local frame = GetTargetThreatLeaderFrame()
+    local previewSolo = TTP.Compat.IsForever()
+        and TinyThreatPlusDB.previewGroupThreatSolo
+        and not IsInGroup()
+        and not IsInRaid()
+
+    if previewSolo and box and box:IsShown() then
+        data = data or {}
+        data.leaderUnit = "player"
+        data.leaderName = UnitName("player") or "Player"
+    end
 
     if not TinyThreatPlusDB.showThreatLeader
         or not box
@@ -1329,6 +1342,11 @@ local function UpdateTargetThreatLeader(box, data)
     end
 
     local role = exists and TTP.GetUnitRole(unit) or nil
+    if previewSolo and unit == "player" and (not role or role == "NONE") then
+        -- Solo players have no assigned group role. Damage is a preview-only
+        -- stand-in so the role-icon layout can still be positioned/tested.
+        role = "DAMAGER"
+    end
     if TinyThreatPlusDB.showThreatLeaderRole and role and role ~= "NONE" then
         local roleAtlas = role == "TANK" and "roleicon-tiny-tank"
             or role == "HEALER" and "roleicon-tiny-healer"
