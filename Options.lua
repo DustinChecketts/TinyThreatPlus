@@ -359,8 +359,9 @@ if TTP.Compat.IsForever() then
     MakeSlider("NATIVE", "Level X Offset", "nativeLevelOffsetX", -30, 10, 1, " px", "Moves the Native level badge horizontally.")
     MakeSlider("NATIVE", "Level Y Offset", "nativeLevelOffsetY", -20, 20, 1, " px", "Moves the Native level badge vertically.")
 
-    Section("NATIVE", "Current Target", "Uses Blizzard's native selected-target border geometry with a neutral TinyThreatPlus treatment.")
-    MakeToggle("NATIVE", "Highlight Current Target", "showTargetHighlight", "Shows Blizzard's native selected-target border, desaturated to a neutral highlight.")
+    Section("NATIVE", "Current Target", "Uses Blizzard's native selected-target border geometry; TinyThreatPlus only desaturates, tints, and adjusts opacity.")
+    MakeToggle("NATIVE", "Highlight Current Target", "showTargetHighlight", "Shows Blizzard's native selected-target border.")
+    MakeColorPicker("NATIVE", "Highlight Color", "targetHighlightColor", "Tints the desaturated Blizzard target border while preserving Blizzard's native geometry.")
     MakeSlider("NATIVE", "Highlight Opacity", "targetHighlightOpacity", 10, 100, 5, "%", "Sets the opacity of Blizzard's native selected-target border.")
 
     Section("NATIVE", "Group Threat Information", "Controls the additional group targeting and threat-leader information used by Native + TinyThreatPlus.")
@@ -416,8 +417,8 @@ local PAGE_DEFAULT_KEYS = {
         "nativeNameOutlineColor", "nativeHealthFont", "nativeHealthFontSize",
         "nativeHealthOutline", "nativeHealthOutlineColor", "showMobLevel",
         "nativeLevelBadgeSize", "nativeLevelFontSize", "nativeLevelOffsetX",
-        "nativeLevelOffsetY", "showTargetHighlight", "targetHighlightOpacity",
-        "showTargetCounter", "showTargetFrameCounter",
+        "nativeLevelOffsetY", "showTargetHighlight", "targetHighlightColor",
+        "targetHighlightOpacity", "showTargetCounter", "showTargetFrameCounter",
         "showThreatLeader", "showThreatLeaderClassIcon", "showThreatLeaderRole",
         "previewGroupThreatSolo",
         "nativeThreatWidth", "nativeThreatHeight",
