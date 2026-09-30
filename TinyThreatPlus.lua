@@ -2009,6 +2009,24 @@ local eventFrame = CreateFrame("Frame")
 local updateElapsed = 0
 
 eventFrame:SetScript("OnEvent", function(_, event, arg1)
+    -- Secret GUIDs mean Forever cannot use identity to tell us when a reusable
+    -- unit token starts describing a different enemy. Treat Blizzard's own
+    -- lifecycle events as that identity boundary instead. Preserve the old
+    -- plate-bound snapshot, but give the new target/token a fresh record.
+    if TTP.Compat.IsForever() then
+        if event == "PLAYER_TARGET_CHANGED" then
+            TTP.foreverThreatTokenSnapshots.target = nil
+        elseif event == "NAME_PLATE_UNIT_ADDED" then
+            TTP.foreverThreatTokenSnapshots[arg1] = nil
+            local addedPlate = C_NamePlate.GetNamePlateForUnit(arg1)
+            if addedPlate then TTP.foreverNameplateSnapshots[addedPlate] = nil end
+        elseif event == "NAME_PLATE_UNIT_REMOVED" then
+            TTP.foreverThreatTokenSnapshots[arg1] = nil
+            local removedPlate = C_NamePlate.GetNamePlateForUnit(arg1)
+            if removedPlate then TTP.foreverNameplateSnapshots[removedPlate] = nil end
+        end
+    end
+
     -- Forever's numeric threat can be accessible during the threat event but
     -- secret later in the render path. Capture it before any diagnostic or
     -- broader addon update work runs.
@@ -2018,7 +2036,8 @@ eventFrame:SetScript("OnEvent", function(_, event, arg1)
         or event == "NAME_PLATE_UNIT_ADDED"
     then
         CaptureForeverThreatForVisibleTargets(arg1)
-    end
+    end
+
     DiagAppend(event, arg1)
 
     if event == "ADDON_LOADED" then
@@ -2039,6 +2058,8 @@ eventFrame:SetScript("OnEvent", function(_, event, arg1)
     if event == "PLAYER_REGEN_ENABLED" then
         wipe(TTP.damageFallback)
         wipe(TTP.foreverThreatSnapshots)
+        wipe(TTP.foreverThreatTokenSnapshots)
+        wipe(TTP.foreverNameplateSnapshots)
     end
 
     if event == "NAME_PLATE_UNIT_ADDED" then
