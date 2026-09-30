@@ -388,45 +388,44 @@ TTP.foreverThreatSnapshots = TTP.foreverThreatSnapshots or {}
 local function CaptureForeverThreatSnapshot(targetUnit)
     if not TTP.Compat.IsForever() or not targetUnit or not UnitExists(targetUnit) then return end
     if UnitIsPlayer(targetUnit) or not UnitCanAttack("player", targetUnit) then return end
-    local targetGUID = UnitGUID(targetUnit)
-    if not targetGUID then return end
-    -- UnitGUID itself becomes secret for some grouped/instance nameplate
-    -- tokens even before combat. Never use a protected string as a Lua key.
-    if TTP.Compat.IsSecretValue(targetGUID)
-        or not TTP.Compat.CanAccessValue(targetGUID)
-    then
-        return
-    end
 
-    -- Merge into the existing target snapshot. A later read through a
-    -- different unit token (for example nameplate1 after target) may have
-    -- fewer accessible values; it must never erase a good event-time read.
-    local snapshot = TTP.foreverThreatSnapshots[targetGUID]
+    -- In grouped Forever content the target GUID itself may be secret. Keep a
+    -- token-keyed snapshot as the primary render fallback; ordinary GUIDs are
+    -- additionally indexed so target/nameplate aliases can share data.
+    local snapshot = TTP.foreverThreatTokenSnapshots[targetUnit]
     if not snapshot then
         snapshot = { capturedAt = GetTime(), sources = {} }
-        TTP.foreverThreatSnapshots[targetGUID] = snapshot
+        TTP.foreverThreatTokenSnapshots[targetUnit] = snapshot
+    end
+
+    local targetGUID = UnitGUID(targetUnit)
+    if targetGUID
+        and not TTP.Compat.IsSecretValue(targetGUID)
+        and TTP.Compat.CanAccessValue(targetGUID)
+    then
+        local guidSnapshot = TTP.foreverThreatSnapshots[targetGUID]
+        if guidSnapshot then
+            snapshot = guidSnapshot
+            TTP.foreverThreatTokenSnapshots[targetUnit] = snapshot
+        else
+            TTP.foreverThreatSnapshots[targetGUID] = snapshot
+        end
     end
 
     for _, sourceUnit in ipairs(TTP.GetThreatUnits()) do
         if UnitExists(sourceUnit) then
-            local sourceGUID = UnitGUID(sourceUnit)
-            if sourceGUID
-                and not TTP.Compat.IsSecretValue(sourceGUID)
-                and TTP.Compat.CanAccessValue(sourceGUID)
-            then
-                local isTanking, status, scaledPercent, rawPercent, threatValue =
-                    TTP.Compat.GetDetailedThreatSituation(sourceUnit, targetUnit)
-                if isTanking ~= nil or status ~= nil or scaledPercent ~= nil
-                    or rawPercent ~= nil or threatValue ~= nil then
-                    local source = snapshot.sources[sourceGUID] or {}
-                    if isTanking ~= nil then source.isTanking = isTanking end
-                    if status ~= nil then source.status = status end
-                    if scaledPercent ~= nil then source.scaledPercent = scaledPercent end
-                    if rawPercent ~= nil then source.rawPercent = rawPercent end
-                    if threatValue ~= nil then source.threatValue = threatValue end
-                    snapshot.sources[sourceGUID] = source
-                    snapshot.capturedAt = GetTime()
-                end
+            local isTanking, status, scaledPercent, rawPercent, threatValue =
+                TTP.Compat.GetDetailedThreatSituation(sourceUnit, targetUnit)
+            if isTanking ~= nil or status ~= nil or scaledPercent ~= nil
+                or rawPercent ~= nil or threatValue ~= nil then
+                local source = snapshot.sources[sourceUnit] or {}
+                if isTanking ~= nil then source.isTanking = isTanking end
+                if status ~= nil then source.status = status end
+                if scaledPercent ~= nil then source.scaledPercent = scaledPercent end
+                if rawPercent ~= nil then source.rawPercent = rawPercent end
+                if threatValue ~= nil then source.threatValue = threatValue end
+                snapshot.sources[sourceUnit] = source
+                snapshot.capturedAt = GetTime()
             end
         end
     end
@@ -466,17 +465,23 @@ end
 
 local function GetForeverSnapshotSource(targetUnit, sourceUnit)
     if not TTP.Compat.IsForever() then return nil end
-    local targetGUID, sourceGUID = UnitGUID(targetUnit), UnitGUID(sourceUnit)
-    if not targetGUID or not sourceGUID then return nil end
-    if TTP.Compat.IsSecretValue(targetGUID)
-        or TTP.Compat.IsSecretValue(sourceGUID)
+
+    -- Token snapshots remain usable when Forever protects the target GUID.
+    local snapshot = TTP.foreverThreatTokenSnapshots[targetUnit]
+    if snapshot and snapshot.sources[sourceUnit] then
+        return snapshot.sources[sourceUnit]
+    end
+
+    local targetGUID = UnitGUID(targetUnit)
+    if not targetGUID
+        or TTP.Compat.IsSecretValue(targetGUID)
         or not TTP.Compat.CanAccessValue(targetGUID)
-        or not TTP.Compat.CanAccessValue(sourceGUID)
     then
         return nil
     end
-    local snapshot = TTP.foreverThreatSnapshots[targetGUID]
-    return snapshot and snapshot.sources[sourceGUID] or nil
+
+    snapshot = TTP.foreverThreatSnapshots[targetGUID]
+    return snapshot and snapshot.sources[sourceUnit] or nil
 end
 
 function TTP.GetThreatData(unit)
@@ -522,7 +527,7 @@ function TTP.GetThreatData(unit)
     if data.playerIsTanking then data.aggroUnit = "player" end
 
     for _, threatUnit in ipairs(TTP.GetThreatUnits()) do
-        if not UnitIsUnit(threatUnit, "player") then
+        if threatUnit ~= "player" then
             local isTanking, status, _, _, threat =
                 TTP.Compat.GetDetailedThreatSituation(threatUnit, unit)
             local sourceSnapshot = GetForeverSnapshotSource(unit, threatUnit)
