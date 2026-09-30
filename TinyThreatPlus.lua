@@ -467,7 +467,20 @@ end
 local function GetForeverSnapshotSource(targetUnit, sourceUnit)
     if not TTP.Compat.IsForever() then return nil end
 
-    -- Token snapshots remain usable when Forever protects the target GUID.
+    -- A nameplate and the player's target can describe the same mob while
+    -- their protected GUIDs cannot be compared. UnitIsUnit(nameplate,target)
+    -- has remained usable for this direct-token pairing, so let nameplates
+    -- consume the richer target snapshot captured by threat events.
+    if string.match(targetUnit or "", "^nameplate%d+$") and UnitExists("target") then
+        local same = TTP.Compat.GetAccessibleValue(UnitIsUnit(targetUnit, "target"))
+        if same then
+            local targetSnapshot = TTP.foreverThreatTokenSnapshots.target
+            if targetSnapshot and targetSnapshot.sources[sourceUnit] then
+                return targetSnapshot.sources[sourceUnit]
+            end
+        end
+    end
+
     local snapshot = TTP.foreverThreatTokenSnapshots[targetUnit]
     if snapshot and snapshot.sources[sourceUnit] then
         return snapshot.sources[sourceUnit]
@@ -1430,8 +1443,7 @@ function TTP.UpdateTargetFrame()
         showThreatBox and box:IsShown()
     )
 
-    -- Threat Leader belongs to the nameplate presentation on Forever.
-    -- Keep the historical target-frame implementation only for legacy clients.
+    -- Forever shows Threat Leader only on the corresponding nameplate.
     if TTP.Compat.IsForever() then
         GetTargetThreatLeaderFrame():Hide()
     else
