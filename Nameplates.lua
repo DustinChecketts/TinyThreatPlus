@@ -17,7 +17,6 @@ local BASE_WIDTH = 172
 local BASE_BAR_HEIGHT = 20
 local BAR_GAP = 3
 local CAST_HEIGHT = 10
-local AURA_GAP = 2
 
 local function PixelSize(frame, width, height)
     if PixelUtil and PixelUtil.SetSize then
@@ -101,23 +100,6 @@ local function CreateThreatBox(parent)
     local box = TTP.CreateThreatBox(parent, nil)
     box:SetFrameLevel(parent:GetFrameLevel() + 6)
     return box
-end
-
-local function CreateAuraButton(parent)
-    local button = CreateFrame("Frame", nil, parent)
-    button.icon = button:CreateTexture(nil, "ARTWORK")
-    button.icon:SetAllPoints()
-    button.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-
-    button.border = button:CreateTexture(nil, "OVERLAY")
-    button.border:SetTexture("Interface\\Buttons\\UI-Debuff-Overlays")
-    button.border:SetAllPoints()
-
-    button.count = button:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
-    button.count:SetPoint("BOTTOMRIGHT", 1, -1)
-    button.count:SetTextColor(1, 1, 1)
-    button:Hide()
-    return button
 end
 
 local UpdateCastFrame
@@ -209,11 +191,6 @@ local function CreatePlate(nameplate)
     plate.castName:SetTextColor(1, 1, 1)
     plate.castName:SetFont(STANDARD_TEXT_FONT, 8, "OUTLINE")
 
-    plate.auras = {}
-    for i = 1, 10 do
-        plate.auras[i] = CreateAuraButton(plate)
-    end
-
     plate.cast:Hide()
     plate.castShell:Hide()
     plate.castName:Hide()
@@ -252,7 +229,6 @@ local function LayoutPlate(nameplate, plate)
         tostring(TinyThreatPlusDB.nameplateThreatWidth),
         tostring(TinyThreatPlusDB.nameplateThreatHeight),
         tostring(TinyThreatPlusDB.nameplateThreatScale),
-        tostring(TinyThreatPlusDB.nameplateAuraSize),
     }, ":")
     if plate.TinyThreatPlusLayoutKey == layoutKey then
         return
@@ -358,29 +334,6 @@ local function LayoutPlate(nameplate, plate)
     PixelPoint(plate.castName, "CENTER", plate.castTextLayer, "CENTER", 0, 0)
     plate.castName:SetWidth(BASE_WIDTH - 8)
     plate.castName:SetJustifyH("CENTER")
-
-    local auraSize = math.max(14, math.min(40,
-        tonumber(TinyThreatPlusDB.nameplateAuraSize) or 20))
-    for i = 1, #plate.auras do
-        local aura = plate.auras[i]
-        PixelSize(aura, auraSize, auraSize)
-        aura:ClearAllPoints()
-        if i == 1 then
-            PixelPoint(aura, "BOTTOMLEFT", plate.name, "TOPLEFT", 0, 3)
-        else
-            PixelPoint(aura, "LEFT", plate.auras[i - 1], "RIGHT", AURA_GAP, 0)
-        end
-    end
-end
-
-local function UpdateAuras(plate, unit)
-    -- Forever marks nameplate aura collections secret in combat. Direct
-    -- C_UnitAuras/UnitDebuff enumeration from addon execution taints the
-    -- protected aura path, so custom aura rendering is disabled on Forever
-    -- until we identify a Blizzard-owned safe data source.
-    for i = 1, #plate.auras do
-        plate.auras[i]:Hide()
-    end
 end
 
 local function SetNativePresentation(nameplate, visible)
@@ -634,8 +587,6 @@ local function UpdatePlate(nameplate, plate, unit, nativeHealth)
     else
         plate.targetHighlight:Hide()
     end
-
-    UpdateAuras(plate, unit)
     UpdateCast(nameplate, plate)
 
     local targeted = UnitIsUnit(unit, "target")
@@ -671,7 +622,6 @@ local function ResetPlate(nameplate)
         plate.cast:Hide()
         plate.castShell:Hide()
         plate.castName:Hide()
-        for i = 1, #plate.auras do plate.auras[i]:Hide() end
     end
     SetNativePresentation(nameplate, true)
 end
@@ -743,11 +693,18 @@ local function UpdateNativeEnhancement(unit, nameplate)
     PixelPoint(overlay, "BOTTOM", unitFrame, "BOTTOM", 0, 4)
     PixelSize(overlay, 40, 40)
 
-    local levelSize = math.max(30, math.min(40,
-        (tonumber(TinyThreatPlusDB.customLevelBadgeSize) or 26) + 8))
+    local levelSize = math.max(24, math.min(48,
+        tonumber(TinyThreatPlusDB.nativeLevelBadgeSize) or 34))
     PixelSize(overlay.level, levelSize, levelSize)
     overlay.level:ClearAllPoints()
-    PixelPoint(overlay.level, "CENTER", healthBar, "LEFT", -6, 0)
+    local levelX = math.max(-30, math.min(10, tonumber(TinyThreatPlusDB.nativeLevelOffsetX) or -6))
+    local levelY = math.max(-20, math.min(20, tonumber(TinyThreatPlusDB.nativeLevelOffsetY) or 0))
+    PixelPoint(overlay.level, "CENTER", healthBar, "LEFT", levelX, levelY)
+    overlay.level.text:SetFont(
+        STANDARD_TEXT_FONT,
+        math.max(8, math.min(16, tonumber(TinyThreatPlusDB.nativeLevelFontSize) or 10)),
+        ""
+    )
 
     -- Reuse the exact custom difficulty calculation and HD badge.
     UpdateLevel(overlay, unit)
@@ -771,7 +728,14 @@ local function UpdateNativeEnhancement(unit, nameplate)
     end
 
     overlay.threat:ClearAllPoints()
-    overlay.threat:SetPoint("LEFT", healthBar, "RIGHT", 22, 0)
+    local threatX = math.max(-10, math.min(40, tonumber(TinyThreatPlusDB.nativeThreatOffsetX) or 22))
+    local threatY = math.max(-20, math.min(20, tonumber(TinyThreatPlusDB.nativeThreatOffsetY) or 0))
+    overlay.threat:SetPoint("LEFT", healthBar, "RIGHT", threatX, threatY)
+    overlay.threat:SetFont(
+        STANDARD_TEXT_FONT,
+        math.max(8, math.min(16, tonumber(TinyThreatPlusDB.nativeThreatFontSize) or 12)),
+        "OUTLINE"
+    )
 
     local data = TTP.GetThreatData(unit)
     if TinyThreatPlusDB.showNameplateThreat and data then
