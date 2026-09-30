@@ -43,9 +43,9 @@ subtitle:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
 subtitle:SetText("Threat-focused nameplates and target-frame information.")
 
 local reset = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-reset:SetSize(90, 22)
+reset:SetSize(110, 22)
 reset:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -24, -18)
-reset:SetText("Defaults")
+reset:SetText("Page Defaults")
 
 local tabBar = CreateFrame("Frame", nil, panel)
 tabBar:SetPoint("TOPLEFT", panel, "TOPLEFT", 18, -58)
