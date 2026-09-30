@@ -10,8 +10,7 @@ if not TTP then return end
 -- Lifecycle:
 --   CreatePlate -> LayoutPlate -> UpdatePlate -> ResetPlate
 --
--- Threat calculation remains in TinyThreatPlus.lua. Diagnostics remain in
--- ThreatDiagnostic.lua. This file is presentation only.
+-- Threat calculation remains in TinyThreatPlus.lua. This file is presentation only.
 
 local BASE_WIDTH = 172
 local BASE_BAR_HEIGHT = 20
