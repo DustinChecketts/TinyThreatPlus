@@ -1908,6 +1908,21 @@ function TTP.StopDiagnostic()
     print("TinyThreatPlus diagnostic stopped with", #(diag.samples or {}), "samples. /reload, then send TinyThreatPlus.lua from SavedVariables.")
 end
 
+local diagnosticElapsed = 0
+
+local function DiagPeriodicSample(elapsed)
+    local diag = TinyThreatPlusDB and TinyThreatPlusDB.diagnostic
+    if not diag or not diag.active or not TTP.Compat.IsForever() then
+        diagnosticElapsed = 0
+        return
+    end
+
+    diagnosticElapsed = diagnosticElapsed + elapsed
+    if diagnosticElapsed < 0.50 then return end
+    diagnosticElapsed = 0
+    DiagAppend(InCombatLockdown() and "PERIODIC_COMBAT" or "PERIODIC_IDLE")
+end
+
 local eventFrame = CreateFrame("Frame")
 local updateElapsed = 0
 
@@ -1968,6 +1983,7 @@ eventFrame:SetScript("OnEvent", function(_, event, arg1)
 end)
 
 eventFrame:SetScript("OnUpdate", function(_, elapsed)
+    DiagPeriodicSample(elapsed)
     updateElapsed = updateElapsed + elapsed
 
     if updateElapsed < 0.08 then
