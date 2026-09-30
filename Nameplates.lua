@@ -797,14 +797,10 @@ local function UpdateNativeEnhancement(unit, nameplate)
 
     overlay = CreateNativeEnhancement(nameplate)
     overlay.targetHighlight:ClearAllPoints()
-    PixelPoint(overlay.targetHighlight, "CENTER", healthBar, "CENTER", 0, 0)
-    local hbWidth = healthBar:GetWidth()
-    local hbHeight = healthBar:GetHeight()
-    if type(hbWidth) == "number" and type(hbHeight) == "number" then
-        PixelSize(overlay.targetHighlight, hbWidth + 11, hbHeight + 9)
-    else
-        overlay.targetHighlight:SetAllPoints(healthBar)
-    end
+    -- Anchor the artwork around Blizzard's bar instead of reading its width
+    -- or height. Forever can make native geometry secret in combat.
+    PixelPoint(overlay.targetHighlight, "TOPLEFT", healthBar, "TOPLEFT", -5, 4)
+    PixelPoint(overlay.targetHighlight, "BOTTOMRIGHT", healthBar, "BOTTOMRIGHT", 5, -4)
     if TinyThreatPlusDB.showTargetHighlight and UnitIsUnit(unit, "target") then
         local color = TinyThreatPlusDB.targetHighlightColor or TTP.defaults.targetHighlightColor or { 1, 1, 1 }
         overlay.targetHighlight:SetVertexColor(
