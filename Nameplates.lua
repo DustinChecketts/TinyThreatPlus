@@ -680,10 +680,6 @@ end
 local NATIVE_FONTS = {
     FRIZQT = "Fonts\\FRIZQT__.TTF",
     ARIALN = "Fonts\\ARIALN.TTF",
-    ARIAL = "Fonts\\ARIAL.TTF",
-    SKURRI = "Fonts\\SKURRI.TTF",
-    F2002 = "Fonts\\2002.TTF",
-    MORPHEUS = "Fonts\\MORPHEUS.TTF",
 }
 
 local function GetNativeFont(key)
