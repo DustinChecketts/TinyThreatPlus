@@ -623,13 +623,23 @@ function TTP.GetGroupTargetCount(unit)
     end
 
     local count = 0
+    local targetPlate = TTP.Compat.HasNamePlateAPI()
+        and C_NamePlate.GetNamePlateForUnit(unit)
+        or nil
 
     for _, groupUnit in ipairs(TTP.GetGroupUnits()) do
         local targetUnit = groupUnit .. "target"
 
         if UnitExists(targetUnit) then
-            local isSameUnit = TTP.Compat.GetAccessibleValue(UnitIsUnit(targetUnit, unit))
-            if isSameUnit then
+            -- Forever protects both GUID equality and UnitIsUnit() in grouped
+            -- combat. Nameplate frame references are ordinary Lua objects, so
+            -- matching the frame returned for each unit token is secret-safe.
+            local groupTargetPlate = TTP.Compat.HasNamePlateAPI()
+                and C_NamePlate.GetNamePlateForUnit(targetUnit)
+                or nil
+            if targetPlate and groupTargetPlate == targetPlate then
+                count = count + 1
+            elseif not TTP.Compat.IsForever() and UnitIsUnit(targetUnit, unit) then
                 count = count + 1
             end
         end
@@ -1408,10 +1418,16 @@ function TTP.UpdateTargetFrame()
         showThreatBox and box:IsShown()
     )
 
-    UpdateTargetThreatLeader(
-        box,
-        showThreatBox and box:IsShown() and TTP.GetThreatData("target") or nil
-    )
+    -- Threat Leader belongs to the nameplate presentation on Forever.
+    -- Keep the historical target-frame implementation only for legacy clients.
+    if TTP.Compat.IsForever() then
+        GetTargetThreatLeaderFrame():Hide()
+    else
+        UpdateTargetThreatLeader(
+            box,
+            showThreatBox and box:IsShown() and TTP.GetThreatData("target") or nil
+        )
+    end
 end
 
 -- ---------------------------------------------------------------------------
