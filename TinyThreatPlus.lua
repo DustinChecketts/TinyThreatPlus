@@ -29,6 +29,13 @@ TTP.defaults = {
     customLevelFontSize = 9,
     customLevelOffsetX = -4,
     customLevelOffsetY = 0,
+    nativeLevelBadgeSize = 34,
+    nativeLevelFontSize = 10,
+    nativeLevelOffsetX = -6,
+    nativeLevelOffsetY = 0,
+    nativeThreatFontSize = 12,
+    nativeThreatOffsetX = 22,
+    nativeThreatOffsetY = 0,
     nameplateThreatWidth = 36,
     nameplateThreatHeight = 20,
     nameplateThreatFontSize = 9,
@@ -1808,9 +1815,7 @@ eventFrame:SetScript("OnEvent", function(_, event, arg1)
         or event == "NAME_PLATE_UNIT_ADDED"
     then
         CaptureForeverThreatForVisibleTargets(arg1)
-    end
-
-    if TTP.ThreatDiagnostic then TTP.ThreatDiagnostic.NoteEvent(event, arg1) end
+    end
     if event == "ADDON_LOADED" then
         if arg1 ~= ADDON_NAME then
             return
@@ -1931,18 +1936,6 @@ SlashCmdList.TINYTHREATPLUS = function(message)
     elseif command == "prioritydebug" then
         TTP.PrintPriorityDebug()
         return
-    elseif command == "threatdebug" then
-        if TTP.ThreatDiagnostic then TTP.ThreatDiagnostic.Start() end
-        return
-    elseif command == "threatstop" then
-        if TTP.ThreatDiagnostic then TTP.ThreatDiagnostic.Stop() end
-        return
-    elseif command == "threatreport" then
-        if TTP.ThreatDiagnostic then TTP.ThreatDiagnostic.PrintReport() end
-        return
-    elseif command == "threatlive" then
-        if TTP.ThreatDiagnostic then TTP.ThreatDiagnostic.ToggleLive() end
-        return
     elseif command == "reset" then
         TTP.ResetDefaults()
         print("TinyThreatPlus settings reset.")
@@ -1956,10 +1949,6 @@ SlashCmdList.TINYTHREATPLUS = function(message)
         print("/ttp priority")
         print("/ttp testpriority")
         print("/ttp prioritydebug")
-        print("/ttp threatdebug")
-        print("/ttp threatstop")
-        print("/ttp threatreport")
-        print("/ttp threatlive")
         print("/ttp reset")
     end
 
