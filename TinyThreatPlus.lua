@@ -72,6 +72,11 @@ TTP.defaults = {
     targetThreatWidth = 40,
     targetThreatHeight = 20,
     targetThreatFontSize = 12,
+    targetThreatOffsetX = 0,
+    targetThreatOffsetY = 2,
+    targetCounterSize = 18,
+    targetCounterOffsetX = -2,
+    targetCounterOffsetY = -2,
 }
 
 TTP.colors = {
@@ -1173,6 +1178,12 @@ local function UpdateStandaloneTargetCounter(
 
     counter:SetScale(scale)
 
+
+    if TTP.Compat.IsForever() then
+        local counterSize = math.max(14, math.min(32,
+            tonumber(TinyThreatPlusDB.targetCounterSize) or 18))
+        counter:SetSize(counterSize, counterSize)
+    end
     local xOffset =
         count < 10 and -0.5 or 0
 
@@ -1369,6 +1380,7 @@ function TTP.UpdateTargetFrame()
     if not UnitExists("target") or not anchor then
         box:Hide()
         GetTargetFrameCounter():Hide()
+        GetTargetThreatLeaderFrame():Hide()
         return
     end
 
@@ -1399,8 +1411,8 @@ function TTP.UpdateTargetFrame()
                 "BOTTOM",
                 anchor,
                 "TOP",
-                0,
-                2
+                TTP.Compat.IsForever() and (tonumber(TinyThreatPlusDB.targetThreatOffsetX) or 0) or 0,
+                TTP.Compat.IsForever() and (tonumber(TinyThreatPlusDB.targetThreatOffsetY) or 2) or 2
             )
 
             local boxWidth = TTP.Compat.IsForever()
@@ -1435,6 +1447,11 @@ function TTP.UpdateTargetFrame()
     UpdateStandaloneTargetCounter(
         anchor,
         showThreatBox and box:IsShown()
+    )
+
+    UpdateTargetThreatLeader(
+        box,
+        showThreatBox and box:IsShown() and TTP.GetThreatData("target") or nil
     )
 end
 
