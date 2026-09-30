@@ -848,17 +848,24 @@ local function UpdateNativeEnhancement(unit, nameplate)
             highlightAlpha
     end
 
+    -- The normal target uses Blizzard's tight selectedBorder. Priority also
+    -- enables Blizzard's broader selectionHighlight layer, giving it a more
+    -- exaggerated silhouette without any addon-owned geometry or scaling.
     if unitFrame.selectionHighlight then
         unitFrame.selectionHighlight:SetDesaturated(true)
         unitFrame.selectionHighlight:SetVertexColor(borderR, borderG, borderB, 1)
-        unitFrame.selectionHighlight:SetAlpha(borderA)
-        if isPriority then unitFrame.selectionHighlight:Show() end
+        unitFrame.selectionHighlight:SetAlpha(isPriority and borderA or 0)
+        if isPriority then
+            unitFrame.selectionHighlight:Show()
+        end
     end
     if healthBar.selectedBorder then
         healthBar.selectedBorder:SetDesaturated(true)
         healthBar.selectedBorder:SetVertexColor(borderR, borderG, borderB, 1)
         healthBar.selectedBorder:SetAlpha(borderA)
-        if isPriority then healthBar.selectedBorder:Show() end
+        if isPriority then
+            healthBar.selectedBorder:Show()
+        end
     end
 
     -- Retired replacement texture remains hidden for compatibility while the
