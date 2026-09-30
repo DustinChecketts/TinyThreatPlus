@@ -708,23 +708,11 @@ local function UpdateNativeEnhancement(unit, nameplate)
     -- Reuse the exact custom difficulty calculation and HD badge.
     UpdateLevel(overlay, unit)
 
-    -- Forever's right-side native level box is not exposed under a stable
-    -- LevelFrame field in this build. Keep Blizzard's HD artwork in place, but
-    -- suppress the duplicate numeric level by matching the already-rendered
-    -- level FontString among UnitFrame regions. Then anchor our threat readout
-    -- to the right edge of the native health bar, centered in that box.
-    local level = UnitEffectiveLevel and UnitEffectiveLevel(unit) or UnitLevel(unit)
-    local levelText = IsAccessible(level) and tostring(level < 0 and "??" or level) or nil
-    if levelText then
-        for _, region in ipairs({ unitFrame:GetRegions() }) do
-            if region and region.GetObjectType and region:GetObjectType() == "FontString"
-                and region.GetText and region:GetText() == levelText
-            then
-                region:Hide()
-                overlay.TinyThreatPlusHiddenNativeLevel = region
-            end
-        end
-    end
+    -- Do not inspect Blizzard-rendered FontString text on Forever. Instance
+    -- nameplates can mark those strings secret even out of combat, making
+    -- comparisons from addon execution illegal. Native mode therefore leaves
+    -- Blizzard's level text untouched until we have a stable frame reference.
+    -- Our threat readout remains purely additive and never reads native text.
 
     overlay.threat:ClearAllPoints()
     local threatX = math.max(-10, math.min(40, tonumber(TinyThreatPlusDB.nativeThreatOffsetX) or 22))
