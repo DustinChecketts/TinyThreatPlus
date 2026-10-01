@@ -323,6 +323,24 @@ local function GetStableThreatState(unit, data)
     return "bad"
 end
 
+local function ApplyForeverProtectedThreatText(fontString, unit)
+    -- Forever can protect nameplate threat percentages while still allowing
+    -- them to flow directly into a FontString. Do not inspect, compare,
+    -- round, or stringify the protected value in Lua; SetFormattedText is the
+    -- presentation sink. This mirrors the proven Forever threat-meter pattern.
+    if not TTP.Compat.IsForever() or not fontString or not fontString.SetFormattedText then
+        return false
+    end
+
+    local _, _, scaledPercent = UnitDetailedThreatSituation("player", unit)
+    if not TTP.Compat.IsSecretValue(scaledPercent) then
+        return false
+    end
+
+    fontString:SetFormattedText("%.0f%%", scaledPercent)
+    return true
+end
+
 local function ApplyForeverProtectedThreatColor(healthBar, unit)
     -- Modern Blizzard clients may protect UnitThreatSituation for off-target
     -- nameplates. Do not discard that state: the protected comparison/color
@@ -635,13 +653,30 @@ local function UpdateNativeEnhancement(unit, nameplate)
         end
     end
 
-    if TinyThreatPlusDB.showNameplateThreat and data then
-        local text = TTP.GetThreatDisplayText(data)
-        local r, g, b = TTP.GetThreatColor(unit, data)
-        overlay.threat:SetText(text)
-        overlay.threat:SetTextColor(r, g, b)
-        overlay.threatBadge:Show()
-        overlay.threat:Show()
+    if TinyThreatPlusDB.showNameplateThreat then
+        -- Prefer the normal readable TinyThreatPlus presentation whenever the
+        -- API gives us ordinary values. For protected off-target nameplates,
+        -- pass Blizzard's live threat percentage straight into the FontString.
+        -- The addon never learns or branches on that protected number.
+        local hasThreatText = ApplyForeverProtectedThreatText(overlay.threat, unit)
+        if hasThreatText then
+            overlay.threat:SetTextColor(1, 1, 1)
+        elseif data then
+            local text = TTP.GetThreatDisplayText(data)
+            local r, g, b = TTP.GetThreatColor(unit, data)
+            overlay.threat:SetText(text)
+            overlay.threat:SetTextColor(r, g, b)
+            hasThreatText = true
+        end
+
+        if hasThreatText then
+            overlay.threatBadge:Show()
+            overlay.threat:Show()
+        else
+            overlay.threat:SetText("")
+            overlay.threat:Hide()
+            overlay.threatBadge:Hide()
+        end
 
         local count = TTP.GetTargetCounter(unit)
         if count then
