@@ -273,7 +273,6 @@ Section("GENERAL", "Group Threat Information", "Group and raid information. The 
 MakeToggle("GENERAL", "Show Nameplate Target Counter", "showTargetCounter", "Shows how many party or raid members are targeting each hostile nameplate.")
 MakeToggle("GENERAL", "Show Target Frame Target Counter", "showTargetFrameCounter", "Shows how many party or raid members are targeting your current hostile target.")
 MakeToggle("GENERAL", "Show Threat Leader", "showThreatLeader", "Shows the player or pet currently leading threat on your target.")
-MakeToggle("GENERAL", "Show Threat Leader Class / Pet Icon", "showThreatLeaderClassIcon", "Shows the threat leader's class icon or pet portrait when available.")
 MakeToggle("GENERAL", "Show Threat Leader Role", "showThreatLeaderRole", "Shows the threat leader's assigned Tank, Healer, or Damage role when available.")
 MakeToggle("GENERAL", "Preview Group Threat While Solo", "previewGroupThreatSolo", "Testing aid: shows solo placeholder group-threat information for positioning.")
 
@@ -322,6 +321,9 @@ if TTP.Compat.IsForever() then
     Section("STYLING", "Target Priority")
     MakeColorPicker("STYLING", "Target Priority Color", "priorityMarkerColor", "Tints Blizzard's native priority-highlight geometry.")
     MakeSlider("STYLING", "Target Priority Opacity", "priorityMarkerOpacity", 10, 100, 5, "%", "Sets target-priority highlight opacity.")
+    MakeSlider("STYLING", "Target Priority Size", "priorityMarkerScale", 50, 200, 5, "%", "Scales the broader target-priority highlight.")
+    MakeSlider("STYLING", "Target Priority X Offset", "priorityMarkerOffsetX", -40, 40, 1, " px", "Moves the target-priority highlight horizontally.")
+    MakeSlider("STYLING", "Target Priority Y Offset", "priorityMarkerOffsetY", -30, 30, 1, " px", "Moves the target-priority highlight vertically.")
 
     Section("STYLING", "Nameplate Threat Readout")
     MakeSlider("STYLING", "Threat Readout Width", "nativeThreatWidth", 20, 60, 2, " px", "Sets nameplate threat-readout width.")
@@ -349,7 +351,7 @@ local PAGE_DEFAULT_KEYS = {
         "showNameplateThreat", "alwaysShowThreatBoxes", "roleBasedColors",
         "displayMode", "showMobLevel", "showTargetHighlight",
         "showTargetCounter", "showTargetFrameCounter", "showThreatLeader",
-        "showThreatLeaderClassIcon", "showThreatLeaderRole",
+        "showThreatLeaderRole",
         "previewGroupThreatSolo", "showTargetFrame", "showPriorityMarker",
         "priorityWhileSolo", "priorityThreatThreshold",
     },
@@ -359,7 +361,8 @@ local PAGE_DEFAULT_KEYS = {
         "nativeHealthOutline", "nativeHealthOutlineColor",
         "nativeLevelBadgeSize", "nativeLevelFontSize", "nativeLevelOffsetX",
         "nativeLevelOffsetY", "targetHighlightColor", "targetHighlightOpacity",
-        "priorityMarkerColor", "priorityMarkerOpacity",
+        "priorityMarkerColor", "priorityMarkerOpacity", "priorityMarkerScale",
+        "priorityMarkerOffsetX", "priorityMarkerOffsetY",
         "nativeThreatWidth", "nativeThreatHeight", "nativeThreatFontSize",
         "nativeThreatOffsetX", "nativeThreatOffsetY",
         "targetThreatWidth", "targetThreatHeight", "targetThreatFontSize",
