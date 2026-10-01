@@ -544,13 +544,10 @@ local function UpdateNativeEnhancement(unit, nameplate)
         or unitFrame.BuffFrame
         or unitFrame.buffFrame
     if auraFrame and auraFrame.ClearAllPoints and auraFrame.SetPoint then
-        if not auraFrame.TinyThreatPlusOriginalPoints then
-            auraFrame.TinyThreatPlusOriginalPoints = {}
-            for pointIndex = 1, auraFrame:GetNumPoints() do
-                auraFrame.TinyThreatPlusOriginalPoints[pointIndex] =
-                    { auraFrame:GetPoint(pointIndex) }
-            end
-        end
+        -- AurasFrame is a restricted Blizzard region in Forever. Reading its
+        -- geometry (GetPoint/GetNumPoints/GetSize/etc.) taints immediately.
+        -- Treat it as write-only presentation: Blizzard owns its contents and
+        -- lifecycle; TinyThreatPlus only supplies a safe anchor.
         auraFrame:ClearAllPoints()
         local auraGap = TinyThreatPlusDB.showTargetCounter and 16 or 4
         PixelPoint(auraFrame, "LEFT", overlay.threatBadge, "RIGHT", auraGap, 0)
