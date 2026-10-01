@@ -332,26 +332,28 @@ local function ApplyForeverProtectedThreatText(fontString, unit)
         return false
     end
 
-    local _, _, scaledPercent = UnitDetailedThreatSituation("player", unit)
-    if not TTP.Compat.IsSecretValue(scaledPercent) then
-        return false
+    local _, _, scaledPercent, _, threatValue = UnitDetailedThreatSituation("player", unit)
+
+    if TinyThreatPlusDB.displayMode == "VALUE" then
+        if not TTP.Compat.IsSecretValue(threatValue) then return false end
+        fontString:SetFormattedText("%.0f", threatValue)
+        return true
     end
 
+    if not TTP.Compat.IsSecretValue(scaledPercent) then return false end
     fontString:SetFormattedText("%.0f%%", scaledPercent)
     return true
 end
 
 local function ApplyForeverProtectedThreatColor(healthBar, unit)
-    -- Modern Blizzard clients may protect UnitThreatSituation for off-target
-    -- nameplates. Do not discard that state: the protected comparison/color
-    -- pipeline can consume it without exposing the result to Lua.
+    -- Forever protects off-target threat ownership, but the isTanking boolean
+    -- can flow directly through Blizzard's secret-safe color fold.
     if not TTP.Compat.IsForever()
-        or not C_Secrets or not C_Secrets.IsEqual
         or not C_CurveUtil or not C_CurveUtil.EvaluateColorValueFromBoolean
     then return false end
 
-    local status = UnitThreatSituation("player", unit)
-    if status == nil or not TTP.Compat.IsSecretValue(status) then return false end
+    local isTanking = UnitDetailedThreatSituation("player", unit)
+    if not TTP.Compat.IsSecretValue(isTanking) then return false end
 
     local native = healthBar.TinyThreatPlusNativeColor
     if not native then
@@ -364,25 +366,15 @@ local function ApplyForeverProtectedThreatColor(healthBar, unit)
     local hi = math.max(native[1], native[2], native[3])
     local lo = math.min(native[1], native[2], native[3])
     local goodR, goodG, goodB = lo, hi, lo
-    local warnR, warnG, warnB = hi, hi * 0.78, lo
     local badR, badG, badB = native[1], native[2], native[3]
-
-    local isThree = C_Secrets.IsEqual(status, 3)
-    local isOne = C_Secrets.IsEqual(status, 1)
-    local isTwo = C_Secrets.IsEqual(status, 2)
-    local isWarn = C_Secrets.Select and C_Secrets.Select(isOne, true, isTwo) or nil
-    if isWarn == nil then return false end
-
     local tank = TTP.PlayerIsTank()
-    local terminalR = C_CurveUtil.EvaluateColorValueFromBoolean(isThree,
+
+    local r = C_CurveUtil.EvaluateColorValueFromBoolean(isTanking,
         tank and goodR or badR, tank and badR or goodR)
-    local terminalG = C_CurveUtil.EvaluateColorValueFromBoolean(isThree,
+    local g = C_CurveUtil.EvaluateColorValueFromBoolean(isTanking,
         tank and goodG or badG, tank and badG or goodG)
-    local terminalB = C_CurveUtil.EvaluateColorValueFromBoolean(isThree,
+    local b = C_CurveUtil.EvaluateColorValueFromBoolean(isTanking,
         tank and goodB or badB, tank and badB or goodB)
-    local r = C_CurveUtil.EvaluateColorValueFromBoolean(isWarn, warnR, terminalR)
-    local g = C_CurveUtil.EvaluateColorValueFromBoolean(isWarn, warnG, terminalG)
-    local b = C_CurveUtil.EvaluateColorValueFromBoolean(isWarn, warnB, terminalB)
 
     TTP.applyingHealthColor = true
     healthBar:SetStatusBarColor(r, g, b)
@@ -482,6 +474,12 @@ local function UpdateNativeEnhancement(unit, nameplate)
         unitFrame.selectionHighlight:SetDesaturated(true)
         unitFrame.selectionHighlight:SetVertexColor(borderR, borderG, borderB, 1)
         unitFrame.selectionHighlight:SetAlpha(isPriority and borderA or 0)
+        unitFrame.selectionHighlight:SetScale(math.max(0.50, math.min(2.00,
+            (tonumber(TinyThreatPlusDB.priorityMarkerScale) or 100) / 100)))
+        unitFrame.selectionHighlight:ClearAllPoints()
+        PixelPoint(unitFrame.selectionHighlight, "CENTER", healthBar, "CENTER",
+            math.max(-40, math.min(40, tonumber(TinyThreatPlusDB.priorityMarkerOffsetX) or 0)),
+            math.max(-30, math.min(30, tonumber(TinyThreatPlusDB.priorityMarkerOffsetY) or 0)))
         if isPriority then
             unitFrame.selectionHighlight:Show()
         end
@@ -603,23 +601,8 @@ local function UpdateNativeEnhancement(unit, nameplate)
             if leaderUnit and UnitExists(leaderUnit) then
                 _, class = UnitClass(leaderUnit)
             end
-            local classAtlases = {
-                WARRIOR="groupfinder-icon-class-warrior", MAGE="groupfinder-icon-class-mage",
-                ROGUE="groupfinder-icon-class-rogue", DRUID="groupfinder-icon-class-druid",
-                HUNTER="groupfinder-icon-class-hunter", SHAMAN="groupfinder-icon-class-shaman",
-                PRIEST="groupfinder-icon-class-priest", WARLOCK="groupfinder-icon-class-warlock",
-                PALADIN="groupfinder-icon-class-paladin", DEATHKNIGHT="groupfinder-icon-class-deathknight",
-            }
             leader.icon:Hide()
             leader.roleIcon:Hide()
-            if TinyThreatPlusDB.showThreatLeaderClassIcon and class and classAtlases[class] then
-                leader.icon:SetAtlas(classAtlases[class])
-                leader.icon:Show()
-            elseif TinyThreatPlusDB.showThreatLeaderClassIcon and leaderUnit
-                and (leaderUnit == "pet" or string.match(leaderUnit, "^partypet%d+$") or string.match(leaderUnit, "^raidpet%d+$")) then
-                SetPortraitTexture(leader.icon, leaderUnit)
-                leader.icon:Show()
-            end
             local role = leaderUnit and UnitExists(leaderUnit) and TTP.GetUnitRole(leaderUnit) or nil
             local roleAtlas = role == "TANK" and "roleicon-tiny-tank"
                 or role == "HEALER" and "roleicon-tiny-healer"
@@ -628,14 +611,10 @@ local function UpdateNativeEnhancement(unit, nameplate)
                 leader.roleIcon:SetAtlas(roleAtlas)
                 leader.roleIcon:Show()
             end
-            leader.icon:ClearAllPoints()
             leader.roleIcon:ClearAllPoints()
             leader.name:ClearAllPoints()
-            leader.icon:SetPoint("LEFT", leader, "LEFT", 0, 0)
-            if leader.icon:IsShown() then leader.roleIcon:SetPoint("LEFT", leader.icon, "RIGHT", 2, 0)
-            else leader.roleIcon:SetPoint("LEFT", leader, "LEFT", 0, 0) end
+            leader.roleIcon:SetPoint("LEFT", leader, "LEFT", 0, 0)
             if leader.roleIcon:IsShown() then leader.name:SetPoint("LEFT", leader.roleIcon, "RIGHT", 3, 0)
-            elseif leader.icon:IsShown() then leader.name:SetPoint("LEFT", leader.icon, "RIGHT", 3, 0)
             else leader.name:SetPoint("LEFT", leader, "LEFT", 0, 0) end
             leader.name:SetText(data.leaderName)
             if class and RAID_CLASS_COLORS and RAID_CLASS_COLORS[class] then
