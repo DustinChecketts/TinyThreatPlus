@@ -44,9 +44,12 @@ TTP.defaults = {
     priorityThreatThreshold = 80,
     priorityMarkerColor = { 0, 0.0627451, 0.3960784 },
     priorityMarkerOpacity = 100,
+    priorityMarkerScale = 100,
+    priorityMarkerOffsetX = 0,
+    priorityMarkerOffsetY = 0,
 
     showThreatLeader = true,
-    showThreatLeaderClassIcon = true,
+    showThreatLeaderClassIcon = false,
     showThreatLeaderRole = true,
     showMobLevel = true,
     displayMode = "VALUE",
