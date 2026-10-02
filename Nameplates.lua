@@ -334,10 +334,13 @@ local function ApplyForeverProtectedThreatText(fontString, unit)
 
     local _, _, scaledPercent, _, threatValue = UnitDetailedThreatSituation("player", unit)
 
+    -- A protected threatValue is the player's absolute raw threat on this
+    -- mob, not TinyThreatPlus' signed lead over the next player. Showing it in
+    -- VALUE mode made numbers such as 443/283/50 look like lead values when
+    -- they were not. Until Forever exposes a secret-safe way to subtract the
+    -- highest competing source, only use protected data for percentage mode.
     if TinyThreatPlusDB.displayMode == "VALUE" then
-        if not TTP.Compat.IsSecretValue(threatValue) then return false end
-        fontString:SetFormattedText("%.0f", threatValue)
-        return true
+        return false
     end
 
     if not TTP.Compat.IsSecretValue(scaledPercent) then return false end
@@ -467,22 +470,12 @@ local function UpdateNativeEnhancement(unit, nameplate)
             highlightAlpha
     end
 
-    -- The normal target uses Blizzard's tight selectedBorder. Priority also
-    -- enables Blizzard's broader selectionHighlight layer, giving it a more
-    -- exaggerated silhouette without any addon-owned geometry or scaling.
+    -- Blizzard's broad selectionHighlight is animated and can be much wider
+    -- than the health bar in Forever. Reusing it caused the large blinking
+    -- navy strip seen in dungeons. Leave that native layer suppressed and use
+    -- the tight selectedBorder for both current-target and priority state.
     if unitFrame.selectionHighlight then
-        unitFrame.selectionHighlight:SetDesaturated(true)
-        unitFrame.selectionHighlight:SetVertexColor(borderR, borderG, borderB, 1)
-        unitFrame.selectionHighlight:SetAlpha(isPriority and borderA or 0)
-        unitFrame.selectionHighlight:SetScale(math.max(0.50, math.min(2.00,
-            (tonumber(TinyThreatPlusDB.priorityMarkerScale) or 100) / 100)))
-        unitFrame.selectionHighlight:ClearAllPoints()
-        PixelPoint(unitFrame.selectionHighlight, "CENTER", healthBar, "CENTER",
-            math.max(-40, math.min(40, tonumber(TinyThreatPlusDB.priorityMarkerOffsetX) or 0)),
-            math.max(-30, math.min(30, tonumber(TinyThreatPlusDB.priorityMarkerOffsetY) or 0)))
-        if isPriority then
-            unitFrame.selectionHighlight:Show()
-        end
+        unitFrame.selectionHighlight:SetAlpha(0)
     end
     if healthBar.selectedBorder then
         healthBar.selectedBorder:SetDesaturated(true)
