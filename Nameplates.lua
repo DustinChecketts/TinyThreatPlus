@@ -436,10 +436,10 @@ local function UpdateNativeEnhancement(unit, nameplate)
     -- style. TinyThreatPlus only desaturates/tints those native textures.
     -- Priority uses the same geometry, deliberately stronger and navy by
     -- default, rather than introducing another independently scaled atlas.
-    local isCurrentTarget = UnitIsUnit(unit, "target")
+    local isCurrentTarget = TTP.Compat.GetAccessibleValue(UnitIsUnit(unit, "target")) == true
     local isPriority = TinyThreatPlusDB.showPriorityMarker
         and TTP.priorityUnit
-        and UnitIsUnit(unit, TTP.priorityUnit)
+        and TTP.Compat.GetAccessibleValue(UnitIsUnit(unit, TTP.priorityUnit)) == true
 
     local highlightColor = TinyThreatPlusDB.targetHighlightColor
         or TTP.defaults.targetHighlightColor
