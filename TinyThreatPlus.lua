@@ -684,13 +684,10 @@ end
 function TTP.GetGroupTargetCount(unit)
     if not unit or not UnitExists(unit) then return 0 end
 
-    -- Forever protects group-target identity (GUIDs, UnitIsUnit results, and
-    -- sometimes nameplate identity) in grouped combat. Do not fall through to
-    -- the legacy GUID-counting path under any circumstance.
+    -- Forever group-target identity is protected in combat. Target Counter is
+    -- intentionally disabled here until it has its own secret-safe transport;
+    -- do not touch GUIDs, compound target tokens, or identity comparisons.
     if TTP.Compat.IsForever() then
-        if unit == "target" and UnitExists("target") then
-            return 1
-        end
         return 0
     end
 
