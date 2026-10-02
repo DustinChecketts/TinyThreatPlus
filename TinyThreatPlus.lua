@@ -682,68 +682,22 @@ function TTP.GetThreatData(unit)
 end
 
 function TTP.GetGroupTargetCount(unit)
-    if not IsInGroup() and not IsInRaid() then
-        if TTP.Compat.IsForever()
-            and TinyThreatPlusDB.previewGroupThreatSolo
-            and unit
-            and UnitExists(unit)
-            and UnitCanAttack("player", unit)
-            and not UnitIsFriend("player", unit)
-        then
+    if not unit or not UnitExists(unit) then return 0 end
+
+    -- Forever protects group-target identity (GUIDs, UnitIsUnit results, and
+    -- sometimes nameplate identity) in grouped combat. Do not fall through to
+    -- the legacy GUID-counting path under any circumstance.
+    if TTP.Compat.IsForever() then
+        if unit == "target" and UnitExists("target") then
             return 1
         end
         return 0
     end
 
-    if not unit or not UnitExists(unit) then
-        return 0
-    end
-
-    local count = 0
-
-    -- Forever protects GUID equality and UnitIsUnit() results in grouped
-    -- combat, and C_NamePlate.GetNamePlateForUnit() rejects compound tokens
-    -- such as "party1target". There is therefore no safe direct identity
-    -- comparison for arbitrary group-member targets. We can still count the
-    -- player's own target without protected data: when rendering a nameplate,
-    -- C_NamePlate.GetNamePlateForUnit("target") returns that same plate.
-    if TTP.Compat.IsForever() then
-        local unitPlate = TTP.Compat.HasNamePlateAPI()
-            and C_NamePlate.GetNamePlateForUnit(unit)
-            or nil
-        local playerTargetPlate = UnitExists("target")
-            and TTP.Compat.HasNamePlateAPI()
-            and C_NamePlate.GetNamePlateForUnit("target")
-            or nil
-
-        -- In Forever grouped combat even frame/token identity can become
-        -- protected. Never compare a nameplate frame/token against another
-        -- value unless both sides are ordinary Lua values.
-        local plateMatch = false
-        if unitPlate and playerTargetPlate
-            and not TTP.Compat.IsSecretValue(unitPlate)
-            and not TTP.Compat.IsSecretValue(playerTargetPlate)
-        then
-            plateMatch = playerTargetPlate == unitPlate
-        end
-
-        local directTarget = false
-        if not TTP.Compat.IsSecretValue(unit) then
-            directTarget = unit == "target"
-        end
-
-        if plateMatch then
-            count = 1
-        elseif directTarget and UnitExists("target") then
-            count = 1
-        end
-
-        return count
-    end
-
     local targetGUID = UnitGUID(unit)
     if not targetGUID then return 0 end
 
+    local count = 0
     for _, groupUnit in ipairs(TTP.GetGroupUnits()) do
         local targetUnit = groupUnit .. "target"
         if UnitExists(targetUnit) and UnitGUID(targetUnit) == targetGUID then
