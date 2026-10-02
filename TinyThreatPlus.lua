@@ -716,9 +716,25 @@ function TTP.GetGroupTargetCount(unit)
             and C_NamePlate.GetNamePlateForUnit("target")
             or nil
 
-        if unitPlate and playerTargetPlate == unitPlate then
+        -- In Forever grouped combat even frame/token identity can become
+        -- protected. Never compare a nameplate frame/token against another
+        -- value unless both sides are ordinary Lua values.
+        local plateMatch = false
+        if unitPlate and playerTargetPlate
+            and not TTP.Compat.IsSecretValue(unitPlate)
+            and not TTP.Compat.IsSecretValue(playerTargetPlate)
+        then
+            plateMatch = playerTargetPlate == unitPlate
+        end
+
+        local directTarget = false
+        if not TTP.Compat.IsSecretValue(unit) then
+            directTarget = unit == "target"
+        end
+
+        if plateMatch then
             count = 1
-        elseif unit == "target" and UnitExists("target") then
+        elseif directTarget and UnitExists("target") then
             count = 1
         end
 
