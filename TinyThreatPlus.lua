@@ -1504,13 +1504,23 @@ function TTP.GetPriorityRole()
 end
 
 local function FindVisibleUnitByGUID(guid)
-    if not guid then
+    if not guid
+        or TTP.Compat.IsSecretValue(guid)
+        or not TTP.Compat.CanAccessValue(guid)
+    then
         return nil
     end
 
     for unit in pairs(TTP.activeNameplates) do
-        if UnitExists(unit) and UnitGUID(unit) == guid then
-            return unit
+        if UnitExists(unit) then
+            local unitGUID = UnitGUID(unit)
+            if unitGUID
+                and not TTP.Compat.IsSecretValue(unitGUID)
+                and TTP.Compat.CanAccessValue(unitGUID)
+                and unitGUID == guid
+            then
+                return unit
+            end
         end
     end
 
@@ -1678,10 +1688,10 @@ function TTP.UpdateAll()
                     if data and data.hasThreatData then
                         local otherTank =
                             data.aggroUnit
-                            and not UnitIsUnit(
+                            and TTP.Compat.GetAccessibleValue(UnitIsUnit(
                                 data.aggroUnit,
                                 "player"
-                            )
+                            )) == false
                             and TTP.IsThreatSourceTank(
                                 data.aggroUnit
                             )
