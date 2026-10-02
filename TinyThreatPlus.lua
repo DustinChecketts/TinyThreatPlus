@@ -308,9 +308,21 @@ end
 local function FindThreatUnitByGUID(guid)
     if not guid or not TTP.Compat.CanAccessValue(guid) or TTP.Compat.IsSecretValue(guid) then return nil end
     local cached = TTP.affiliatedGUIDs[guid]
-    if cached and UnitExists(cached) and UnitGUID(cached) == guid then return cached end
+    if cached and UnitExists(cached) then
+        local cachedGUID = UnitGUID(cached)
+        if cachedGUID
+            and not TTP.Compat.IsSecretValue(cachedGUID)
+            and TTP.Compat.CanAccessValue(cachedGUID)
+            and cachedGUID == guid
+        then return cached end
+    end
     for _, unit in ipairs(TTP.GetThreatUnits()) do
-        if UnitGUID(unit) == guid then return unit end
+        local unitGUID = UnitGUID(unit)
+        if unitGUID
+            and not TTP.Compat.IsSecretValue(unitGUID)
+            and TTP.Compat.CanAccessValue(unitGUID)
+            and unitGUID == guid
+        then return unit end
     end
     return nil
 end
