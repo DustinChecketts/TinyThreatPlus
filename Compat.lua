@@ -15,8 +15,10 @@ local Compat = TTP.Compat
 -- distinguish Forever from Retail.
 function Compat.IsForever()
     local interfaceVersion = select(4, GetBuildInfo())
-    return WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
-        and type(interfaceVersion) == "number"
+    -- Forever has used the 16000-series interface throughout beta, but its
+    -- reported WOW_PROJECT_ID has not been a reliable discriminator across
+    -- builds. Interface generation is the stable capability boundary.
+    return type(interfaceVersion) == "number"
         and interfaceVersion >= 16000
         and interfaceVersion < 17000
 end
