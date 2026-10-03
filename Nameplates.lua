@@ -297,10 +297,9 @@ local function LayoutNativeText(healthBar)
 end
 
 local function GetForeverBaseHealthColor(unit)
-    -- Preserve Blizzard's relationship/tap language whenever TinyThreatPlus
-    -- is not actively communicating threat. UnitSelectionColor is the same
-    -- selection/reaction palette Blizzard uses: hostile red, unfriendly
-    -- orange, neutral yellow, friendly green. Tap-denied mobs are grey.
+    -- Preserve the unit's actual reaction/tap language whenever TinyThreatPlus
+    -- is not actively communicating threat. Do not use the bar's current color
+    -- as identity: Blizzard can already have threat-tinted a recycled plate.
     if UnitIsTapDenied then
         local tapped = TTP.Compat.GetAccessibleValue(UnitIsTapDenied(unit))
         if tapped == true then
@@ -308,6 +307,19 @@ local function GetForeverBaseHealthColor(unit)
         end
     end
 
+    -- UnitReaction is the stable source for NPC disposition. In particular,
+    -- reaction 4 is neutral and must remain yellow even if another Blizzard
+    -- presentation layer has temporarily painted this nameplate red.
+    if UnitReaction then
+        local reaction = TTP.Compat.GetAccessibleValue(UnitReaction(unit, "player"))
+        if type(reaction) == "number" then
+            if reaction >= 5 then return 0.10, 0.80, 0.10 end -- friendly
+            if reaction == 4 then return 1.00, 1.00, 0.00 end -- neutral
+            return 0.80, 0.10, 0.10                         -- hostile/unfriendly
+        end
+    end
+
+    -- Fall back to Blizzard's selection palette if reaction is unavailable.
     if UnitSelectionColor then
         local r, g, b = UnitSelectionColor(unit, true)
         if IsAccessible(r) and IsAccessible(g) and IsAccessible(b) then
