@@ -321,9 +321,11 @@ if TTP.Compat.IsForever() then
     Section("STYLING", "Target Priority")
     MakeColorPicker("STYLING", "Target Priority Color", "priorityMarkerColor", "Tints Blizzard's native priority-highlight geometry.")
     MakeSlider("STYLING", "Target Priority Opacity", "priorityMarkerOpacity", 10, 100, 5, "%", "Sets target-priority highlight opacity.")
-    MakeSlider("STYLING", "Target Priority Size", "priorityMarkerScale", 50, 200, 5, "%", "Scales the broader target-priority highlight.")
-    MakeSlider("STYLING", "Target Priority X Offset", "priorityMarkerOffsetX", -40, 40, 1, " px", "Moves the target-priority highlight horizontally.")
-    MakeSlider("STYLING", "Target Priority Y Offset", "priorityMarkerOffsetY", -30, 30, 1, " px", "Moves the target-priority highlight vertically.")
+    MakeSlider("STYLING", "Target Priority Width", "priorityMarkerWidth", 100, 240, 1, " px", "Sets the exact width of the target-priority outline.")
+    MakeSlider("STYLING", "Target Priority Height", "priorityMarkerHeight", 10, 40, 1, " px", "Sets the exact height of the target-priority outline.")
+    MakeSlider("STYLING", "Target Priority Thickness", "priorityMarkerThickness", 1, 8, 1, " px", "Sets the pixel thickness of the target-priority outline.")
+    MakeSlider("STYLING", "Target Priority X Offset", "priorityMarkerOffsetX", -40, 40, 1, " px", "Moves the target-priority outline horizontally.")
+    MakeSlider("STYLING", "Target Priority Y Offset", "priorityMarkerOffsetY", -30, 30, 1, " px", "Moves the target-priority outline vertically.")
 
     Section("STYLING", "Nameplate Threat Readout")
     MakeSlider("STYLING", "Threat Readout Width", "nativeThreatWidth", 20, 60, 2, " px", "Sets nameplate threat-readout width.")
@@ -361,7 +363,8 @@ local PAGE_DEFAULT_KEYS = {
         "nativeHealthOutline", "nativeHealthOutlineColor",
         "nativeLevelBadgeSize", "nativeLevelFontSize", "nativeLevelOffsetX",
         "nativeLevelOffsetY", "targetHighlightColor", "targetHighlightOpacity",
-        "priorityMarkerColor", "priorityMarkerOpacity", "priorityMarkerScale",
+        "priorityMarkerColor", "priorityMarkerOpacity", "priorityMarkerWidth",
+        "priorityMarkerHeight", "priorityMarkerThickness",
         "priorityMarkerOffsetX", "priorityMarkerOffsetY",
         "nativeThreatWidth", "nativeThreatHeight", "nativeThreatFontSize",
         "nativeThreatOffsetX", "nativeThreatOffsetY",
