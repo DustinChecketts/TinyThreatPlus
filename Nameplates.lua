@@ -168,6 +168,16 @@ local function CreateNativeEnhancement(nameplate)
     overlay.counterText:SetTextColor(1, 1, 1)
     overlay.counterText:Hide()
 
+    -- Target Priority uses an addon-owned four-edge outline so its geometry can
+    -- be tuned exactly without reading or resizing Blizzard restricted regions.
+    overlay.priority = CreateFrame("Frame", nil, overlay)
+    overlay.priority:SetFrameLevel(overlay:GetFrameLevel() + 4)
+    overlay.priority.top = overlay.priority:CreateTexture(nil, "OVERLAY")
+    overlay.priority.bottom = overlay.priority:CreateTexture(nil, "OVERLAY")
+    overlay.priority.left = overlay.priority:CreateTexture(nil, "OVERLAY")
+    overlay.priority.right = overlay.priority:CreateTexture(nil, "OVERLAY")
+    overlay.priority:Hide()
+
     -- Group threat leader belongs with the mob it describes, not the target
     -- frame. Keep this deliberately compact beneath the native health bar.
     overlay.leader = CreateFrame("Frame", nil, overlay)
@@ -208,6 +218,7 @@ ResetNativeEnhancement = function(nameplate)
     overlay.threat:SetText("")
     overlay.counterRing:Hide()
     overlay.counterText:Hide()
+    if overlay.priority then overlay.priority:Hide() end
     overlay.stableThreatState = nil
     local resetHealth = TTP.GetNameplateHealthBar(nameplate)
     if resetHealth then resetHealth.TinyThreatPlusUnit = nil end
@@ -489,13 +500,7 @@ local function UpdateNativeEnhancement(unit, nameplate)
         (tonumber(TinyThreatPlusDB.priorityMarkerOpacity) or 100) / 100))
 
     local borderR, borderG, borderB, borderA = 1, 1, 1, 0
-    if isPriority then
-        borderR, borderG, borderB, borderA =
-            priorityColor[1] or 0,
-            priorityColor[2] or 0.0627451,
-            priorityColor[3] or 0.3960784,
-            priorityAlpha
-    elseif isCurrentTarget and TinyThreatPlusDB.showTargetHighlight then
+    if isCurrentTarget and TinyThreatPlusDB.showTargetHighlight then
         borderR, borderG, borderB, borderA =
             highlightColor[1] or 1,
             highlightColor[2] or 1,
@@ -503,10 +508,8 @@ local function UpdateNativeEnhancement(unit, nameplate)
             highlightAlpha
     end
 
-    -- Blizzard's broad selectionHighlight is animated and can be much wider
-    -- than the health bar in Forever. Reusing it caused the large blinking
-    -- navy strip seen in dungeons. Leave that native layer suppressed and use
-    -- the tight selectedBorder for both current-target and priority state.
+    -- Keep Blizzard's tight selectedBorder exclusively for current-target
+    -- feedback. Priority gets its own precisely-sized outline below.
     if unitFrame.selectionHighlight then
         unitFrame.selectionHighlight:SetAlpha(0)
     end
@@ -514,14 +517,56 @@ local function UpdateNativeEnhancement(unit, nameplate)
         healthBar.selectedBorder:SetDesaturated(true)
         healthBar.selectedBorder:SetVertexColor(borderR, borderG, borderB, 1)
         healthBar.selectedBorder:SetAlpha(borderA)
+    end
+
+    local overlay = CreateNativeEnhancement(nameplate)
+
+    local priority = overlay.priority
+    if priority then
         if isPriority then
-            healthBar.selectedBorder:Show()
+            local width = math.max(100, math.min(240,
+                tonumber(TinyThreatPlusDB.priorityMarkerWidth) or 172))
+            local height = math.max(10, math.min(40,
+                tonumber(TinyThreatPlusDB.priorityMarkerHeight) or 20))
+            local thickness = math.max(1, math.min(8,
+                tonumber(TinyThreatPlusDB.priorityMarkerThickness) or 2))
+            local offsetX = math.max(-40, math.min(40,
+                tonumber(TinyThreatPlusDB.priorityMarkerOffsetX) or 0))
+            local offsetY = math.max(-30, math.min(30,
+                tonumber(TinyThreatPlusDB.priorityMarkerOffsetY) or 0))
+
+            priority:ClearAllPoints()
+            PixelPoint(priority, "CENTER", healthBar, "CENTER", offsetX, offsetY)
+            PixelSize(priority, width, height)
+
+            local r, g, b = priorityColor[1] or 0,
+                priorityColor[2] or 0.0627451,
+                priorityColor[3] or 0.3960784
+            for _, edge in ipairs({
+                priority.top, priority.bottom, priority.left, priority.right
+            }) do
+                edge:SetColorTexture(r, g, b, priorityAlpha)
+                edge:ClearAllPoints()
+            end
+            priority.top:SetPoint("TOPLEFT")
+            priority.top:SetPoint("TOPRIGHT")
+            priority.top:SetHeight(thickness)
+            priority.bottom:SetPoint("BOTTOMLEFT")
+            priority.bottom:SetPoint("BOTTOMRIGHT")
+            priority.bottom:SetHeight(thickness)
+            priority.left:SetPoint("TOPLEFT", priority.top, "BOTTOMLEFT")
+            priority.left:SetPoint("BOTTOMLEFT", priority.bottom, "TOPLEFT")
+            priority.left:SetWidth(thickness)
+            priority.right:SetPoint("TOPRIGHT", priority.top, "BOTTOMRIGHT")
+            priority.right:SetPoint("BOTTOMRIGHT", priority.bottom, "TOPRIGHT")
+            priority.right:SetWidth(thickness)
+            priority:Show()
+        else
+            priority:Hide()
         end
     end
 
-    -- Retired replacement texture remains hidden for compatibility while the
-    -- prototype is cleaned up; it can be removed entirely before release.
-    local overlay = CreateNativeEnhancement(nameplate)
+
 
     -- Forever exposes its right-side level presentation as a stable frame.
     -- Hide the frame itself rather than inspecting its potentially-secret text.
