@@ -296,17 +296,36 @@ local function LayoutNativeText(healthBar)
     end
 end
 
-local function GetNativeThreatBarColor(healthBar, state)
-    -- Tint Blizzard's existing status-bar texture rather than replacing or
-    -- layering artwork. Use the native hostile red as the saturation/value
-    -- reference, then rotate only its hue for warning/safe states.
-    if not healthBar.TinyThreatPlusNativeColor then
-        local r, g, b = healthBar:GetStatusBarColor()
-        if IsAccessible(r) and IsAccessible(g) and IsAccessible(b) then
-            healthBar.TinyThreatPlusNativeColor = { r, g, b }
-        else
-            healthBar.TinyThreatPlusNativeColor = { 0.72, 0.10, 0.10 }
+local function GetForeverBaseHealthColor(unit)
+    -- Preserve Blizzard's relationship/tap language whenever TinyThreatPlus
+    -- is not actively communicating threat. UnitSelectionColor is the same
+    -- selection/reaction palette Blizzard uses: hostile red, unfriendly
+    -- orange, neutral yellow, friendly green. Tap-denied mobs are grey.
+    if UnitIsTapDenied then
+        local tapped = TTP.Compat.GetAccessibleValue(UnitIsTapDenied(unit))
+        if tapped == true then
+            return 0.9, 0.9, 0.9
         end
+    end
+
+    if UnitSelectionColor then
+        local r, g, b = UnitSelectionColor(unit, true)
+        if IsAccessible(r) and IsAccessible(g) and IsAccessible(b) then
+            return r, g, b
+        end
+    end
+
+    return nil
+end
+
+local function GetNativeThreatBarColor(healthBar, state, unit)
+    -- Threat colors are based on the unit's current Blizzard relationship
+    -- color, never a stale color cached on a recycled nameplate frame.
+    local r, g, b = GetForeverBaseHealthColor(unit)
+    if r then
+        healthBar.TinyThreatPlusNativeColor = { r, g, b }
+    elseif not healthBar.TinyThreatPlusNativeColor then
+        healthBar.TinyThreatPlusNativeColor = { 0.72, 0.10, 0.10 }
     end
     local n = healthBar.TinyThreatPlusNativeColor
     local hi = math.max(n[1], n[2], n[3])
@@ -358,12 +377,14 @@ local function ApplyForeverProtectedThreatColor(healthBar, unit)
     local isTanking = UnitDetailedThreatSituation("player", unit)
     if not TTP.Compat.IsSecretValue(isTanking) then return false end
 
-    local native = healthBar.TinyThreatPlusNativeColor
-    if not native then
-        local nr, ng, nb = healthBar:GetStatusBarColor()
-        if not IsAccessible(nr) or not IsAccessible(ng) or not IsAccessible(nb) then return false end
+    local nr, ng, nb = GetForeverBaseHealthColor(unit)
+    local native
+    if nr then
         native = { nr, ng, nb }
         healthBar.TinyThreatPlusNativeColor = native
+    else
+        native = healthBar.TinyThreatPlusNativeColor
+        if not native then return false end
     end
 
     local hi = math.max(native[1], native[2], native[3])
@@ -390,7 +411,7 @@ local function ApplyForeverThreatColor(healthBar, unit, data)
     if not TinyThreatPlusDB.roleBasedColors or not data or not data.hasThreatData then return end
 
     local state = GetStableThreatState(unit, data)
-    local r, g, b = GetNativeThreatBarColor(healthBar, state)
+    local r, g, b = GetNativeThreatBarColor(healthBar, state, unit)
     TTP.applyingHealthColor = true
     healthBar:SetStatusBarColor(r, g, b)
     TTP.applyingHealthColor = false
@@ -576,13 +597,17 @@ local function UpdateNativeEnhancement(unit, nameplate)
         -- Protected off-target threat was applied without inspecting it in Lua.
     elseif TinyThreatPlusDB.roleBasedColors and data and data.hasThreatData then
         ApplyForeverThreatColor(healthBar, unit, data)
-    elseif healthBar.TinyThreatPlusNativeColor then
-        -- Leaving the threat table returns the exact Blizzard color captured
-        -- for this bar rather than leaving the last combat state behind.
-        local n = healthBar.TinyThreatPlusNativeColor
-        TTP.applyingHealthColor = true
-        healthBar:SetStatusBarColor(n[1], n[2], n[3])
-        TTP.applyingHealthColor = false
+    else
+        -- Outside meaningful threat, mirror Blizzard's live relationship/tap
+        -- color. This is especially important for neutral mobs: a recycled
+        -- plate must return to yellow instead of retaining hostile/threat red.
+        local r, g, b = GetForeverBaseHealthColor(unit)
+        if r then
+            healthBar.TinyThreatPlusNativeColor = { r, g, b }
+            TTP.applyingHealthColor = true
+            healthBar:SetStatusBarColor(r, g, b)
+            TTP.applyingHealthColor = false
+        end
     end
 
     local leader = overlay.leader
