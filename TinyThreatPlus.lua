@@ -44,7 +44,9 @@ TTP.defaults = {
     priorityThreatThreshold = 80,
     priorityMarkerColor = { 0, 0.0627451, 0.3960784 },
     priorityMarkerOpacity = 100,
-    priorityMarkerScale = 100,
+    priorityMarkerWidth = 172,
+    priorityMarkerHeight = 20,
+    priorityMarkerThickness = 2,
     priorityMarkerOffsetX = 0,
     priorityMarkerOffsetY = 0,
 
@@ -1651,13 +1653,19 @@ function TTP.UpdateAll()
     TTP.priorityDataSource = nil
 
     local priorityRole = TTP.GetPriorityRole()
-    local visibleHostiles = 0
+    local engagedHostiles = 0
 
+    -- Priority is comparative. Nearby/visible enemies that are not actually
+    -- participating in the fight must not create a "priority" when the player
+    -- is only engaged with one mob.
     for unit in pairs(TTP.activeNameplates) do
         if UnitExists(unit)
             and TTP.IsHostileNPC(unit)
         then
-            visibleHostiles = visibleHostiles + 1
+            local data = TTP.GetThreatData(unit)
+            if data and data.hasThreatData then
+                engagedHostiles = engagedHostiles + 1
+            end
         end
     end
 
@@ -1671,7 +1679,7 @@ function TTP.UpdateAll()
 
     if TinyThreatPlusDB.showPriorityMarker
         and priorityRole ~= "HEALER"
-        and visibleHostiles > 1
+        and engagedHostiles > 1
         and (
             inGroup
             or soloPriorityAllowed
