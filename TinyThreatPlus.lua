@@ -2133,6 +2133,9 @@ SlashCmdList.TINYTHREATPLUS = function(message)
         TinyThreatPlusDB.diagnostic = nil
         print("TinyThreatPlus diagnostic data cleared.")
         return
+    elseif command == "leveldebug" then
+        TTP.PrintLevelColorDiagnostic()
+        return
     elseif command == "colors" then
         TinyThreatPlusDB.roleBasedColors =
             not TinyThreatPlusDB.roleBasedColors
@@ -2183,6 +2186,7 @@ SlashCmdList.TINYTHREATPLUS = function(message)
         print("TinyThreatPlus commands:")
         print("/ttp diag start | stop | clear")
         print("/ttp colors")
+        print("/ttp leveldebug")
         print("/ttp levels")
         print("/ttp counter")
         print("/ttp preview")
