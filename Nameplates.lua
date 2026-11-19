@@ -86,49 +86,48 @@ local function UpdateLevel(plate, unit)
 
     plate.level.text:SetText(level < 0 and "??" or tostring(level))
 
-    -- Match Blizzard's target-frame difficulty color on Forever. The native
-    -- function owns client-specific thresholds; the formula below is only a
-    -- fallback when the function or its color is unavailable.
+    -- Forever's GetCreatureDifficultyColor can classify XP-bearing mobs as
+    -- gray (confirmed: level 46 player / level 37 creature). Prefer the
+    -- Classic XP gray threshold for readable levels, while retaining the
+    -- native API as fallback if player level cannot be read.
     local playerLevel = UnitEffectiveLevel and UnitEffectiveLevel("player") or UnitLevel("player")
     if level < 0 then
         plate.level.text:SetTextColor(1, 0.1, 0.1)
-    else
-        local nativeColor
-        if TTP.Compat.IsForever() and type(GetCreatureDifficultyColor) == "function" then
-            nativeColor = GetCreatureDifficultyColor(level)
+    elseif IsAccessible(playerLevel) and type(playerLevel) == "number" then
+        local difference = level - playerLevel
+        local greyLevel
+        if playerLevel <= 5 then
+            greyLevel = 0
+        elseif playerLevel <= 39 then
+            greyLevel = playerLevel - math.floor(playerLevel / 10) - 5
+        elseif playerLevel <= 59 then
+            greyLevel = playerLevel - math.floor(playerLevel / 5) - 1
+        else
+            greyLevel = playerLevel - 9
         end
 
-        if nativeColor and IsAccessible(nativeColor.r) and IsAccessible(nativeColor.g)
-            and IsAccessible(nativeColor.b)
+        if level <= greyLevel then
+            plate.level.text:SetTextColor(0.5, 0.5, 0.5)
+        elseif difference >= 5 then
+            plate.level.text:SetTextColor(1, 0.1, 0.1)
+        elseif difference >= 3 then
+            plate.level.text:SetTextColor(1, 0.5, 0)
+        elseif difference >= -2 then
+            plate.level.text:SetTextColor(1, 1, 0)
+        else
+            plate.level.text:SetTextColor(0.25, 0.75, 0.25)
+        end
+    elseif type(GetCreatureDifficultyColor) == "function" then
+        local color = GetCreatureDifficultyColor(level)
+        if color and IsAccessible(color.r) and IsAccessible(color.g)
+            and IsAccessible(color.b)
         then
-            plate.level.text:SetTextColor(nativeColor.r, nativeColor.g, nativeColor.b)
-        elseif IsAccessible(playerLevel) and type(playerLevel) == "number" then
-            local difference = level - playerLevel
-            local greyLevel
-            if playerLevel <= 5 then
-                greyLevel = 0
-            elseif playerLevel <= 39 then
-                greyLevel = playerLevel - math.floor(playerLevel / 10) - 5
-            elseif playerLevel <= 59 then
-                greyLevel = playerLevel - math.floor(playerLevel / 5) - 1
-            else
-                greyLevel = playerLevel - 9
-            end
-
-            if level <= greyLevel then
-                plate.level.text:SetTextColor(0.5, 0.5, 0.5)
-            elseif difference >= 5 then
-                plate.level.text:SetTextColor(1, 0.1, 0.1)
-            elseif difference >= 3 then
-                plate.level.text:SetTextColor(1, 0.5, 0)
-            elseif difference >= -2 then
-                plate.level.text:SetTextColor(1, 1, 0)
-            else
-                plate.level.text:SetTextColor(0.25, 0.75, 0.25)
-            end
+            plate.level.text:SetTextColor(color.r, color.g, color.b)
         else
             plate.level.text:SetTextColor(1, 1, 1)
         end
+    else
+        plate.level.text:SetTextColor(1, 1, 1)
     end
 
     plate.level:Show()
