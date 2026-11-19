@@ -133,6 +133,79 @@ local function UpdateLevel(plate, unit)
 
     plate.level:Show()
 end
+-- Read-only, on-demand comparison of Blizzard and addon level colors.
+function TTP.PrintLevelColorDiagnostic()
+    if not TTP.Compat.IsForever() then
+        print("TTP level diagnostic: Forever only.")
+        return
+    end
+
+    local function SafeLevel(unit, effective)
+        local getter = effective and UnitEffectiveLevel or UnitLevel
+        if type(getter) ~= "function" then return "unavailable" end
+        local ok, value = pcall(getter, unit)
+        if not ok or not IsAccessible(value) then return "protected" end
+        return tostring(value)
+    end
+
+    local function RGB(r, g, b)
+        if not IsAccessible(r) or not IsAccessible(g) or not IsAccessible(b) then
+            return "protected/unavailable"
+        end
+        return string.format("%.3f, %.3f, %.3f", r, g, b)
+    end
+
+    print("TTP level colors | player:", SafeLevel("player", false),
+        "effective:", SafeLevel("player", true),
+        "| target:", SafeLevel("target", false),
+        "effective:", SafeLevel("target", true))
+
+    local level = UnitEffectiveLevel and UnitEffectiveLevel("target") or UnitLevel("target")
+    local playerLevel = UnitEffectiveLevel and UnitEffectiveLevel("player") or UnitLevel("player")
+    if not IsAccessible(level) or not IsAccessible(playerLevel)
+        or type(level) ~= "number" or type(playerLevel) ~= "number"
+    then
+        print("TTP level colors: level values unavailable/protected.")
+        return
+    end
+
+    local grey
+    if playerLevel <= 5 then grey = 0
+    elseif playerLevel <= 39 then grey = playerLevel - math.floor(playerLevel / 10) - 5
+    elseif playerLevel <= 59 then grey = playerLevel - math.floor(playerLevel / 5) - 1
+    else grey = playerLevel - 9 end
+    local diff = level - playerLevel
+    local fallback = level <= grey and "gray"
+        or (diff >= 5 and "red")
+        or (diff >= 3 and "orange")
+        or (diff >= -2 and "yellow")
+        or "green"
+    print("TTP level colors | fallback:", fallback, "| gray cutoff:", grey)
+
+    if type(GetCreatureDifficultyColor) == "function" then
+        local ok, color = pcall(GetCreatureDifficultyColor, level)
+        if ok and color then
+            print("TTP level colors | native RGB:", RGB(color.r, color.g, color.b))
+        else
+            print("TTP level colors | native: failed/unavailable")
+        end
+    else
+        print("TTP level colors | native API missing")
+    end
+
+    local plate = C_NamePlate and C_NamePlate.GetNamePlateForUnit
+        and C_NamePlate.GetNamePlateForUnit("target")
+    local overlay = plate and plate.TinyThreatPlusNativeEnhancement
+    local font = overlay and overlay.level and overlay.level.text
+    if font then
+        local ok, r, g, b = pcall(font.GetTextColor, font)
+        print("TTP level colors | applied RGB:",
+            ok and RGB(r, g, b) or "protected/unavailable")
+    else
+        print("TTP level colors | target nameplate not visible")
+    end
+end
+
 local function CreateNativeEnhancement(nameplate)
     if nameplate.TinyThreatPlusNativeEnhancement then
         return nameplate.TinyThreatPlusNativeEnhancement
