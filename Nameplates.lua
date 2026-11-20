@@ -384,6 +384,21 @@ local function LayoutNativeText(healthBar)
     end
 end
 
+-- Keep reaction and tap eligibility separate from attackability. A neutral
+-- creature may be attackable without being aggressive, and a denied tap must
+-- never be masked by threat coloring.
+local function CanOverrideForeverReactionColor(unit)
+    if UnitIsTapDenied then
+        local denied = TTP.Compat.GetAccessibleValue(UnitIsTapDenied(unit))
+        if denied == true or denied == nil then return false end
+    end
+    if not UnitReaction then return false end
+    local reaction = TTP.Compat.GetAccessibleValue(UnitReaction(unit, "player"))
+    -- Only actively hostile NPCs are eligible for threat recoloring. Neutral
+    -- enemies keep Blizzard's disposition color even when attackable.
+    return type(reaction) == "number" and reaction <= 3
+end
+
 local function GetForeverBaseHealthColor(unit)
     -- Preserve the unit's actual reaction/tap language whenever TinyThreatPlus
     -- is not actively communicating threat. Do not use the bar's current color
@@ -474,6 +489,8 @@ local function ApplyForeverProtectedThreatColor(healthBar, unit)
         or not C_CurveUtil or not C_CurveUtil.EvaluateColorValueFromBoolean
     then return false end
 
+    if not CanOverrideForeverReactionColor(unit) then return false end
+
     local isTanking = UnitDetailedThreatSituation("player", unit)
     if not TTP.Compat.IsSecretValue(isTanking) then return false end
 
@@ -508,7 +525,8 @@ end
 
 local function ApplyForeverThreatColor(healthBar, unit, data)
     if not healthBar or not healthBar.SetStatusBarColor then return end
-    if not TinyThreatPlusDB.roleBasedColors or not data or not data.hasThreatData then return end
+    if not TinyThreatPlusDB.roleBasedColors or not data or not data.hasThreatData
+        or not CanOverrideForeverReactionColor(unit) then return end
 
     local state = GetStableThreatState(unit, data)
     local r, g, b = GetNativeThreatBarColor(healthBar, state, unit)
@@ -525,7 +543,7 @@ local function HookForeverHealthBarColor(healthBar)
     -- restores/recolors its native bar, immediately reapply the current threat
     -- state instead of racing it from our update loop.
     hooksecurefunc(healthBar, "SetStatusBarColor", function(bar)
-        if TTP.applyingHealthColor or not TinyThreatPlusDB.roleBasedColors then return end
+        if TTP.applyingHealthColor then return end
         local unit = bar.TinyThreatPlusUnit
         if not unit or not UnitExists(unit) then return end
         local plate = C_NamePlate.GetNamePlateForUnit(unit)
@@ -534,6 +552,16 @@ local function HookForeverHealthBarColor(healthBar)
             return
         end
         local data = TTP.GetThreatData(unit)
+        if not CanOverrideForeverReactionColor(unit) then
+            local r, g, b = GetForeverBaseHealthColor(unit)
+            if r then
+                TTP.applyingHealthColor = true
+                bar:SetStatusBarColor(r, g, b)
+                TTP.applyingHealthColor = false
+            end
+            return
+        end
+        if not TinyThreatPlusDB.roleBasedColors then return end
         if ApplyForeverProtectedThreatColor(bar, unit) then return end
         if data and data.hasThreatData then ApplyForeverThreatColor(bar, unit, data) end
     end)
@@ -727,9 +755,11 @@ local function UpdateNativeEnhancement(unit, nameplate)
     -- Blizzard health updates from flashing the bar back to its base color.
     healthBar.TinyThreatPlusUnit = unit
     HookForeverHealthBarColor(healthBar)
-    if TinyThreatPlusDB.roleBasedColors and ApplyForeverProtectedThreatColor(healthBar, unit) then
+    if TinyThreatPlusDB.roleBasedColors and CanOverrideForeverReactionColor(unit)
+        and ApplyForeverProtectedThreatColor(healthBar, unit) then
         -- Protected off-target threat was applied without inspecting it in Lua.
-    elseif TinyThreatPlusDB.roleBasedColors and data and data.hasThreatData then
+    elseif TinyThreatPlusDB.roleBasedColors and CanOverrideForeverReactionColor(unit)
+        and data and data.hasThreatData then
         ApplyForeverThreatColor(healthBar, unit, data)
     else
         -- Outside meaningful threat, mirror Blizzard's live relationship/tap
