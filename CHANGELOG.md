@@ -1,26 +1,22 @@
 # Changelog
 
-## 1.3.0
+## 1.3.0-beta1 — WoW Forever public beta
 
 ### WoW Forever
-- Added WoW Forever 1.60.x support.
-- Added a Forever compatibility layer for restricted and secret-value APIs.
-- Added custom Forever nameplate presentation while retaining Blizzard-owned health, cast, visibility, and unit handling.
-- Added threat delta display to Forever nameplates and the target frame.
-- Added pet-aware threat handling and Threat Leader presentation.
-- Added Target Counter support for hostile targets while excluding friendly targets.
-- Added Target Priority support with Forever-safe health handling.
-- Added custom mob level presentation and suppressed incompatible native Forever level/selection artwork.
-- Added Forever-aware cast-bar and nameplate geometry.
-- Added support for Blizzard's Forever nameplate size/style families.
+- Initial public beta for the live WoW Forever client, based on in-game testing.
+- Enhances Blizzard's native nameplates with compact threat readouts, target-frame threat, mob-level badges, and configurable styling.
+- Shows exact signed threat differences when Blizzard exposes readable values (most reliably on the current target).
+- Uses supported protected threat-state coloring where possible on other nameplates; off-target exact threat differences are not guaranteed.
+- Adds configurable Target Priority outlines for encounters with multiple engaged enemies.
+- Preserves native NPC reaction and tap colors outside meaningful threat.
+- Adds compatibility safeguards for protected values and nameplate identity.
 
-### Architecture
-- Added `Compat.lua` as the client/API compatibility boundary.
-- Split nameplate presentation into `Nameplates.lua`.
-- Preserved Blizzard ownership of protected nameplate mechanics while TinyThreatPlus owns presentation.
-- Documented the reusable Forever UI ownership pattern in `docs/FOREVER_UI_ARCHITECTURE.md`.
-- Kept the threat diagnostic source in the repository but excluded it from production packages.
+### Known limitations
+- Blizzard's protected threat APIs can prevent signed threat differences on non-targeted mobs; readouts may be unavailable rather than estimated.
+- Group Target Counter is not reliably available on Forever and is intentionally disabled there.
+- Target Priority is experimental and should not be treated as a guaranteed threat prediction.
+- Some nameplate combinations and group encounters still require broader testing.
 
-### Compatibility
-- WoW Forever: tested on the 1.60.1 beta client.
-- TBC Anniversary and Classic Era support remain in the shared addon.
+### Other clients
+- The shared codebase retains Classic Era and TBC Anniversary support, but this release candidate has not yet been regression-tested on those clients.
+
