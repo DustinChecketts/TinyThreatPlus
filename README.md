@@ -1,16 +1,22 @@
 # Tiny Threat Plus
 
-A World of Warcraft: Classic (Anniversary, Seasons, Hardcore, Era) addon that enhances Blizzard's native Classic nameplates with clear, actionable threat information while preserving the default UI style.
+A World of Warcraft Forever and Classic (Anniversary, Seasons, Hardcore, Era) addon that enhances Blizzard's native Classic nameplates with clear, actionable threat information while preserving the default UI style.
 
 Tiny Threat Plus is designed to work seamlessly with all 7 built-in Blizzard nameplate styles and sizes, adding threat information you want without replacing your nameplates.
 
+#### **WoW Forever Public Beta**
+
+Tiny Threat Plus supports WoW Forever with a lightweight, Blizzard-native presentation. **Exact signed threat differences are shown only when Blizzard exposes readable threat values**, typically on your current target. Other nameplates may have restricted threat data; the addon will not invent a signed threat lead.
+
+**Known Forever limitations:** Group Target Counter is currently unavailable due to protected unit identity, off-target signed threat differences may be blank, and Target Priority remains experimental. Please report reproducible bugs with the client build, encounter, addon version, and any Lua error.
+
 #### **Features**
 
-* **Threat Display** - See your threat difference as a value or percentage directly beside enemy nameplates and on the target frame.
+* **Threat Display** - See threat differences on readable targets, with restricted off-target information handled according to each client's API.
 * **Role-Based Threat Colors** - Health bars dynamically change green, yellow, or red based on whether you're tanking or dealing damage.
 * **Threat Leader** - See who currently leads threat, including class-colored names, class/pet icons, and group role.
-* **Target Priority** - Highlights the enemy that deserves your attention when fighting multiple targets. Tanks are warned about mobs at risk of being lost, while DPS are guided toward safe targets based on group focus, enemy health, and threat.
-* **Target Counter** - See how many party or raid members are targeting each enemy.
+* **Target Priority** - Highlights a candidate for attention during multi-target combat using available threat information; experimental on Forever.
+* **Target Counter** - Counts group members targeting enemies on supported Classic clients; unavailable on Forever while unit identity remains protected.
 * **Mob Information** - Adds mob level, difficulty coloring, rare/elite indicators, and raid markers.
 * **Pet Support** - Tracks pet threat and includes optional solo Target Priority support for pet classes.
 * **Native Blizzard Styling** - Automatically adapts and scales with Classic, Modern, Thin Bars, Blocky Bars, Clean Health, Blocky Cast, and Legacy Red nameplates.
@@ -38,6 +44,6 @@ The preferred data flow is: **Blizzard lifecycle/event → capability check → 
 
 #### **Known Issues / To-Do**
 
-*   Test with various other popular UI frameworks and addons
+*   Test with various other popular UI frameworks and addons\n*   Restore reliable off-target threat difference and group target counting on Forever if Blizzard exposes suitable APIs
 
 Updated, uploaded, and maintained (at least for now) by [StormtrooperTK421](https://www.curseforge.com/linkout?remoteUrl=https://discordapp.com/users/237746068844969994) on [GitHub](https://github.com/DustinChecketts/TinyThreatPlus). Please submit issues and I'll do my best to troubleshoot, replicate, and resolve issues as my limited abilities allow.
