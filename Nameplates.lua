@@ -394,9 +394,9 @@ local function CanOverrideForeverReactionColor(unit)
     end
     if not UnitReaction then return false end
     local reaction = TTP.Compat.GetAccessibleValue(UnitReaction(unit, "player"))
-    -- Only actively hostile NPCs are eligible for threat recoloring. Neutral
-    -- enemies keep Blizzard's disposition color even when attackable.
-    return type(reaction) == "number" and reaction <= 3
+    -- Hostile/hated reactions are eligible for threat recoloring. Unfriendly
+    -- and neutral reactions retain their distinct disposition colors.
+    return type(reaction) == "number" and reaction <= 2
 end
 
 local function GetForeverBaseHealthColor(unit)
@@ -411,14 +411,15 @@ local function GetForeverBaseHealthColor(unit)
     end
 
     -- UnitReaction is the stable source for NPC disposition. In particular,
-    -- reaction 4 is neutral and must remain yellow even if another Blizzard
-    -- presentation layer has temporarily painted this nameplate red.
+    -- reaction 3 is unfriendly (orange), while reaction 4 is neutral (yellow).
+    -- Neither should inherit hostile red from another presentation layer.
     if UnitReaction then
         local reaction = TTP.Compat.GetAccessibleValue(UnitReaction(unit, "player"))
         if type(reaction) == "number" then
             if reaction >= 5 then return 0.10, 0.80, 0.10 end -- friendly
             if reaction == 4 then return 1.00, 1.00, 0.00 end -- neutral
-            return 0.80, 0.10, 0.10                         -- hostile/unfriendly
+            if reaction == 3 then return 1.00, 0.50, 0.00 end -- unfriendly
+            return 0.80, 0.10, 0.10                         -- hostile
         end
     end
 
